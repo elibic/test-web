@@ -1,30 +1,34 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>שגיאה 404 - דף לא נמצא</title>
-    
+    <title>שגיאה 404 - דף זה לא נמצא</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
+
     <style>
         /* --- Global Theme Variables (From FLOOR8APP) --- */
         :root {
-            --bg-gradient: radial-gradient(circle at 50% 0%, #2c3e50, #000000); 
+            --bg-gradient: radial-gradient(circle at 50% 0%, #2c3e50, #000000);
             --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
             --glass-border: 1px solid rgba(255, 255, 255, 0.18);
             --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-            --gold-primary: #E6C25F; 
-            --gold-muted: #C2A153;   
-            --text-main: #F8FAFC;    
-            --text-secondary: #CBD5E1; 
+            --gold-primary: #E6C25F;
+            --gold-muted: #C2A153;
+            --text-main: #F8FAFC;
+            --text-secondary: #CBD5E1;
         }
 
         /* --- Reset & Body --- */
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
-            margin: 0; padding: 0;
+            margin: 0;
+            padding: 0;
             font-family: 'Heebo', sans-serif;
             background: var(--bg-gradient);
             color: var(--text-main);
@@ -53,7 +57,7 @@
             font-size: 2rem;
             font-weight: 700;
             margin: 0 0 25px 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .status-text {
@@ -89,16 +93,19 @@
 
         /* --- Digital Display (The "Screen") --- */
         .digital-display {
-            background: rgba(0, 0, 0, 0.4); /* Darker inner screen */
+            background: rgba(0, 0, 0, 0.4);
+            /* Darker inner screen */
             border-radius: 12px;
             padding: 15px 0;
             width: 100%;
-            border: 1px solid rgba(230, 194, 95, 0.1); /* Faint gold border */
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+            border: 1px solid rgba(230, 194, 95, 0.1);
+            /* Faint gold border */
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
         }
-        
+
         .floor-number {
-            font-family: 'Heebo', sans-serif; /* Keeping consistency with app */
+            font-family: 'Heebo', sans-serif;
+            /* Keeping consistency with app */
             font-size: 5rem;
             font-weight: 800;
             color: var(--gold-primary);
@@ -137,16 +144,33 @@
 
         /* --- Mobile Optimization --- */
         @media (max-height: 500px) and (orientation: landscape) {
-            .brand-logo { width: 80px; margin-bottom: 10px; }
-            .main-title { font-size: 1.5rem; margin-bottom: 15px; }
-            .floor-number { font-size: 3.5rem; }
-            .footer-text { position: relative; bottom: auto; margin-top: 20px; }
+            .brand-logo {
+                width: 80px;
+                margin-bottom: 10px;
+            }
+
+            .main-title {
+                font-size: 1.5rem;
+                margin-bottom: 15px;
+            }
+
+            .floor-number {
+                font-size: 3.5rem;
+            }
+
+            .footer-text {
+                position: relative;
+                bottom: auto;
+                margin-top: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-    <img src="https://firebasestorage.googleapis.com/v0/b/nitzaelev.firebasestorage.app/o/Powered%20by_LOGO_.png?alt=media&token=a3a3d8fe-213d-4102-ac82-3848dc1e96d0" alt="Nitza Logo" class="brand-logo">
+    <img src="https://firebasestorage.googleapis.com/v0/b/nitzaelev.firebasestorage.app/o/Powered%20by_LOGO_.png?alt=media&token=a3a3d8fe-213d-4102-ac82-3848dc1e96d0"
+        alt="Nitza Logo" class="brand-logo">
 
     <h1 class="main-title">אופס! משהו השתבש</h1>
 
@@ -164,4 +188,5 @@
     </div>
 
 </body>
+
 </html>
