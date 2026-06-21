@@ -13,3 +13,7 @@
 ```bash
 firebase deploy --only hosting
 ```
+
+---
+
+*מנוהל ב‑Git ו‑GitHub מאז יוני 2026.*
