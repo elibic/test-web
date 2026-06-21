@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעלית שבת - תצוגת קיוסק</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="stylesheet" href="kiosk-style.css">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    
+    <!-- Firebase SDK (Compat v8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Configuration & Logic -->
+    <script src="/firebase-config.js"></script>
+
+    <!-- Display-Specific Clean Styles -->
+    <style>
+        /* Lite Mode Overrides */
+        
+        /* Ensure Container is centered and full height */
+        #clockContainer {
+            display: flex !important;
+            height: 85vh; /* Occupy most of the screen */
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* --- CRITICAL FIX: Hide Large Clock when Elevators are visible (Shabbat Mode) --- */
+        body.shabbat-mode-active #clockContainer {
+            display: none !important;
+        }
+
+        /* Clean Digital Panel - No Box, No Background */
+        #digitalClockPanel {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* Typography Enhancements */
+        .clock-time {
+            font-size: 22vw; /* Massive font for visibility */
+            font-weight: 800;
+            color: #FFFFFF;
+            line-height: 0.9;
+            margin-bottom: 2vh;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8); /* Better contrast on deep blacks */
+            font-variant-numeric: tabular-nums;
+        }
+
+        .clock-date {
+            font-size: 5vw;
+            color: #FFD700; /* Gold Primary */
+            font-weight: 700;
+            margin-bottom: 1.5vh;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .clock-hebrew-date {
+            font-size: 3.5vw;
+            color: #cccccc; /* Light Gray */
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        /* Hide Analog Clock Wrapper Completely */
+        #analogClockWrapper {
+            display: none !important;
+        }
+
+        /* Orientation Adjustments */
+        @media (orientation: landscape) {
+            .clock-time { font-size: 20vw; }
+            .clock-date { font-size: 4vw; }
+            .clock-hebrew-date { font-size: 3vw; }
+        }
+    </style>
+</head>
+
+<body>
+    
+    <!-- Error Screen (Shown if no floor in URL) -->
+    <div id="errorScreen">
+        <i class="fas fa-exclamation-triangle" style="font-size: 4em; margin-bottom: 20px;"></i>
+        <h2>שגיאת קונפיגורציה</h2>
+        <p>לא הוגדרה קומה עבור מסך זה.</p>
+        <p style="direction: ltr; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+            Add <b>?floor=X</b> to the URL.<br>Example: <i>display.html?floor=5</i>
+        </p>
+    </div>
+
+    <!-- ADDED: Top Logo (Dynamic Src) -->
+    <img id="mainLogo" class="top-logo" src="" alt="Main Logo">
+
+    <div id="displayContainer">
+        
+        <div id="main-shabbat-indicator">
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="flameGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#C0C0C0" /><stop offset="50%" style="stop-color:#FFFFFF" /><stop offset="100%" style="stop-color:#B0B0B0" />
+                    </linearGradient>
+                </defs>
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="44" y="120" width="12" height="65" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M38 150 C 35 145, 65 145, 62 150 L 38 150 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M35 120 C 40 110, 60 110, 65 120 L 35 120 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="42" y="50" width="16" height="70" fill="#f0f0f0" stroke="#ccc" stroke-width="0"/>
+                <path d="M49 50 L 51 42" stroke="#333" stroke-width="2"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347" filter="url(#flameGlow)">
+                    <animate attributeName="ry" values="12;14;12" dur="1.2s" repeatCount="indefinite" />
+                    <animate attributeName="rx" values="7;6;7" dur="1s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="50" cy="33" rx="3" ry="6" fill="#FFEEA0" />
+            </svg>
+            
+            <span>שבת שלום</span>
+            
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="44" y="120" width="12" height="65" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M38 150 C 35 145, 65 145, 62 150 L 38 150 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M35 120 C 40 110, 60 110, 65 120 L 35 120 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="42" y="50" width="16" height="70" fill="#f0f0f0" stroke="#ccc" stroke-width="0"/>
+                <path d="M49 50 L 51 42" stroke="#333" stroke-width="2"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347" filter="url(#flameGlow)">
+                    <animate attributeName="ry" values="12;14;12" dur="1.2s" repeatCount="indefinite" />
+                    <animate attributeName="rx" values="7;6;7" dur="1s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="50" cy="33" rx="3" ry="6" fill="#FFEEA0" />
+            </svg>
+        </div>
+        
+        <div id="clockContainer">
+            <div id="digitalClockPanel" class="clock-panel">
+                <div class="clock-time" id="clockTime">00:00:00</div>
+                <div class="clock-date" id="clockDate">טוען תאריך...</div>
+                <div class="clock-hebrew-date" id="clockHebrewDate">טוען תאריך עברי...</div>
+            </div>
+            
+            <!-- ANALOG CLOCK REMOVED FOR CLEAN DESIGN & PERFORMANCE -->
+        </div>
+        
+        <div class="dashboard-container"></div>
+        
+        <!-- DELETED: Footer Controls (Buttons) -->
+    </div>
+    
+    <!-- Dynamic Logo from Config -->
+    <img id="poweredByLogo" src="" alt="Powered By Logo" class="bottom-logo">
+    
+    <div class="notification" id="notificationPopup"></div>
+    
+    <div class="bottom-status-bar" id="bottomStatusBar">
+        <span class="status-time" id="statusTime" style="font-weight:bold; color: var(--gold-primary);">00:00:00</span> | 
+        <span id="statusDate"></span> | 
+        <span id="statusHebrewDate" style="margin-right: 8px;"></span>
+    </div>
+
+    <!-- Main Logic -->
+    <script src="kiosk-logic.js"></script>
+</body>
+</html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פאנל ניהול ראשי</title>
+    <link href="https://fonts.googleapis.com/css?family=Heebo:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    
+    <style>
+        body { font-family: 'Heebo', Arial, sans-serif; background: linear-gradient(120deg, #141E30 0%, #243B55 100%); color: #ecd08f; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 20px; box-sizing: border-box; }
+        h1, h2, h3 { color: #ecd08f; margin-bottom: 20px; }
+        
+        /* Main Containers */
+        .container { background: rgba(20, 30, 48, 0.97); border-radius: 28px; box-shadow: 0 6px 48px #0007, 0 1.5px 3px #ecd08f40 inset; padding: 30px; width: 90%; max-width: 900px; border: 2px solid #ecd08f; margin-bottom: 20px; position: relative; }
+        
+        /* Forms & Inputs */
+        .form-group { margin-bottom: 20px; text-align: right; }
+        label { display: block; color: #ecd08f; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ecd08f; border-radius: 8px; background-color: rgba(255, 255, 255, 0.1); color: #ecd08f; box-sizing: border-box; font-family: inherit; font-size: 1em; }
+        option { background-color: #141E30; color: #ecd08f; }
+        
+        .input-wrapper { position: relative; width: 100%; }
+        .password-toggle { position: absolute; left: 10px; top: 12px; color: #ecd08f; cursor: pointer; z-index: 10; font-size: 1.1em;}
+        
+        /* Buttons */
+        button { background: linear-gradient(90deg, #262c43 60%, #14192c 100%); color: #ecd08f; border: 2px solid #ecd08f; border-radius: 18px; font-size: 1.1em; font-family: inherit; padding: 10px 25px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 25px #ecd08f18; transition: all 0.2s; width: 100%; margin-top: 10px;}
+        button:hover { background: linear-gradient(90deg, #1c2130 80%, #fcdf83 120%); color: #ffe9a1; }
+        
+        .social-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #333; border-color: #fff; }
+        .social-btn:hover { background: #f0f0f0; color: #000; }
+        .back-btn { background: transparent; border-color: #ecd08f80; }
+        
+        .logout-btn { background-color: #d32f2f; border-color: #d32f2f; position: absolute; top: 20px; left: 20px; width: auto; font-size: 0.9em; padding: 5px 15px;}
+        
+        /* Auth Views */
+        .auth-view { display: none; flex-direction: column; gap: 15px; }
+        .auth-view.active { display: flex; }
+        .forgot-password { color: #ecd08f; text-decoration: underline; cursor: pointer; font-size: 0.9em; text-align: center; margin-top: 15px; display: block; }
+        
+        /* Lists & Badges */
+        .list-container { margin-top: 20px; border-top: 1px solid #ecd08f50; padding-top: 20px; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: #141E30; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(236, 208, 143, 0.2); }
+        
+        .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; text-align: right; }
+        .role-badge { font-size: 0.75em; padding: 3px 8px; border-radius: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .role-admin { background: #ecd08f; color: #141E30; }
+        .role-viewer { background: #4caf50; color: #fff; }
+        .device-count { font-size: 0.85em; color: #aaa; margin-right: 5px; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;}
+
+        /* Action Buttons in List */
+        .actions { display: flex; gap: 8px; }
+        .action-btn { width: 34px; height: 34px; padding: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1em; margin: 0; transition: transform 0.2s;}
+        .action-btn:hover { transform: scale(1.1); }
+        .edit-btn { background: #3498db; border-color: #3498db; color: white; }
+        .delete-btn { background: #e74c3c; border-color: #e74c3c; color: white; }
+
+        /* Notification */
+        .notification { visibility: hidden; opacity: 0; min-width: 200px; background: #ecd08f; color: #243B55; text-align: center; border-radius: 12px; padding: 15px 25px; position: fixed; z-index: 3001; left: 50%; bottom: 50px; font-size: 1em; transform: translateX(-50%); box-shadow: 0 2px 18px #0007; transition: opacity 0.3s, visibility 0.3s; font-weight: bold; }
+        .notification.show { visibility: visible; opacity: 1; }
+        
+        /* Modals (Edit, Logout, ForgotPass) */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal.active { display: flex; }
+        .modal-content { background: #1e293b; padding: 30px; border: 2px solid #ecd08f; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative;}
+        .modal-content h3 { border-bottom: 1px dashed #ecd08f50; padding-bottom: 10px; margin-top: 0;}
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .btn-confirm { background: #ecd08f; color: #141E30; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: auto; margin: 0;}
+        .btn-cancel { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid #aaa; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: auto; margin: 0;}
+        .btn-cancel:hover { background: rgba(255,255,255,0.2); }
+        .btn-danger { background: #e74c3c; color: white; border: none; }
+        .modal-close { position: absolute; top: 15px; left: 20px; font-size: 1.5em; cursor: pointer; color: #aaa; }
+    </style>
+</head>
+<body>
+    
+    <!-- AUTH CONTAINER -->
+    <div id="authContainer" class="container">
+        <h2>כניסה לפאנל ניהול משתמשים</h2>
+        <div id="auth-main" class="auth-view active">
+            <button id="googleSignInBtn" class="social-btn"><svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9.18v3.48h4.74c-.2 1.13-.83 2.08-1.78 2.72v2.26h2.9c1.7-1.56 2.68-3.87 2.68-6.62z"></path><path fill="#34A853" d="M9.18 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-2.97.86-2.3 0-4.26-1.56-4.96-3.66H1.2v2.33C2.68 15.98 5.67 18 9.18 18z"></path><path fill="#FBBC05" d="M4.22 10.74c-.14-.42-.22-.88-.22-1.34s.08-.92.22-1.34V5.73H1.2C.43 7.1.01 8.7.01 10.4c0 1.7.42 3.3 1.19 4.67l3.02-2.33z"></path><path fill="#EA4335" d="M9.18 3.54c1.32 0 2.5.45 3.44 1.34l2.58-2.58C13.65.88 11.61 0 9.18 0 5.67 0 2.68 2.02 1.2 4.93l3.02 2.33c.7-2.1 2.66-3.66 4.96-3.66z"></path></svg>התחבר עם Google</button>
+            <button id="emailSignInBtn">התחבר עם אימייל וסיסמה</button>
+        </div>
+        
+        <div id="auth-email" class="auth-view">
+            <form id="loginForm">
+                <input type="email" id="loginEmail" placeholder="אימייל" required>
+                <div class="input-wrapper">
+                    <input type="password" id="loginPassword" placeholder="סיסמה" required>
+                    <i class="fas fa-eye password-toggle" id="toggleLoginPass"></i>
+                </div>
+                <button type="submit">התחבר</button>
+                <a class="forgot-password" id="forgotPasswordLink">שכחתי סיסמה</a>
+            </form>
+            <button class="back-btn" data-target="auth-main">חזור</button>
+        </div>
+    </div>
+
+    <!-- MAIN ADMIN PANEL -->
+    <div id="adminPanel" class="container" style="display: none;">
+        <button id="logoutBtn" class="logout-btn">התנתק</button>
+        <h1>פאנל ניהול ראשי</h1>
+        
+        <!-- Add New User -->
+        <div class="container" style="box-shadow: none; border: 1px dashed #ecd08f50; background: transparent;">
+            <h3>הזמנת משתמש חדש</h3>
+            <p style="color:#aaa; font-size:0.9em; margin-bottom: 20px;">המשתמש יקבל מייל לקביעת סיסמה אישית.</p>
+            <form id="addUserForm">
+                <div class="form-group"><label>שם משתמש:</label><input type="text" id="newUserName" required></div>
+                <div class="form-group"><label>אימייל:</label><input type="email" id="newUserEmail" required></div>
+                
+                <div class="form-group">
+                    <label>סוג הרשאה:</label>
+                    <select id="newUserRole">
+                        <option value="admin">מנהל מערכת (ניהול + צפייה)</option>
+                        <option value="viewer" selected>צופה בלבד (floor_8)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>מקסימום מכשירים:</label>
+                    <input type="number" id="newUserDevices" value="1" min="1" max="50">
+                </div>
+
+                <button type="submit">שלח הזמנה</button>
+            </form>
+        </div>
+
+        <!-- User Lists -->
+        <div class="list-container">
+            <h2>מנהלי מערכת (Admins)</h2>
+            <ul id="emailList"></ul>
+        </div>
+        
+        <div class="list-container">
+            <h2 style="color: #4caf50;">צופים מורשים (Viewers)</h2>
+            <ul id="viewerList"></ul>
+        </div>
+        
+        <div class="list-container">
+            <h2>טלפונים מורשים</h2>
+            <ul id="phoneList"></ul>
+        </div>
+    </div>
+
+    <!-- EDIT USER MODAL -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('editUserModal')">&times;</span>
+            <h3>עריכת משתמש</h3>
+            <p id="editUserEmailDisplay" style="color:#aaa; font-size:0.9em; margin-bottom:20px; direction: ltr;"></p>
+            <input type="hidden" id="editOriginalEmail">
+            <input type="hidden" id="editOriginalRole">
+            
+            <div class="form-group">
+                <label>סוג הרשאה:</label>
+                <select id="editUserRole">
+                    <option value="admin">מנהל מערכת</option>
+                    <option value="viewer">צופה בלבד</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>מקסימום מכשירים:</label>
+                <input type="number" id="editUserDevices" min="1" max="50">
+            </div>
+
+            <div class="modal-buttons">
+                <button id="saveEditBtn" class="btn-confirm">שמור שינויים</button>
+                <button class="btn-cancel" onclick="closeModal('editUserModal')">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGOUT CONFIRMATION MODAL -->
+    <div id="logoutConfirmModal" class="modal">
+        <div class="modal-content">
+            <h3>התנתקות</h3>
+            <p style="color: #fff; margin-bottom: 20px;">האם אתה בטוח שברצונך להתנתק מהמערכת?</p>
+            <div class="modal-buttons">
+                <button id="logoutConfirmBtn" class="btn-confirm btn-danger">כן, התנתק</button>
+                <button class="btn-cancel" onclick="closeModal('logoutConfirmModal')">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORGOT PASSWORD MODAL -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('forgotPasswordModal')">&times;</span>
+            <h3>איפוס סיסמה</h3>
+            <p style="color: #fff; margin-bottom: 15px;">הכנס את האימייל שלך לשליחת קישור איפוס:</p>
+            <input type="email" id="forgotEmailInput" placeholder="your@email.com">
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button id="sendResetBtn" class="btn-confirm">שלח קישור</button>
+                <button class="btn-cancel" onclick="closeModal('forgotPasswordModal')">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION POPUP -->
+    <div class="notification" id="notificationPopup"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyABExU11JS2KsumwG5z6-X_Tnn_OJZkusg",
+  authDomain: "nitzaelev.firebaseapp.com",
+  databaseURL: "https://nitzaelev-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "nitzaelev",
+  storageBucket: "nitzaelev.firebasestorage.app",
+  messagingSenderId: "922911314024",
+  appId: "1:922911314024:web:560493db03aa477cd7ebdd",
+  measurementId: "G-6BQ4RTV03F"
+        };        
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        const ui = {
+            authContainer: document.getElementById('authContainer'),
+            adminPanel: document.getElementById('adminPanel'),
+            notificationPopup: document.getElementById('notificationPopup'),
+            authViews: document.querySelectorAll('.auth-view'),
+            
+            // Login Elements
+            googleSignInBtn: document.getElementById('googleSignInBtn'),
+            emailSignInBtn: document.getElementById('emailSignInBtn'),
+            loginForm: document.getElementById('loginForm'),
+            forgotPasswordLink: document.getElementById('forgotPasswordLink'),
+            logoutBtn: document.getElementById('logoutBtn'),
+            
+            // Password Toggles
+            toggleLoginPass: document.getElementById('toggleLoginPass'),
+            loginPassInput: document.getElementById('loginPassword'),
+
+            // Add User Form
+            addUserForm: document.getElementById('addUserForm'),
+            
+            // Lists
+            emailList: document.getElementById('emailList'),
+            viewerList: document.getElementById('viewerList'),
+            phoneList: document.getElementById('phoneList'),
+            
+            // Modals Elements
+            editModal: document.getElementById('editUserModal'),
+            editEmailDisplay: document.getElementById('editUserEmailDisplay'),
+            editOriginalEmail: document.getElementById('editOriginalEmail'),
+            editOriginalRole: document.getElementById('editOriginalRole'),
+            editRoleSelect: document.getElementById('editUserRole'),
+            editDevicesInput: document.getElementById('editUserDevices'),
+            saveEditBtn: document.getElementById('saveEditBtn'),
+            
+            logoutModal: document.getElementById('logoutConfirmModal'),
+            logoutConfirmBtn: document.getElementById('logoutConfirmBtn'),
+            
+            forgotModal: document.getElementById('forgotPasswordModal'),
+            forgotEmailInput: document.getElementById('forgotEmailInput'),
+            sendResetBtn: document.getElementById('sendResetBtn')
+        };
+        
+        // --- Helper Functions ---
+        function showNotification(message, isError = false) {
+            ui.notificationPopup.textContent = message;
+            ui.notificationPopup.style.backgroundColor = isError ? '#d32f2f' : '#ecd08f';
+            ui.notificationPopup.style.color = isError ? '#fff' : '#243B55';
+            ui.notificationPopup.classList.add('show');
+            setTimeout(() => ui.notificationPopup.classList.remove('show'), 4000);
+        }
+        
+        function showAuthView(viewId) {
+            ui.authViews.forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        // Modal Helpers
+        window.closeModal = (modalId) => { document.getElementById(modalId).classList.remove('active'); };
+        window.openModal = (modalId) => { document.getElementById(modalId).classList.add('active'); };
+
+        // Toggle Password Visibility
+        function setupPasswordToggle(toggleBtn, inputField) {
+            toggleBtn.addEventListener('click', () => {
+                const type = inputField.getAttribute('type') === 'password' ? 'text' : 'password';
+                inputField.setAttribute('type', type);
+                toggleBtn.classList.toggle('fa-eye');
+                toggleBtn.classList.toggle('fa-eye-slash');
+            });
+        }
+        setupPasswordToggle(ui.toggleLoginPass, ui.loginPassInput);
+
+        // --- AUTH Handlers ---
+        ui.googleSignInBtn.addEventListener('click', () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => showNotification(err.message, true)));
+        ui.emailSignInBtn.addEventListener('click', () => showAuthView('auth-email'));
+        document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', (e) => showAuthView(e.target.dataset.target)));
+        
+        // Logout Flow
+        ui.logoutBtn.addEventListener('click', () => openModal('logoutConfirmModal'));
+        ui.logoutConfirmBtn.addEventListener('click', () => {
+            auth.signOut();
+            closeModal('logoutConfirmModal');
+        });
+
+        // Forgot Password Flow
+        ui.forgotPasswordLink.addEventListener('click', () => openModal('forgotPasswordModal'));
+        ui.sendResetBtn.addEventListener('click', () => {
+            const email = ui.forgotEmailInput.value;
+            if(!email) return showNotification("נא להזין אימייל", true);
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    showNotification("מייל לאיפוס סיסמה נשלח בהצלחה!");
+                    closeModal('forgotPasswordModal');
+                })
+                .catch(err => showNotification("שגיאה: " + err.message, true));
+        });
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const encodedEmail = (user.email || "").replace(/\./g, '_');
+                let isSuperAdmin = false;
+                const checks = [
+                    database.ref('super_admins').child(encodedEmail).once('value')
+                ];
+                
+                Promise.all(checks).then(snapshots => {
+                    snapshots.forEach(snapshot => { if (snapshot.exists() && snapshot.val() === true) isSuperAdmin = true; });
+                    if (isSuperAdmin) {
+                        ui.authContainer.style.display = 'none';
+                        ui.adminPanel.style.display = 'block';
+                        loadAndDisplayLists();
+                    } else {
+                        showNotification("אין לך הרשאת גישה לדף זה.", true);
+                        auth.signOut();
+                    }
+                });
+            } else {
+                ui.authContainer.style.display = 'block';
+                ui.adminPanel.style.display = 'none';
+                showAuthView('auth-main');
+            }
+        });
+
+        ui.loginForm.addEventListener('submit', e => {
+            e.preventDefault();
+            auth.signInWithEmailAndPassword(e.target.loginEmail.value, ui.loginPassInput.value)
+                .catch(err => showNotification(err.message, true));
+        });
+
+        // --- LIST MANAGEMENT & RENDER ---
+        function renderUserList(snapshot, listElement, roleType) {
+            listElement.innerHTML = '';
+            const data = snapshot.val() || {};
+            Object.keys(data).forEach(encodedKey => {
+                const originalEmail = encodedKey.replace(/_/g, '.');
+                const entry = data[encodedKey];
+                const maxDev = (typeof entry === 'object' && entry.maxDevices) ? entry.maxDevices : 1;
+                
+                const li = document.createElement('li');
+                
+                const badgeClass = roleType === 'admin' ? 'role-admin' : 'role-viewer';
+                const badgeText = roleType === 'admin' ? 'מנהל' : 'צופה';
+
+                li.innerHTML = `
+                    <div class="user-info">
+                        <strong>${originalEmail}</strong>
+                        <span class="role-badge ${badgeClass}">${badgeText}</span>
+                        <span class="device-count"><i class="fas fa-mobile-alt"></i> ${maxDev}</span>
+                    </div>
+                    <div class="actions">
+                        <button class="action-btn edit-btn" onclick="openEditUserModal('${originalEmail}', '${roleType}', ${maxDev})" title="ערוך משתמש">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteUser('${encodedKey}', '${roleType}')" title="מחק הרשאה">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                listElement.appendChild(li);
+            });
+        }
+
+        function loadAndDisplayLists() {
+            database.ref('allowed_users').on('value', snap => renderUserList(snap, ui.emailList, 'admin'));
+            database.ref('allowed_viewers').on('value', snap => renderUserList(snap, ui.viewerList, 'viewer'));
+            
+            // Phones (Simple list)
+            database.ref('allowed_phone_numbers').on('value', snapshot => {
+                ui.phoneList.innerHTML = '';
+                const data = snapshot.val() || {};
+                Object.keys(data).forEach(key => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${key}</span> <button class="action-btn delete-btn" onclick="deletePhone('${key}')"><i class="fas fa-trash"></i></button>`;
+                    ui.phoneList.appendChild(li);
+                });
+            });
+        }
+
+        // --- INVITE USER (No Password Provided) ---
+        ui.addUserForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const displayName = document.getElementById('newUserName').value;
+            const email = document.getElementById('newUserEmail').value;
+            const role = document.getElementById('newUserRole').value; 
+            const maxDevices = parseInt(document.getElementById('newUserDevices').value) || 1;
+
+            showNotification('יוצר הזמנה...', false);
+            
+            const secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
+            const encodedEmail = email.replace(/\./g, '_');
+            const targetPath = (role === 'admin') ? 'allowed_users' : 'allowed_viewers';
+            const permissionData = { allowed: true, maxDevices: maxDevices };
+            
+            // Generate random temp password
+            const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+
+            secondaryApp.auth().createUserWithEmailAndPassword(email, tempPassword)
+                .then((cred) => {
+                    // Update profile & permissions
+                    const p1 = cred.user.updateProfile({ displayName: displayName });
+                    const p2 = database.ref(targetPath).child(encodedEmail).set(permissionData);
+                    return Promise.all([p1, p2]);
+                })
+                .then(() => {
+                    // Send reset email immediately
+                    return secondaryApp.auth().sendPasswordResetEmail(email);
+                })
+                .then(() => {
+                    showNotification('המשתמש נוצר ונשלח אליו מייל לקביעת סיסמה!');
+                    ui.addUserForm.reset();
+                })
+                .catch(error => { 
+                    if (error.code === 'auth/email-already-in-use') {
+                        // User exists? Just update permission and send reset email anyway to be helpful
+                        database.ref(targetPath).child(encodedEmail).set(permissionData)
+                            .then(() => secondaryApp.auth().sendPasswordResetEmail(email))
+                            .then(() => {
+                                showNotification('המשתמש קיים - עודכנו הרשאות ונשלח מייל לאיפוס סיסמה.');
+                                ui.addUserForm.reset();
+                            });
+                    } else {
+                        showNotification('שגיאה: ' + error.message, true);
+                    }
+                })
+                .finally(() => { if(secondaryApp) secondaryApp.delete(); });
+        });
+
+        // --- EDIT USER LOGIC ---
+        window.openEditUserModal = (email, currentRole, currentDevices) => {
+            ui.editEmailDisplay.textContent = email;
+            ui.editOriginalEmail.value = email;
+            ui.editOriginalRole.value = currentRole;
+            ui.editRoleSelect.value = currentRole;
+            ui.editDevicesInput.value = currentDevices;
+            openModal('editUserModal');
+        };
+
+        ui.saveEditBtn.addEventListener('click', () => {
+            const email = ui.editOriginalEmail.value;
+            const oldRole = ui.editOriginalRole.value;
+            const newRole = ui.editRoleSelect.value;
+            const newDevices = parseInt(ui.editDevicesInput.value) || 1;
+            const encodedEmail = email.replace(/\./g, '_');
+            
+            const newData = { allowed: true, maxDevices: newDevices };
+            
+            if (oldRole === newRole) {
+                // Same role, just update data
+                const path = oldRole === 'admin' ? 'allowed_users' : 'allowed_viewers';
+                database.ref(path).child(encodedEmail).update(newData)
+                    .then(() => {
+                        showNotification('הפרטים עודכנו בהצלחה');
+                        closeModal('editUserModal');
+                    });
+            } else {
+                // Role changed: Delete from old, Add to new
+                const oldPath = oldRole === 'admin' ? 'allowed_users' : 'allowed_viewers';
+                const newPath = newRole === 'admin' ? 'allowed_users' : 'allowed_viewers';
+                
+                database.ref(oldPath).child(encodedEmail).remove()
+                    .then(() => database.ref(newPath).child(encodedEmail).set(newData))
+                    .then(() => {
+                        showNotification('התפקיד והפרטים עודכנו בהצלחה');
+                        closeModal('editUserModal');
+                    })
+                    .catch(err => showNotification('שגיאה בעדכון: ' + err.message, true));
+            }
+        });
+
+        // --- DELETE HANDLERS ---
+        window.deleteUser = (encodedEmail, role) => {
+            if (confirm('האם למחוק את הרשאות המשתמש? (המשתמש עצמו יישאר ב-Auth, רק הגישה תבוטל)')) {
+                const path = role === 'admin' ? 'allowed_users' : 'allowed_viewers';
+                database.ref(path).child(encodedEmail).remove()
+                    .then(() => showNotification('ההרשאה נמחקה'));
+            }
+        };
+
+        window.deletePhone = (phone) => {
+            if (confirm('למחוק מספר זה?')) {
+                database.ref('allowed_phone_numbers').child(phone).remove();
+            }
+        };
+
+    </script>
+</body>
+</html>

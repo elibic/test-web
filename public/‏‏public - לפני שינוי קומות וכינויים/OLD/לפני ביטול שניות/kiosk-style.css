@@ -1,0 +1,728 @@
+/* ----------------------------------------------------------- */
+/* --- HIGH PERFORMANCE THEME (RASPBERRY PI ZERO OPTIMIZED) --- */
+/* ----------------------------------------------------------- */
+
+/* --- Root Variables (Solid Colors, No Gradients) --- */
+:root {
+    /* Pure Black Background for minimal rendering effort */
+    --bg-color: #000000; 
+    
+    /* Card Background - Dark Gray instead of Glass */
+    --card-bg: #121212;
+    --card-border: 2px solid #333333;
+    
+    /* High Contrast Gold */
+    --gold-primary: #FFD700; /* Bright Gold */
+    --gold-dim: #8a7c4f;     /* Dimmed state */
+    
+    --text-main: #FFFFFF;    
+    --text-secondary: #AAAAAA; 
+    
+    /* Active State (Inverted High Contrast) */
+    --active-bg: #FFD700;
+    --active-text: #000000;
+}
+
+/* --- General Layout --- */
+body { 
+    margin: 0; 
+    padding: 10px; 
+    font-family: 'Heebo', sans-serif; 
+    background-color: var(--bg-color); /* Flat color */
+    color: var(--text-main); 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: space-between; 
+    height: 100vh; 
+    text-align: center; 
+    box-sizing: border-box; 
+    overflow: hidden; 
+    /* Hardware Acceleration hint */
+    transform: translateZ(0);
+}
+
+/* --- Top Logo Styles --- */
+.top-logo {
+    display: block;
+    max-height: 80px; 
+    width: auto;
+    margin: 5px auto 10px auto;
+    /* No drop-shadow filter */
+    flex-shrink: 0;
+}
+
+/* Bottom Logo Styles */
+.bottom-logo {
+    position: fixed;
+    bottom: 10px; 
+    left: 20px;   
+    max-height: 40px;
+    opacity: 0.5; 
+    z-index: 200; 
+    pointer-events: none;
+}
+
+#displayContainer { 
+    display: flex; 
+    width: 100%; 
+    flex-direction: column; 
+    align-items: center; 
+    position: relative; 
+    flex: 1; 
+    justify-content: flex-start; 
+    overflow-y: auto;
+    scrollbar-width: none; 
+}
+#displayContainer::-webkit-scrollbar { display: none; }
+
+/* --- Shabbat Indicator --- */
+#main-shabbat-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    color: var(--gold-primary);
+    font-size: 2.2em; 
+    font-weight: 700;
+    margin-top: 5px; 
+    margin-bottom: 15px; 
+    /* Removed text-shadow */
+    flex-shrink: 0; 
+}
+
+.shabbat-candle-svg {
+    width: 28px; 
+    height: auto;
+    /* Removed drop-shadow filter */
+}
+
+/* --- Dashboard Grid --- */
+.dashboard-container { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 15px; 
+    width: 100%; 
+    max-width: 1200px; 
+    flex-shrink: 0; 
+}
+
+/* --- Elevator Panel (High Performance Card) --- */
+.elevator-panel { 
+    background-color: var(--card-bg);
+    border: var(--card-border);
+    /* No backdrop-filter, No box-shadow */
+    border-radius: 12px; /* Reduced radius for simpler antialiasing */
+    padding: 20px;  
+    width: 300px; 
+    position: relative; 
+    box-sizing: border-box; 
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.2s ease; /* Simple transition only */
+    min-height: 280px;
+}
+
+/* --- Internal Panel Layout --- */
+.panel-side-floor {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+}
+
+.panel-side-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* ---------------------------------------------------- */
+/* --- SINGLE ELEVATOR VIEW (Desktop Default) --- */
+/* ---------------------------------------------------- */
+@media (min-width: 600px) {
+    .elevator-panel:only-child {
+        width: 90%;
+        max-width: 900px;
+        flex-direction: row; 
+        justify-content: space-around;
+        align-items: center;
+        padding: 40px;
+        gap: 20px;
+    }
+
+    .elevator-panel:only-child .panel-side-floor {
+        flex: 1;
+        border-left: 2px solid #333; /* Simple border */
+        padding-left: 40px;
+    }
+    
+    .elevator-panel:only-child .floor-indicator {
+        font-size: 14em; 
+        line-height: 0.8;
+    }
+
+    .elevator-panel:only-child .panel-side-info {
+        flex: 1;
+        align-items: center; 
+        gap: 20px;
+    }
+
+    .elevator-panel:only-child .elevator-id {
+        font-size: 2em;
+        margin-bottom: 10px;
+    }
+
+    .elevator-panel:only-child .direction-status {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .elevator-panel:only-child .elevator-arrow-svg,
+    .elevator-panel:only-child .stop-status-svg {
+        width: 100px;
+        height: 100px;
+    }
+
+    .elevator-panel:only-child .eta-display {
+        border-top: none; 
+    }
+
+    .elevator-panel:only-child .eta-result {
+        font-size: 3em; 
+    }
+    
+    .elevator-panel:only-child .floor-label {
+        font-size: 1.2em;
+    }
+}
+
+/* --- ACTIVE STATE (Approaching) - High Contrast Swap --- */
+/* Instead of complex animations, we just swap colors */
+.elevator-panel.approaching {
+    background-color: var(--active-bg); /* Solid Gold Background */
+    border-color: var(--active-bg);
+    z-index: 10;
+}
+
+.elevator-id { 
+    font-size: 1.2em; 
+    font-weight: 400; 
+    color: var(--text-secondary); 
+    margin-bottom: 5px;
+}
+
+/* Color Inversion when Active */
+.elevator-panel.approaching .elevator-id {
+    color: var(--active-text); /* Black Text */
+    font-weight: 700;
+}
+
+.floor-indicator { 
+    font-size: 5.5em; 
+    font-weight: 800; 
+    color: var(--gold-primary);
+    line-height: 1;
+    letter-spacing: -3px;
+    margin: 0;
+}
+
+/* Color Inversion for Floor Number */
+.elevator-panel.approaching .floor-indicator {
+    color: var(--active-text); /* Black Text */
+}
+
+.direction-status { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    height: 60px; 
+    width: 60px;
+    position: relative;
+    margin-bottom: 5px;
+}
+
+/* --- ARROW & STOP ICONS --- */
+.elevator-arrow-svg {
+    width: 50px;
+    height: 50px;
+    fill: var(--gold-primary);
+    /* No Drop Shadow */
+}
+
+/* Color Inversion for Arrow */
+.elevator-panel.approaching .elevator-arrow-svg {
+    fill: var(--active-text);
+}
+
+.arrow-up { transform: rotate(0deg); }
+.arrow-down { transform: rotate(180deg); }
+
+.stop-status-svg {
+    width: 55px;
+    height: 55px;
+    overflow: visible;
+}
+.stop-ring {
+    fill: none;
+    stroke: var(--gold-primary);
+    stroke-width: 4; /* Thicker for visibility without glow */
+    stroke-linecap: round;
+    /* Removed heavy SVG stroke animation */
+}
+.stop-bars {
+    fill: var(--gold-primary);
+    /* Removed pulse animation */
+}
+
+/* Color Inversion for Stop Icon */
+.elevator-panel.approaching .stop-ring { stroke: var(--active-text); }
+.elevator-panel.approaching .stop-bars { fill: var(--active-text); }
+
+
+/* --- ETA Section --- */
+.eta-display {
+    border-top: 2px solid #333;
+    width: 100%;
+    padding-top: 10px;
+    margin-top: 5px;
+    text-align: center;
+}
+
+.elevator-panel.approaching .eta-display {
+    border-top: 2px solid rgba(0,0,0,0.2);
+}
+
+.floor-label { font-size: 0.9em; color: var(--text-secondary); margin-bottom: 2px; }
+.elevator-panel.approaching .floor-label { color: rgba(0,0,0,0.7); font-weight: 600; }
+
+.eta-result { 
+    font-size: 1.4em; 
+    font-weight: 700; 
+    color: var(--gold-primary);
+    min-height: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Active ETA Style */
+.elevator-panel.approaching .eta-result {
+    color: var(--active-text);
+    font-size: 2em; 
+}
+
+/* Mode Toggling */
+body.shabbat-mode-active #main-shabbat-indicator { display: flex; }
+body.shabbat-mode-active .dashboard-container { display: flex; }
+body:not(.shabbat-mode-active) .dashboard-container { display: none !important; }
+
+/* In standard mode, show clock unless overriden by public mode */
+body:not(.shabbat-mode-active) #clockContainer { display: flex !important; }
+
+/* WEEKDAY MODE */
+body.weekday-mode .eta-display { display: none !important; }
+body.weekday-mode .dashboard-container { display: flex !important; }
+
+
+/* --- Clock Container --- */
+#clockContainer {
+    display: none; 
+    width: 100%; 
+    max-width: 600px; 
+    margin: 0 auto;
+    flex-direction: column;
+    justify-content: center; 
+    align-items: center;
+    min-height: 0; 
+    flex: 1;
+}
+
+.clock-panel {
+    background-color: var(--card-bg);
+    border: var(--card-border);
+    /* No Glass */
+    border-radius: 20px;
+    padding: 2em;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.clock-time { 
+    font-size: 5.5em; 
+    font-weight: 700; 
+    color: #fff; 
+    margin: 0; 
+    line-height: 1; 
+    font-variant-numeric: tabular-nums; 
+    letter-spacing: -2px;
+}
+.clock-date { font-size: 1.5em; font-weight: 400; color: var(--gold-primary); margin-top: 10px; letter-spacing: 1px;}
+.clock-hebrew-date { font-size: 1.2em; font-weight: 300; color: var(--text-secondary); margin-top: 5px; }
+
+
+/* ======================================================= */
+/* --- ANALOG CLOCK STYLES (UPDATED & VERIFIED) --- */
+/* ======================================================= */
+
+#analogClockWrapper {
+    display: none; /* JS toggles this to flex when active */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.analog-clock-panel {
+    position: relative;
+    width: 350px;
+    height: 350px;
+    border: 4px solid var(--gold-primary);
+    border-radius: 50%;
+    background: #000; /* Deep black background */
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+    margin-bottom: 20px;
+}
+
+.clock-face {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* The numbers 1-12 */
+.number {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    line-height: 40px;
+    font-size: 2em;
+    font-weight: 700;
+    color: #fff;
+    /* Center the pivot point */
+    left: 50%;
+    top: 50%;
+    margin-left: -20px;
+    margin-top: -20px;
+}
+
+/* Positioning numbers on a circle (Radius ~140px) */
+.number-12 { transform: translate(0, -140px); }
+.number-1  { transform: translate(70px, -121px); }
+.number-2  { transform: translate(121px, -70px); }
+.number-3  { transform: translate(140px, 0); }
+.number-4  { transform: translate(121px, 70px); }
+.number-5  { transform: translate(70px, 121px); }
+.number-6  { transform: translate(0, 140px); }
+.number-7  { transform: translate(-70px, 121px); }
+.number-8  { transform: translate(-121px, 70px); }
+.number-9  { transform: translate(-140px, 0); }
+.number-10 { transform: translate(-121px, -70px); }
+.number-11 { transform: translate(-70px, -121px); }
+
+/* The Hands */
+.hand {
+    position: absolute;
+    bottom: 50%; /* Anchor bottom of hand to vertical center of clock */
+    left: 50%;   /* Anchor left of hand to horizontal center of clock */
+    transform-origin: 50% 100%; /* Pivot point: Bottom Center of the hand */
+    border-radius: 4px;
+    z-index: 10;
+    transition: transform 0.2s cubic-bezier(0.4, 2.08, 0.55, 0.44); /* Smooth ticking */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.hour-hand {
+    width: 8px;
+    height: 90px;
+    background: #fff;
+    margin-left: -4px; /* Perfectly center based on width */
+    z-index: 10;
+}
+
+.minute-hand {
+    width: 6px;
+    height: 130px;
+    background: #e0e0e0; /* Slightly different shade */
+    margin-left: -3px; /* Perfectly center based on width */
+    z-index: 11;
+}
+
+.second-hand {
+    width: 2px;
+    height: 140px;
+    background: var(--gold-primary);
+    margin-left: -1px; /* Perfectly center based on width */
+    z-index: 12;
+    transition: none; /* FIX: Remove transition to prevent rewind glitch */
+}
+
+.center-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    background: var(--gold-primary);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 13;
+    box-shadow: 0 0 5px rgba(0,0,0,0.8);
+}
+
+.analog-clock-date-container {
+    text-align: center;
+}
+
+.analog-clock-date {
+    font-size: 1.5em;
+    color: var(--gold-primary);
+    font-weight: 700;
+}
+
+.analog-clock-hebrew-date {
+    font-size: 1.2em;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+
+/* --- Footer Controls --- */
+.footer-controls {
+    position: fixed; 
+    bottom: 10px; 
+    left: 0; 
+    width: 100%; 
+    padding: 10px;
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 100; 
+    gap: 15px; 
+    box-sizing: border-box;
+    pointer-events: none; 
+}
+
+.control-btn {
+    pointer-events: auto;
+    background: #333; 
+    border: 1px solid #555; 
+    color: var(--gold-primary);
+    border-radius: 50%; 
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em; 
+    cursor: pointer; 
+}
+.control-btn:hover { background: #555; color: #fff; }
+
+body.shabbat-mode-active .footer-controls { 
+    justify-content: flex-start;
+    padding-right: 20px;
+}
+
+/* --- Modal & Notifications --- */
+.modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+.modal.show { display: flex; }
+.modal-content { 
+    background: #111; 
+    padding: 30px; 
+    border: 2px solid var(--gold-primary); 
+    border-radius: 12px; 
+    width: 90%; 
+    max-width: 450px; 
+    text-align: center; 
+    position: relative; 
+}
+.modal-title { color: var(--gold-primary); margin-top: 0; }
+.modal-text { color: var(--text-main); margin-bottom: 20px; }
+.modal-close { position: absolute; top: 15px; left: 20px; color: var(--text-secondary); font-size: 32px; font-weight: bold; cursor: pointer; line-height: 1; }
+.qr-container { margin: 10px auto; padding: 15px; background: #fff; border-radius: 8px; display: inline-block; position: relative; }
+#whatsappQRContainer { width: 180px !important; height: 180px !important; }
+.qr-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: #fff; border-radius: 8px; padding: 4px; }
+
+.notification { visibility: hidden; opacity: 0; min-width: 200px; background: var(--gold-primary); color: #000; text-align: center; border-radius: 50px; padding: 12px 25px; position: fixed; z-index: 3001; left: 50%; top: 20px; font-size: 1em; transform: translateX(-50%) translateY(-20px); transition: all 0.2s; font-weight: bold; }
+.notification.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.bottom-status-bar {
+    position: fixed; bottom: 5px; left: 0; right: 0;
+    background: #000;
+    border-top: 1px solid #333;
+    padding: 5px 15px;
+    text-align: center; font-size: 0.9em; color: var(--gold-dim);
+    z-index: 50; display: none;
+}
+body.shabbat-mode-active .bottom-status-bar { display: block; }
+
+/* ----------------------------------------------------------- */
+/* ---  SPECIFIC MEDIA QUERY FOR SHORT LANDSCAPE SCREENS  --- */
+/* ----------------------------------------------------------- */
+@media (orientation: landscape) and (max-height: 640px) {
+    body { 
+        padding: 0;
+        overflow: hidden;
+    }
+    
+    .top-logo {
+        max-height: 8vh; 
+        margin: 1vh auto;
+    }
+
+    #displayContainer {
+        height: 100vh;
+        padding-bottom: 60px; 
+        justify-content: flex-start; 
+        padding-top: 0;
+        box-sizing: border-box;
+    }
+
+    #main-shabbat-indicator {
+        font-size: 4vh; 
+        margin: 0 0 2vh 0; 
+        gap: 2vh;
+    }
+    .shabbat-candle-svg { width: 5vh; }
+
+    /* --- SINGLE VIEW OPTIMIZATION --- */
+    .elevator-panel:only-child {
+        width: 96vw; 
+        height: auto;
+        max-height: 68vh; 
+        min-height: 0;
+        padding: 2vmin; 
+        margin: 8vh auto 0 auto; 
+        justify-content: center; 
+        align-items: center;     
+        gap: 0;
+        /* Re-apply border for single view here explicitly if needed */
+        background-color: var(--card-bg);
+    }
+    
+    /* Left Side (Info) */
+    .elevator-panel:only-child .panel-side-info {
+        flex: 0 0 45%; 
+        justify-content: center;
+        gap: 1vh;
+    }
+    
+    .elevator-panel:only-child .elevator-id {
+        font-size: 4.5vh; 
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .elevator-panel:only-child .direction-status {
+        width: 14vh; 
+        height: 14vh;
+        margin: 0;
+    }
+    .elevator-panel:only-child .elevator-arrow-svg,
+    .elevator-panel:only-child .stop-status-svg {
+        width: 12vh;
+        height: 12vh;
+    }
+    
+    .elevator-panel:only-child .eta-display {
+        margin: 0; padding: 0; border: none;
+    }
+    .elevator-panel:only-child .floor-label { font-size: 2.5vh; } 
+    .elevator-panel:only-child .eta-result { 
+        font-size: 6vh; 
+        line-height: 1; 
+        margin-top: 0;
+    }
+
+    /* Right Side (Floor) */
+    .elevator-panel:only-child .panel-side-floor {
+        flex: 0 0 55%; 
+        padding: 0;
+        border-left: 2px solid #333; /* Simple border */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .elevator-panel:only-child .floor-indicator {
+        font-size: 32vh; 
+        line-height: 0.8;
+        margin-top: 1.5vh;
+        letter-spacing: -1vh;
+    }
+
+    /* --- MULTIPLE ELEVATORS LAYOUT --- */
+    .dashboard-container:not(:has(.elevator-panel:only-child)) {
+        display: flex;
+        flex-wrap: nowrap;
+        width: 100%;
+        gap: 2vmin; 
+        justify-content: center;
+        align-items: center;
+    }
+
+    .elevator-panel:not(:only-child) {
+        flex: 0 1 30vw; 
+        height: 60vh;
+        min-height: 0;
+        padding: 2vmin;
+    }
+    
+    .elevator-panel:not(:only-child) .floor-indicator { 
+        font-size: 20vmin; 
+    }
+    
+    .footer-controls { 
+        bottom: 2vmin; 
+    }
+    .bottom-logo { max-height: 8vmin; bottom: 2vmin; left: 2vmin; }
+}
+
+/* Portrait Mobile */
+@media (max-width: 480px) and (orientation: portrait) {
+        #main-shabbat-indicator { font-size: 1.8em; margin-bottom: 20px; }
+        .dashboard-container { gap: 10px; }
+        .elevator-panel { width: 46%; min-height: 220px; padding: 15px 10px; }
+        .floor-indicator { font-size: 4em; }
+        .direction-status { height: 40px; width: 40px; }
+        .elevator-arrow-svg { width: 35px; height: 35px; }
+        .stop-status-svg { width: 38px; height: 38px; }
+        .eta-result { font-size: 1em; }
+        
+        .elevator-panel:only-child {\
+            flex-direction: column;
+            width: 300px;
+            gap: 0;
+            height: auto;
+        }
+        .elevator-panel:only-child .panel-side-floor {
+            border-left: none;
+            padding-left: 0;
+        }
+        .elevator-panel:only-child .floor-indicator {
+            font-size: 5.5em; /* Reset size */
+        }
+}
+
+/* Error Screen */
+#errorScreen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    color: #ef4444;
+    padding: 20px;
+}

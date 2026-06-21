@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>מעלית שבת - מובייל</title>
+    
+    <!-- Heebo Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <!-- QR Code Lib -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    
+    <style>
+        /* --- Root Variables --- */
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 0%, #2c3e50, #000000); 
+            --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            --glass-border: 1px solid rgba(255, 255, 255, 0.18);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --gold-primary: #E6C25F; 
+            --gold-muted: #C2A153;   
+            --text-main: #F8FAFC;    
+            --text-secondary: #CBD5E1; 
+        }
+
+        /* --- General Reset & Body --- */
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            font-family: 'Heebo', sans-serif; 
+            background: var(--bg-gradient); 
+            color: var(--text-main); 
+            display: flex; flex-direction: column; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* --- Layout Containers --- */
+        #displayContainer { 
+            display: none; /* Hidden until auth */
+            width: 100%; 
+            height: 100%;
+            flex-direction: column; 
+            align-items: center; 
+            padding-bottom: 50px; 
+            padding-top: 5px;
+        }
+
+        /* --- Logo & Header --- */
+        .top-logo-container {
+            margin-top: 5px;
+            margin-bottom: 2px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .top-logo {
+            width: 100px; 
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(230, 194, 95, 0.3));
+        }
+
+        #main-shabbat-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--gold-primary);
+            font-size: 1.5em; 
+            font-weight: 700;
+            margin-bottom: 5px; 
+            text-shadow: 0 0 20px rgba(230, 194, 95, 0.4); 
+            flex-shrink: 0;
+        }
+        
+        .shabbat-candle-svg {
+            width: 20px; height: auto;
+            filter: drop-shadow(0 0 10px rgba(230, 194, 95, 0.6));
+        }
+
+        /* --- Dashboard (Elevators) --- */
+        .dashboard-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            align-content: flex-start;
+            gap: 8px; 
+            width: 100%; 
+            max-width: 600px; 
+            padding: 0 5px;
+            overflow-y: auto; 
+            flex: 1; 
+            min-height: 0;
+        }
+        
+        .elevator-panel { 
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: var(--glass-border);
+            border-radius: 16px; 
+            box-shadow: var(--glass-shadow);
+            padding: 8px;  
+            width: 48%; 
+            max-width: 180px;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            justify-content: space-between;
+            height: auto;
+            min-height: 160px;
+            flex-grow: 1;
+        }
+
+        .elevator-id { font-size: 0.9em; color: var(--text-secondary); margin-bottom: 2px; }
+        .floor-indicator { 
+            font-size: 3.5em; 
+            font-weight: 800; color: var(--gold-primary);
+            text-shadow: 0 0 15px rgba(230, 194, 95, 0.3); line-height: 1; margin: 5px 0;
+        }
+        
+        .direction-status { height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .elevator-arrow-svg { width: 35px; height: 35px; fill: var(--gold-primary); }
+        .arrow-up { transform: rotate(0deg); }
+        .arrow-down { transform: rotate(180deg); }
+        
+        /* RESTORED STOP ANIMATION STYLES */
+        .stop-status-svg {
+            width: 38px;
+            height: 38px;
+            overflow: visible;
+        }
+        .stop-ring {
+            fill: none;
+            stroke: var(--gold-primary);
+            stroke-width: 6; /* Thicker for small size visibility */
+            stroke-linecap: round;
+            transform-origin: center;
+            transform: rotate(-90deg);
+            stroke-dasharray: 283; 
+            stroke-dashoffset: 283;
+            filter: drop-shadow(0 0 5px rgba(230, 194, 95, 0.4));
+            animation: ringLoad 3s ease-in-out infinite alternate;
+        }
+        .stop-bars {
+            fill: var(--gold-primary);
+            filter: drop-shadow(0 0 4px rgba(230, 194, 95, 0.5));
+            transform-origin: center;
+            animation: barsPulse 2s ease-in-out infinite;
+        }
+        @keyframes ringLoad { 0% { stroke-dashoffset: 283; } 20% { stroke-dashoffset: 283; } 100% { stroke-dashoffset: 0; } }
+        @keyframes barsPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+
+        .eta-display {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%; padding-top: 5px; margin-top: 5px; text-align: center;
+        }
+        .floor-label { font-size: 0.75em; color: var(--text-secondary); }
+        .eta-result { font-size: 1.1em; font-weight: 600; color: var(--gold-primary); min-height: 1.2em; }
+
+        /* --- Controls (Horizontal at bottom) --- */
+        .side-controls-container {
+            position: fixed;
+            bottom: 38px; 
+            right: 0; left: 0;
+            display: flex;
+            flex-direction: row; 
+            justify-content: center; 
+            gap: 15px;
+            align-items: center;
+            z-index: 100;
+            padding: 5px 10px;
+            pointer-events: none; 
+        }
+        
+        .side-controls-container > * { pointer-events: auto; }
+
+        .control-btn-round {
+            background: rgba(20, 30, 48, 0.8);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--gold-muted);
+            color: var(--gold-primary);
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+        
+        .screen-lock-btn {
+            background: rgba(20, 30, 48, 0.8);
+            backdrop-filter: blur(5px);
+            color: var(--gold-primary);
+            border: 1px solid var(--gold-muted);
+            border-radius: 20px;
+            font-size: 0.85em;
+            padding: 0 15px;
+            height: 42px; 
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .screen-lock-btn.active {
+            background: rgba(230, 194, 95, 0.25);
+            border-color: var(--gold-primary);
+            color: #fff;
+        }
+
+        /* --- Footer Status Bar --- */
+        .bottom-status-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #000;
+            border-top: 1px solid var(--gold-muted);
+            padding: 6px 0;
+            text-align: center;
+            z-index: 200;
+            line-height: 1.2;
+        }
+        .status-text {
+            font-size: 0.9em; 
+            color: var(--text-secondary);
+            font-weight: 400;
+            display: flex; justify-content: center; align-items: center; gap: 5px;
+        }
+        .status-time { font-weight: bold; color: var(--gold-primary); font-size: 1.1em; }
+
+        /* --- Bottom Left Logo --- */
+        .bottom-left-logo {
+            position: fixed; bottom: 45px; left: 10px;
+            height: 20px; opacity: 0.5; z-index: 90;
+        }
+
+        /* --- LANDSCAPE OPTIMIZATION --- */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .top-logo-container, .bottom-left-logo { display: none !important; }
+            
+            #main-shabbat-indicator {
+                font-size: 1.1em;
+                margin-bottom: 2px;
+                margin-top: 2px;
+            }
+            .shabbat-candle-svg { width: 14px; }
+            
+            #displayContainer { padding-bottom: 35px; padding-top: 0; }
+            
+            .dashboard-container { gap: 6px; padding-top: 0; }
+            
+            .elevator-panel {
+                min-height: 110px;
+                padding: 5px;
+            }
+            
+            .floor-indicator { font-size: 2.2em; margin: 0; }
+            .elevator-id { font-size: 0.8em; }
+            .direction-status { height: 26px; width: 26px; }
+            .elevator-arrow-svg { width: 24px; height: 24px; }
+            .stop-status-svg { width: 24px; height: 24px; } /* Smaller stop icon */
+            
+            .eta-display { margin-top: 2px; padding-top: 2px; }
+            .eta-result { font-size: 0.9em; min-height: 1em; }
+            .floor-label { display: none; } 
+            
+            .side-controls-container { bottom: 32px; gap: 10px; }
+            .control-btn-round { width: 34px; height: 34px; font-size: 0.9em; }
+            .screen-lock-btn { height: 34px; font-size: 0.75em; padding: 0 10px; }
+        }
+
+        /* --- Auth & Modals --- */
+        #authContainer, .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
+            z-index: 9999; display: none;
+            align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+        .auth-box, .modal-content {
+            background: var(--glass-bg); border: var(--glass-border);
+            border-radius: 28px; padding: 30px; width: 90%; max-width: 400px;
+            text-align: center; position: relative;
+            box-shadow: var(--glass-shadow);
+        }
+        
+        .input-wrapper { position: relative; width: 100%; }
+        .auth-input {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            border-radius: 12px; border: 1px solid var(--gold-muted);
+            background: rgba(255,255,255,0.05); color: #fff;
+            box-sizing: border-box; font-family: inherit; font-size: 1em;
+        }
+        .auth-input::placeholder { color: rgba(255,255,255,0.5); }
+        
+        .password-toggle { position: absolute; left: 10px; top: 12px; color: var(--gold-muted); cursor: pointer; z-index: 10; }
+
+        .auth-btn {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, var(--gold-muted), var(--gold-primary));
+            color: #0f172a; font-weight: bold; border: none;
+            border-radius: 12px; cursor: pointer; font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .google-btn { background: #fff; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        
+        .forgot-pass-link { display: block; margin-top: 10px; color: var(--text-secondary); text-decoration: underline; cursor: pointer; font-size: 0.9em; }
+        
+        .primary-btn {
+            width: 100%; padding: 12px; margin-top: 10px;
+            background: var(--gold-primary); color: #000; font-weight: bold;
+            border: none; border-radius: 8px; cursor: pointer; font-size: 1em;
+        }
+        .close-btn { position: absolute; top: 15px; left: 20px; color: var(--text-secondary); font-size: 28px; cursor: pointer; line-height: 1; }
+        
+        .contact-link-action { display: block; margin-top: 10px; margin-bottom: 10px; color: var(--gold-primary); text-decoration: underline; font-weight: bold; font-size: 1.1em; }
+        .qr-wrapper { background: white; padding: 10px; border-radius: 10px; display: inline-block; }
+
+        .notification-popup { 
+            visibility: hidden; opacity: 0; min-width: 250px; 
+            background: var(--gold-primary); color: #000; 
+            text-align: center; border-radius: 50px; padding: 12px 25px; 
+            position: fixed; z-index: 10000; top: 20px; left: 50%; transform: translateX(-50%); 
+            transition: all 0.3s; font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .notification-popup.show { visibility: visible; opacity: 1; top: 40px; }
+
+        .loader {
+            border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--gold-primary);
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes flowAnimation { 0% { opacity: 0; transform: translateY(20%); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(-40%); } }
+        .elevator-arrow-path { animation: flowAnimation 1.5s infinite linear; }
+
+        /* Mobile Optimization for Horizontal Buttons */
+        @media (max-width: 380px) {
+            .screen-lock-btn span { display: none; } 
+            .side-controls-container { gap: 8px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- LOADING SCREEN -->
+    <div id="loadingOverlay" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:10000; align-items:center; justify-content:center; flex-direction:column;">
+        <div class="loader"></div>
+        <span style="color:var(--gold-primary);" id="loadingText">טוען מערכת...</span>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="authContainer" style="display:none;">
+        <div class="auth-box">
+            <h2 id="loginTitle" style="color:var(--gold-primary); margin-top:0; margin-bottom:20px;">כניסה למערכת</h2>
+            
+            <button id="googleSignInBtn" class="auth-btn google-btn">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9.18v3.48h4.74c-.2 1.13-.83 2.08-1.78 2.72v2.26h2.9c1.7-1.56 2.68-3.87 2.68-6.62z"></path><path fill="#34A853" d="M9.18 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-2.97.86-2.3 0-4.26-1.56-4.96-3.66H1.2v2.33C2.68 15.98 5.67 18 9.18 18z"></path><path fill="#FBBC05" d="M4.22 10.74c-.14-.42-.22-.88-.22-1.34s.08-.92.22-1.34V5.73H1.2C.43 7.1.01 8.7.01 10.4c0 1.7.42 3.3 1.19 4.67l3.02-2.33z"></path><path fill="#EA4335" d="M9.18 3.54c1.32 0 2.5.45 3.44 1.34l2.58-2.58C13.65.88 11.61 0 9.18 0 5.67 0 2.68 2.02 1.2 4.93l3.02 2.33c.7-2.1 2.66-3.66 4.96-3.66z"></path></svg>
+                <span id="googleBtnTxt">התחבר עם Google</span>
+            </button>
+            
+            <p style="color:var(--text-secondary); margin: 15px 0;">או</p>
+            
+            <form id="loginForm">
+                <input type="email" id="emailInput" class="auth-input" placeholder="אימייל" required>
+                <div class="input-wrapper">
+                    <input type="password" id="passInput" class="auth-input" placeholder="סיסמה" required>
+                    <i class="fas fa-eye password-toggle" id="togglePasswordVisibility"></i>
+                </div>
+                <button type="submit" class="auth-btn" id="loginBtnTxt">התחבר</button>
+            </form>
+            <a class="forgot-pass-link" id="forgotPasswordBtn">שכחתי סיסמה</a>
+            <p id="authError" style="color:#ef4444; margin-top:10px; display:none;"></p>
+        </div>
+    </div>
+
+    <!-- FORGOT PASSWORD MODAL -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: var(--gold-primary); margin-top:0;">איפוס סיסמה</h3>
+            <p style="color: #fff;">הכנס את האימייל שלך לקבלת קישור לאיפוס סיסמה:</p>
+            <input type="email" id="forgotEmailInput" class="auth-input" placeholder="אימייל">
+            <button id="sendResetBtn" class="primary-btn">שלח קישור</button>
+            <button id="cancelResetBtn" class="primary-btn" style="background:rgba(255,255,255,0.1); border:1px solid #aaa; color:#fff;">ביטול</button>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="displayContainer">
+        
+        <!-- Top Logo -->
+        <div class="top-logo-container">
+            <img src="https://firebasestorage.googleapis.com/v0/b/nitzaelev.firebasestorage.app/o/nitza_logo.png?alt=media&token=90e39d30-62cc-406d-902a-9c55c265c0ef" class="top-logo" alt="Logo">
+        </div>
+
+        <!-- Header -->
+        <div id="main-shabbat-indicator">
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200">
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="#ccc"/>
+                <rect x="44" y="120" width="12" height="65" fill="#ccc"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347"/>
+            </svg>
+            <span id="headerText">שבת שלום</span>
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200">
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="#ccc"/>
+                <rect x="44" y="120" width="12" height="65" fill="#ccc"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347"/>
+            </svg>
+        </div>
+
+        <!-- Elevators Grid -->
+        <div class="dashboard-container"></div>
+
+        <!-- Horizontal Controls at Bottom -->
+        <div class="side-controls-container">
+            <!-- Logout -->
+            <button class="control-btn-round" style="border-color:#ef4444; color:#ef4444;" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+            
+            <!-- Contact -->
+            <button class="control-btn-round" onclick="openContactModal()">
+                <i class="fas fa-phone"></i>
+            </button>
+
+            <!-- Language Toggle (Updated Design) -->
+            <button class="control-btn-round" id="langBtn" onclick="toggleLanguage()">
+                <i class="fas fa-globe"></i>
+            </button>
+
+            <!-- Screen Lock Button (Horizontal friendly) -->
+            <button class="screen-lock-btn" id="screenLockButton" onclick="requestScreenLock()">
+                <i class="fas fa-mobile-alt"></i> <span id="keepScreenOnTxt">השאר מסך דולק</span>
+            </button>
+        </div>
+
+        <!-- Bottom Left Logo -->
+        <img src="https://firebasestorage.googleapis.com/v0/b/wolfsonelev.firebasestorage.app/o/Powered%20by_LOGO.png?alt=media&token=0e6c3ae5-24d7-49a1-bcc4-ab4c244adae3" class="bottom-left-logo" alt="Powered By">
+
+    </div>
+
+    <!-- Bottom Status Bar -->
+    <div class="bottom-status-bar">
+        <div class="status-text">
+            <span id="statusTime" class="status-time">00:00:00</span>
+            <span style="color:#666;"> | </span>
+            <span id="statusDate">--/--/--</span>
+            <span style="color:#666;"> | </span>
+            <span id="statusHebrewDate" style="color:#C2A153;">טוען...</span>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Initial Welcome Modal -->
+    <div id="initialPromptModal" class="modal">
+        <div class="modal-content">
+            <h2 id="welcomeTitle" style="color:var(--gold-primary);">ברוכים הבאים!</h2>
+            <p id="welcomeText" style="line-height:1.6; font-size:1.1em;">
+                יש לחבר את המכשיר למטען וללחוץ על כפתור <b>'השאר מסך דולק'</b> בתחתית המסך, כדי להבטיח שהמסך יישאר פעיל לאורך השבת.
+            </p>
+            <button class="primary-btn" onclick="closeInitialPrompt()" id="understandBtn">הבנתי</button>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeContactModal()">&times;</span>
+            <h3 style="color:var(--gold-primary);" id="contactTitle">צור קשר</h3>
+            <p id="contactPhone">טלפון: 052-5705289</p>
+            <a href="https://wa.me/972525705289" class="contact-link-action" id="clickHereTxt">לחץ כאן לשליחת הודעה</a>
+            <div class="qr-wrapper">
+                <canvas id="qrCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Popup -->
+    <div class="notification-popup" id="notificationPopup"></div>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // --- CONFIGURATION ---
+        const HARDCODED_FLOOR = "8"; 
+        const THIS_SCREEN_FLOOR = HARDCODED_FLOOR;
+        const THIS_SCREEN_FLOOR_NUM = parseInt(THIS_SCREEN_FLOOR, 10);
+        const STALE_TIMEOUT = 30000;
+        const INTERPOLATION_DELAY = 500;
+        
+        // --- LOCALIZATION DICTIONARY ---
+        const translations = {
+            he: {
+                dir: 'rtl',
+                loading: "טוען מערכת...",
+                loginTitle: "כניסה למערכת",
+                loginBtn: "התחבר",
+                googleBtn: "התחבר עם Google",
+                email: "אימייל",
+                pass: "סיסמה",
+                forgotPass: "שכחתי סיסמה",
+                shabbatShalom: "שבת שלום",
+                keepScreen: "השאר מסך דולק",
+                screenActive: "המסך דולק",
+                contactTitle: "צור קשר",
+                phone: "טלפון: 052-5705289",
+                clickHere: "לחץ כאן לשליחת הודעה",
+                welcomeTitle: "ברוכים הבאים!",
+                welcomeText: "יש לחבר את המכשיר למטען וללחוץ על כפתור 'השאר מסך דולק' בתחתית המסך, כדי להבטיח שהמסך יישאר פעיל לאורך השבת.",
+                understand: "הבנתי",
+                floor: "קומה",
+                up: "עלייה",
+                down: "ירידה",
+                stopped: "עצרה",
+                etaPrefix: "המעלית תגיע לקומה",
+                arrived: "המעלית כאן",
+                mins: "דק'",
+                popupCharger: "המסך יישאר דולק. מומלץ לחבר למטען.",
+                popupError: "הפעולה נכשלה. ייתכן שהדפדפן לא תומך.",
+                authError: "שגיאת התחברות",
+                // New Keys for Logic
+                break: "הפסקה",
+                notStopping: "לא עוצרת",
+                error: "שגיאה",
+                here: "המעלית כאן"
+            },
+            en: {
+                dir: 'ltr',
+                loading: "Loading System...",
+                loginTitle: "System Login",
+                loginBtn: "Login",
+                googleBtn: "Login with Google",
+                email: "Email",
+                pass: "Password",
+                forgotPass: "Forgot Password",
+                shabbatShalom: "Shabbat Shalom",
+                keepScreen: "Keep Screen On",
+                screenActive: "Screen Active",
+                contactTitle: "Contact Us",
+                phone: "Phone: 052-5705289",
+                clickHere: "Click here to send message",
+                welcomeTitle: "Welcome!",
+                welcomeText: "Please connect device to charger and click the 'Keep Screen On' button at the bottom to ensure screen stays active.",
+                understand: "I Understand",
+                floor: "Floor",
+                up: "Going Up",
+                down: "Going Down",
+                stopped: "Stopped",
+                etaPrefix: "Elevator arriving at floor",
+                arrived: "Elevator Here",
+                mins: "min",
+                popupCharger: "Screen will stay on. Connect charger.",
+                popupError: "Action failed. Browser might not support.",
+                authError: "Login Error",
+                // New Keys for Logic
+                break: "On Break",
+                notStopping: "Not Stopping",
+                error: "Error",
+                here: "Elevator Here"
+            }
+        };
+
+        let currentLang = 'he';
+        let isScreenLocked = false;
+        let wakeLockInstance = null;
+        let serverTimeOffset = 0;
+        let currentHebrewDateCache = "טוען...";
+
+        // --- FIREBASE INIT ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyABExU11JS2KsumwG5z6-X_Tnn_OJZkusg",
+            authDomain: "nitzaelev.firebaseapp.com",
+            databaseURL: "https://nitzaelev-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "nitzaelev",
+            storageBucket: "nitzaelev.firebasestorage.app",
+            messagingSenderId: "922911314024",
+            appId: "1:922911314024:web:560493db03aa477cd7ebdd"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+        // --- STATE VARIABLES ---
+        let elevatorStates = {}, latestElevatorsData = null, settings = null, elevatorConfigs = null;
+
+        // --- DOM ELEMENTS ---
+        const ui = {
+            loadingOverlay: document.getElementById('loadingOverlay'),
+            authContainer: document.getElementById('authContainer'),
+            displayContainer: document.getElementById('displayContainer'),
+            dashboard: document.querySelector('.dashboard-container'),
+            notification: document.getElementById('notificationPopup'),
+            initialPrompt: document.getElementById('initialPromptModal'),
+            contactModal: document.getElementById('contactModal'),
+            screenBtn: document.getElementById('screenLockButton'),
+            keepScreenOnTxt: document.getElementById('keepScreenOnTxt'),
+            
+            // Auth elements
+            googleBtn: document.getElementById('googleSignInBtn'),
+            passToggle: document.getElementById('togglePasswordVisibility'),
+            passInput: document.getElementById('passInput'),
+            forgotBtn: document.getElementById('forgotPasswordBtn'),
+            forgotModal: document.getElementById('forgotPasswordModal'),
+            forgotEmail: document.getElementById('forgotEmailInput'),
+            sendReset: document.getElementById('sendResetBtn'),
+            cancelReset: document.getElementById('cancelResetBtn')
+        };
+
+        // --- AUTH LOGIC ---
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                ui.authContainer.style.display = 'none';
+                ui.loadingOverlay.style.display = 'flex';
+                initializeApp();
+            } else {
+                ui.loadingOverlay.style.display = 'none';
+                ui.authContainer.style.display = 'flex';
+                ui.displayContainer.style.display = 'none';
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('emailInput').value;
+            const pass = document.getElementById('passInput').value;
+            auth.signInWithEmailAndPassword(email, pass).catch(err => {
+                const errEl = document.getElementById('authError');
+                errEl.textContent = translations[currentLang].authError;
+                errEl.style.display = 'block';
+            });
+        });
+
+        ui.googleBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(err => {
+                const errEl = document.getElementById('authError');
+                errEl.textContent = translations[currentLang].authError;
+                errEl.style.display = 'block';
+            });
+        });
+
+        ui.passToggle.addEventListener('click', () => {
+            const type = ui.passInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            ui.passInput.setAttribute('type', type);
+            ui.passToggle.classList.toggle('fa-eye');
+            ui.passToggle.classList.toggle('fa-eye-slash');
+        });
+
+        ui.forgotBtn.addEventListener('click', () => { ui.forgotModal.style.display = 'flex'; });
+        ui.cancelReset.addEventListener('click', () => { ui.forgotModal.style.display = 'none'; });
+        ui.sendReset.addEventListener('click', () => {
+            const email = ui.forgotEmail.value;
+            if(!email) return alert('נא להזין אימייל');
+            auth.sendPasswordResetEmail(email)
+                .then(() => { 
+                    alert('מייל לאיפוס הסיסמה נשלח בהצלחה. אם אינך מוצא אותו בתיבת הדואר הנכנס, ייתכן שהוא נמצא בתיקיית הספאם.'); 
+                    ui.forgotModal.style.display = 'none'; 
+                })
+                .catch(err => alert('שגיאה בשליחה: ' + err.message));
+        });
+
+        function logout() {
+            auth.signOut();
+            location.reload();
+        }
+
+        // --- APP INITIALIZATION ---
+        async function initializeApp() {
+            initializeClock();
+            applyLanguage();
+            
+            try {
+                const [sSnap, cSnap] = await Promise.all([
+                    database.ref('settings').once('value'),
+                    database.ref('elevator_configs').once('value')
+                ]);
+                settings = sSnap.val() || {};
+                elevatorConfigs = cSnap.val() || {};
+
+                database.ref('elevators').on('value', (snapshot) => {
+                    latestElevatorsData = snapshot.val() || {};
+                    // Replaced updateDashboard() with Logic Handlers
+                    updateDashboard(); 
+                    ui.loadingOverlay.style.display = 'none';
+                    ui.displayContainer.style.display = 'flex';
+                });
+                
+                setTimeout(() => { ui.initialPrompt.style.display = 'flex'; }, 1000);
+                
+                // --- NEW: Live Countdown Interval ---
+                setInterval(() => {
+                    if (latestElevatorsData) {
+                        const elevatorIds = Object.keys(latestElevatorsData);
+                        const visibleElevators = elevatorIds.filter(id => shouldShowElevator(id));
+                        visibleElevators.forEach(id => {
+                            if (elevatorStates[id]) calculateAndShowETAFor(id, elevatorStates[id]);
+                        });
+                    }
+                }, 1000);
+
+            } catch (e) {
+                console.error(e);
+                alert("Error loading data");
+            }
+        }
+
+        // --- FILTERING LOGIC ---
+        function shouldShowElevator(elevatorId) {
+            const floorToCheck = THIS_SCREEN_FLOOR;
+            if (!floorToCheck) return true;
+            
+            const config = elevatorConfigs[elevatorId];
+            if (!config) return true;
+
+            if (config.VISIBLE_FLOORS && config.VISIBLE_FLOORS.length > 0) {
+                if (config.VISIBLE_FLOORS.includes('*')) return true;
+                return config.VISIBLE_FLOORS.map(String).includes(String(floorToCheck));
+            }
+            
+            if (config.STOPPING_FLOORS) {
+                return config.STOPPING_FLOORS.map(String).includes(String(floorToCheck));
+            }
+            
+            return true;
+        }
+
+        // --- HELPER FUNCTIONS ---
+        function getNumericFloor(floorText) {
+            if (floorText === null || floorText === undefined) return null;
+            const text = String(floorText).toUpperCase();
+            if (text === 'L') return -1;
+            const num = parseInt(text, 10);
+            return isNaN(num) ? null : num;
+        }
+
+        function countStopsInList(startFloor, endFloor, list) {
+             if (!list || list.length === 0) return 0;
+             const sortedStops = list.map(getNumericFloor).sort((a, b) => a - b);
+             if (endFloor > startFloor) { return sortedStops.filter(f => f > startFloor && f <= endFloor).length; } 
+             else { return sortedStops.filter(f => f < startFloor && f >= endFloor).length; }
+        }
+
+        // --- DATE & TIME LOGIC ---
+        async function syncServerTime() {
+            try {
+                const offsetRef = database.ref('.info/serverTimeOffset');
+                const snapshot = await offsetRef.once('value');
+                serverTimeOffset = snapshot.val() || 0;
+            } catch (error) { serverTimeOffset = 0; }
+        }
+
+        function updateJerusalemTime() {
+            const now = new Date(Date.now() + serverTimeOffset);
+            const options = { timeZone: 'Asia/Jerusalem', hour12: false, year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', weekday: 'long' };
+            const formatter = new Intl.DateTimeFormat('en-US', options);
+            const parts = formatter.formatToParts(now);
+            const findPart = (type) => parts.find(p => p.type === type)?.value || '00';
+            const year = parseInt(findPart('year'));
+            const month = parseInt(findPart('month')) - 1; 
+            const day = parseInt(findPart('day'));
+            const hour = parseInt(findPart('hour')) % 24;
+            const minute = parseInt(findPart('minute'));
+            const second = parseInt(findPart('second'));
+            const currentJerusalemTime = new Date(Date.UTC(year, month, day, hour, minute, second));
+            const dayNameHe = new Intl.DateTimeFormat('he-IL', { timeZone: 'Asia/Jerusalem', weekday: 'long' }).format(now);
+            return {
+                dateObj: currentJerusalemTime, dayName: dayNameHe,
+                day: String(day).padStart(2, '0'), month: String(month + 1).padStart(2, '0'), year: String(year),
+                hour: String(hour).padStart(2, '0'), minute: String(minute).padStart(2, '0'), second: String(second).padStart(2, '0')
+            };
+        }
+
+        async function fetchHebrewDate(date) {
+            try {
+                const year = date.getUTCFullYear();
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const url = `https://www.hebcal.com/converter?cfg=json&gy=${year}&gm=${month}&gd=${day}&g2h=1`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.hebrew) {
+                    currentHebrewDateCache = data.hebrew.replace(/[\u0591-\u05C7]/g, '');
+                }
+            } catch (error) {}
+        }
+
+        function initializeClock() {
+            syncServerTime();
+            setInterval(syncServerTime, 3600000);
+            
+            // Initial call
+            const timeData = updateJerusalemTime();
+            fetchHebrewDate(timeData.dateObj);
+
+            setInterval(() => {
+                const td = updateJerusalemTime();
+                const timeStr = `${td.hour}:${td.minute}:${td.second}`;
+                const dateStr = `${td.dayName}, ${td.day}/${td.month}/${td.year}`;
+                
+                document.getElementById('statusTime').textContent = timeStr;
+                document.getElementById('statusDate').textContent = dateStr;
+                document.getElementById('statusHebrewDate').textContent = currentHebrewDateCache;
+                
+                // Fetch Hebrew date at midnight
+                if (td.hour === '00' && td.minute === '00' && td.second === '01') {
+                     fetchHebrewDate(td.dateObj);
+                }
+            }, 1000);
+        }
+
+        // --- UI & TRANSLATION ---
+        function toggleLanguage() {
+            currentLang = (currentLang === 'he') ? 'en' : 'he';
+            applyLanguage();
+        }
+
+        function applyLanguage() {
+            const t = translations[currentLang];
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = t.dir;
+            
+            // Mirror controls for LTR
+            const controls = document.querySelector('.side-controls-container');
+            if(t.dir === 'ltr') controls.style.flexDirection = 'row-reverse';
+            else controls.style.flexDirection = 'row';
+
+            // Auth
+            document.getElementById('loadingText').textContent = t.loading;
+            document.getElementById('loginTitle').textContent = t.loginTitle;
+            document.getElementById('loginBtnTxt').textContent = t.loginBtn;
+            document.getElementById('googleBtnTxt').textContent = t.googleBtn;
+            document.getElementById('emailInput').placeholder = t.email;
+            document.getElementById('passInput').placeholder = t.pass;
+            document.getElementById('forgotPasswordBtn').textContent = t.forgotPass;
+
+            // Main
+            document.getElementById('headerText').textContent = t.shabbatShalom;
+            ui.keepScreenOnTxt.textContent = isScreenLocked ? t.screenActive : t.keepScreen;
+            
+            // Modals
+            document.getElementById('welcomeTitle').textContent = t.welcomeTitle;
+            document.getElementById('welcomeText').innerHTML = t.welcomeText;
+            document.getElementById('understandBtn').textContent = t.understand;
+            
+            document.getElementById('contactTitle').textContent = t.contactTitle;
+            document.getElementById('contactPhone').textContent = t.phone;
+            document.getElementById('clickHereTxt').textContent = t.clickHere;
+
+            if (latestElevatorsData) updateDashboard();
+        }
+
+        // --- WAKE LOCK LOGIC ---
+        async function requestScreenLock() {
+            const t = translations[currentLang];
+            if (!('wakeLock' in navigator)) {
+                showNotification(t.popupError);
+                return;
+            }
+            try {
+                wakeLockInstance = await navigator.wakeLock.request('screen');
+                isScreenLocked = true;
+                ui.screenBtn.classList.add('active');
+                ui.keepScreenOnTxt.textContent = t.screenActive;
+                ui.screenBtn.innerHTML = `<i class="fa-solid fa-check-circle"></i> <span id="keepScreenOnTxt">${t.screenActive}</span>`;
+                showNotification(t.popupCharger);
+                
+                wakeLockInstance.addEventListener('release', () => {
+                    isScreenLocked = false;
+                    wakeLockInstance = null;
+                    ui.screenBtn.classList.remove('active');
+                    ui.keepScreenOnTxt.textContent = t.keepScreen;
+                    ui.screenBtn.innerHTML = `<i class="fas fa-mobile-alt"></i> <span id="keepScreenOnTxt">${t.keepScreen}</span>`;
+                });
+            } catch (err) {
+                console.error(err);
+                showNotification(t.popupError);
+            }
+        }
+
+        function showNotification(msg) {
+            ui.notification.textContent = msg;
+            ui.notification.classList.add('show');
+            setTimeout(() => ui.notification.classList.remove('show'), 5000);
+        }
+
+        // --- ELEVATOR CORE LOGIC (NEW) ---
+        function updateDashboard() {
+            if (!latestElevatorsData) return;
+            const sortedIds = Object.keys(latestElevatorsData).sort();
+            const visibleIds = sortedIds.filter(id => shouldShowElevator(id));
+
+            // Clear panels that shouldn't be there
+            const container = ui.dashboard;
+            Array.from(container.children).forEach(child => {
+                 const id = child.id.replace('panel-', '');
+                 if (!visibleIds.includes(id)) child.remove();
+            });
+
+            // Create or Update panels via Process
+            visibleIds.forEach(id => {
+                let panel = document.getElementById(`panel-${id}`);
+                if (!panel) {
+                    panel = createPanel(id);
+                    container.appendChild(panel);
+                }
+                processElevatorUpdate(id, latestElevatorsData[id]);
+            });
+        }
+
+        function createPanel(id) {
+            const t = translations[currentLang];
+            const div = document.createElement('div');
+            div.className = 'elevator-panel';
+            div.id = `panel-${id}`;
+            div.innerHTML = `
+                <div class="elevator-id" id="lbl-${id}"></div>
+                <div class="floor-indicator" id="floor-${id}">--</div>
+                <div class="direction-status" id="dir-${id}"></div>
+                <div class="eta-display">
+                    <div class="floor-label" id="etaLabel-${id}"></div>
+                    <div class="eta-result" id="eta-${id}"></div>
+                </div>
+            `;
+            return div;
+        }
+
+        // --- ADVANCED STATE MANAGEMENT (From Test File) ---
+        async function processElevatorUpdate(id, newData) {
+            const currentState = elevatorStates[id] || {};
+            const lastFloorNum = getNumericFloor(currentState.floor);
+            const currentFloorNum = getNumericFloor(newData.floor);
+
+            if (currentFloorNum === null) return;
+            
+            const config = elevatorConfigs[id] || {};
+            const topFloorNum = getNumericFloor(config.TOP_FLOOR ?? settings.TOP_FLOOR);
+            const bottomFloorNum = getNumericFloor(config.BOTTOM_FLOOR ?? settings.BOTTOM_FLOOR);
+            
+            if (currentState.timeoutId) clearTimeout(currentState.timeoutId);
+            
+            let newDirection = currentState.direction || 'stopped';
+            if (currentFloorNum === topFloorNum || currentFloorNum === bottomFloorNum) newDirection = 'stopped';
+            else if (lastFloorNum !== null && currentFloorNum !== lastFloorNum) newDirection = (currentFloorNum > lastFloorNum) ? 'up' : 'down';
+
+            const newState = {
+                floor: newData.floor,
+                direction: newDirection,
+                timestamp: Date.now(),
+                timeoutId: setTimeout(() => {
+                    const timedOutState = elevatorStates[id];
+                    if (timedOutState && (Date.now() - timedOutState.timestamp >= STALE_TIMEOUT)) {
+                       timedOutState.direction = 'stopped';
+                       updateElevatorDisplay(id, timedOutState);
+                    }
+                }, STALE_TIMEOUT)
+            };
+            
+            elevatorStates[id] = newState;
+
+            // Interpolation Logic
+            if (lastFloorNum !== null && Math.abs(currentFloorNum - lastFloorNum) > 1) {
+                await interpolateAndDisplay(id, lastFloorNum, currentFloorNum, newState);
+            } else {
+                updateElevatorDisplay(id, newState);
+            }
+            
+            // Calc ETA once on update (Interval handles the rest)
+            calculateAndShowETAFor(id, newState);
+        }
+
+        async function interpolateAndDisplay(elevatorId, startNum, endNum, finalState) {
+            const step = (endNum > startNum) ? 1 : -1;
+            const direction = (step > 0) ? 'up' : 'down';
+            
+            const allFloorsMap = new Map();
+            if (elevatorConfigs) {
+                Object.values(elevatorConfigs).forEach(config => {
+                    if(config && config.STOPPING_FLOORS) config.STOPPING_FLOORS.forEach(floor => allFloorsMap.set(getNumericFloor(floor), floor));
+                });
+            }
+
+            for (let floor = startNum + step; floor !== endNum; floor += step) {
+                const displayFloor = allFloorsMap.get(floor) || floor.toString();
+                const intermediateState = { floor: displayFloor, direction: direction };
+                updateElevatorDisplay(elevatorId, intermediateState);
+                await new Promise(resolve => setTimeout(resolve, INTERPOLATION_DELAY));
+            }
+            updateElevatorDisplay(elevatorId, finalState);
+        }
+
+        // --- DOM UPDATER (Adapted to App's ID Structure) ---
+        function updateElevatorDisplay(id, stateData) {
+            const t = translations[currentLang];
+            
+            // Update Labels
+            const labelEl = document.getElementById(`lbl-${id}`);
+            if(labelEl) labelEl.textContent = t.dir === 'rtl' ? `מעלית ${id}` : `Elevator ${id}`;
+            
+            const etaLabel = document.getElementById(`etaLabel-${id}`);
+            if(etaLabel) etaLabel.textContent = `${t.etaPrefix} ${THIS_SCREEN_FLOOR}`;
+            
+            // Elements
+            const floorEl = document.getElementById(`floor-${id}`);
+            const dirContainer = document.getElementById(`dir-${id}`);
+
+            if (!stateData) {
+                if(floorEl) floorEl.textContent = '--';
+                if(dirContainer) dirContainer.innerHTML = '';
+                return;
+            }
+
+            if(floorEl) floorEl.textContent = stateData.floor || '--';
+            
+            if(dirContainer) {
+                let dir = stateData.direction;
+                if (dir === 'up') {
+                    dirContainer.innerHTML = `<svg class="elevator-arrow-svg arrow-up" viewBox="0 0 24 24"><path class="elevator-arrow-path" d="M12 4 L22 20 L2 20 Z" /></svg>`;
+                } else if (dir === 'down') {
+                    dirContainer.innerHTML = `<svg class="elevator-arrow-svg arrow-down" viewBox="0 0 24 24"><path class="elevator-arrow-path" d="M12 4 L22 20 L2 20 Z" /></svg>`;
+                } else {
+                     dirContainer.innerHTML = `
+                        <svg class="stop-status-svg" viewBox="0 0 100 100">
+                            <circle class="stop-ring" cx="50" cy="50" r="45" />
+                            <g class="stop-bars"> 
+                                <rect x="38" y="30" width="8" height="40" rx="2" />
+                                <rect x="54" y="30" width="8" height="40" rx="2" />
+                            </g>
+                        </svg>
+                    `;
+                }
+            }
+        }
+
+        // --- ETA CALCULATION (Adapted for App Translations) ---
+        function calculateAndShowETAFor(id, state) {
+            const el = document.getElementById(`eta-${id}`);
+            const t = translations[currentLang];
+            const config = elevatorConfigs[id];
+            
+            if (!config || !settings) { el.textContent = "..."; return; }
+            
+            // 1. Check for Break
+            const breakActive = config.SHABBAT_BREAK_ACTIVE || false;
+            if (breakActive) {
+                const now = new Date(Date.now() + (serverTimeOffset || 0));
+                const [startH, startM] = (config.SHABBAT_BREAK_START || "00:00").split(':').map(Number);
+                const [endH, endM] = (config.SHABBAT_BREAK_END || "00:00").split(':').map(Number);
+                const startTime = new Date(now); startTime.setHours(startH, startM, 0);
+                const endTime = new Date(now); endTime.setHours(endH, endM, 0);
+                if (now >= startTime && now <= endTime) { el.textContent = t.break; return; }
+            }
+
+            const userFloorNum = getNumericFloor(THIS_SCREEN_FLOOR);
+            const topFloorNum = getNumericFloor(config.TOP_FLOOR ?? settings.TOP_FLOOR);
+            const bottomFloorNum = getNumericFloor(config.BOTTOM_FLOOR ?? settings.BOTTOM_FLOOR);
+
+            if (userFloorNum === null) { el.textContent = t.error; return; }
+
+            let stopsUp = config.STOPPING_FLOORS_UP || [];
+            let stopsDown = config.STOPPING_FLOORS_DOWN || [];
+            
+            const canStopUp = stopsUp.length === 0 || stopsUp.map(String).includes(String(THIS_SCREEN_FLOOR));
+            const canStopDown = stopsDown.length === 0 || stopsDown.map(String).includes(String(THIS_SCREEN_FLOOR));
+            
+            if (!canStopUp && !canStopDown) { el.textContent = t.notStopping; return; }
+
+            const elevatorFloorNum = getNumericFloor(state.floor);
+            
+            // --- LOGIC FIX: Check stopping config + direction ---
+            let isHereAndStopping = false;
+            if (userFloorNum === elevatorFloorNum) {
+                 // If status is specifically STOPPED, or unknown (' ') which usually implies idle
+                 if (state.direction === 'stopped' || state.direction === ' ') {
+                     isHereAndStopping = true;
+                 }
+                 // If moving UP and allowed to stop UP
+                 else if (state.direction === 'up' && canStopUp) {
+                     isHereAndStopping = true;
+                 }
+                 // If moving DOWN and allowed to stop DOWN
+                 else if (state.direction === 'down' && canStopDown) {
+                     isHereAndStopping = true;
+                 }
+            }
+
+            if (isHereAndStopping) { el.textContent = t.here; return; }
+            
+            let effectiveDirection = state.direction;
+            if (effectiveDirection === 'stopped' || effectiveDirection === ' ') {
+                if (elevatorFloorNum === bottomFloorNum) effectiveDirection = 'up';
+                else if (elevatorFloorNum === topFloorNum) effectiveDirection = 'down';
+                else effectiveDirection = 'up';
+            }
+            
+            const timePerFloor = parseFloat(config.TIME_PER_FLOOR ?? settings.TIME_PER_FLOOR ?? 0); 
+            let timePassFloor = parseFloat(config.TIME_PASS_FLOOR || 0);
+            if (timePassFloor === 0) {
+                 const expressTimeUp = parseFloat(config.EXPRESS_TIME_UP ?? settings.EXPRESS_TIME_UP ?? 0);
+                 const totalTravelDistance = Math.abs(topFloorNum - bottomFloorNum) || 1;
+                 if(expressTimeUp > 0) timePassFloor = expressTimeUp / totalTravelDistance;
+            }
+            
+            const zeroWaitActive = config.ZERO_FLOOR_WAIT_ACTIVE || false;
+            const zeroWaitSeconds = parseFloat(config.ZERO_FLOOR_WAIT_SECONDS || 0);
+            const zeroFloorWait = zeroWaitActive ? zeroWaitSeconds : 0;
+            const zeroFloorNum = 0;
+
+            const calcSegmentTime = (start, end, dir) => {
+                const list = (dir === 'up') ? stopsUp : stopsDown;
+                const stopsCount = countStopsInList(start, end, list);
+                const steps = Math.abs(end - start);
+                if (steps === 0) return 0;
+                const passCount = steps - stopsCount; 
+                let time = (stopsCount * timePerFloor) + (passCount * timePassFloor);
+                if (zeroFloorWait > 0 && start !== zeroFloorNum) {
+                     if ((start < zeroFloorNum && end >= zeroFloorNum) || (start > zeroFloorNum && end <= zeroFloorNum)) {
+                         time += zeroFloorWait;
+                     }
+                }
+                return time;
+            };
+
+            let totalSeconds = 0;
+            if (effectiveDirection === 'up' || effectiveDirection === ' ') {
+                if (userFloorNum > elevatorFloorNum) {
+                    if (canStopUp) { totalSeconds = calcSegmentTime(elevatorFloorNum, userFloorNum, 'up'); }
+                    else {
+                        totalSeconds = calcSegmentTime(elevatorFloorNum, topFloorNum, 'up');
+                        totalSeconds += calcSegmentTime(topFloorNum, userFloorNum, 'down');
+                    }
+                } else {
+                    totalSeconds = calcSegmentTime(elevatorFloorNum, topFloorNum, 'up');
+                    totalSeconds += calcSegmentTime(topFloorNum, userFloorNum, 'down');
+                }
+            } else { 
+                if (userFloorNum < elevatorFloorNum) {
+                    if (canStopDown) { totalSeconds = calcSegmentTime(elevatorFloorNum, userFloorNum, 'down'); }
+                    else {
+                        totalSeconds = calcSegmentTime(elevatorFloorNum, bottomFloorNum, 'down');
+                        totalSeconds += calcSegmentTime(bottomFloorNum, userFloorNum, 'up');
+                    }
+                } else {
+                    totalSeconds = calcSegmentTime(elevatorFloorNum, bottomFloorNum, 'down');
+                    totalSeconds += calcSegmentTime(bottomFloorNum, userFloorNum, 'up');
+                }
+            }
+
+            if (elevatorFloorNum === zeroFloorNum && zeroFloorWait > 0) totalSeconds += zeroFloorWait;
+            
+            // Live Countdown adjustment
+            const elapsedSinceUpdate = (Date.now() - (state.timestamp || Date.now())) / 1000;
+            let finalSeconds = totalSeconds - elapsedSinceUpdate;
+            if (finalSeconds < 0) finalSeconds = 0;
+            
+            const mins = Math.floor(finalSeconds / 60);
+            const secs = Math.round(finalSeconds % 60);
+            
+            el.textContent = `${mins}:${secs.toString().padStart(2,'0')} ${t.mins}`;
+        }
+
+        // --- MODAL CONTROLS ---
+        function closeInitialPrompt() { ui.initialPrompt.style.display = 'none'; }
+        
+        function openContactModal() {
+            ui.contactModal.style.display = 'flex';
+            const canvas = document.getElementById('qrCanvas');
+            const link = "https://wa.me/972525705289";
+            QRCode.toCanvas(canvas, link, { width: 180 }, (err) => {});
+        }
+        function closeContactModal() { ui.contactModal.style.display = 'none'; }
+        window.onclick = (e) => {
+            if (e.target == ui.contactModal) closeContactModal();
+        }
+
+    </script>
+</body>
+</html>

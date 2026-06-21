@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת טיימרים פרימיום</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 - רקע בהיר ונקי */
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        /* עיצוב הכרטיס הכהה */
+        .premium-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a); /* גרדיאנט כהה עדין */
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* שדות קלט */
+        .input-dark {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            color: #fff;
+            transition: all 0.3s;
+            font-family: 'Rubik', sans-serif; /* פונט רגיל למספרים */
+        }
+        .input-dark:focus {
+            outline: none;
+            border-color: #60a5fa; /* Blue 400 */
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+        }
+
+        /* כפתורים מהירים */
+        .btn-quick {
+            background: #334155;
+            color: #cbd5e1;
+            border: none;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .btn-quick:hover {
+            background: #475569;
+            color: white;
+        }
+
+        /* כפתורי היסטוריה */
+        .btn-history {
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-history:hover {
+            background: rgba(51, 65, 85, 0.8);
+            color: #60a5fa;
+            border-color: #60a5fa;
+        }
+
+        /* כפתורי שליטה ראשיים - גרדיאנטים מודרניים */
+        .btn-action {
+            border-radius: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-action:active { transform: scale(0.97); }
+
+        .btn-start { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .btn-start:hover { box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+
+        .btn-pause { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .btn-pause:hover { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
+
+        .btn-reset { background: #334155; color: #e2e8f0; border: 1px solid #475569; }
+        .btn-reset:hover { background: #475569; color: white; }
+
+        /* אנימציית סיום - הבהוב אדום/כתום */
+        @keyframes alarm-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); border-color: #ef4444; }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); border-color: #fca5a5; }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: #ef4444; }
+        }
+
+        .timer-finished {
+            animation: alarm-pulse 1.5s infinite;
+            background: linear-gradient(145deg, #450a0a, #1a0505); /* רקע אדמדם כהה */
+        }
+        
+        .timer-finished .display-text {
+            color: #fca5a5;
+            text-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+        }
+
+        /* שדה כותרת */
+        .title-input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #f8fafc;
+            font-weight: 700;
+            transition: border-color 0.3s;
+        }
+        .title-input:focus, .title-input:hover {
+            outline: none;
+            border-bottom-color: #64748b;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+
+        /* תגית סטטוס */
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-weight: 700;
+            background: rgba(255,255,255,0.1);
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight">
+                מערכת טיימרים <span class="text-blue-600">חכמה</span>
+            </h1>
+            <p class="text-slate-500 font-medium">ניהול זמנים מתקדם - 6 שעונים במקביל עם היסטוריה</p>
+        </header>
+
+        <!-- Grid Container -->
+        <div id="timers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Timers injected here -->
+        </div>
+    </div>
+
+    <!-- Hidden Audio -->
+    <audio id="alarm-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" loop></audio>
+
+    <script>
+        const TOTAL_TIMERS = 6;
+        const HISTORY_KEY = 'timer_history_v1';
+        const timersState = {};
+        
+        // Load history from localStorage or initialize empty
+        let timersHistory = JSON.parse(localStorage.getItem(HISTORY_KEY)) || {};
+
+        function createTimerHTML(id) {
+            return `
+            <div id="card-${id}" class="premium-card p-6 flex flex-col justify-between h-full">
+                <!-- כותרת וסטטוס -->
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-3 flex-1">
+                        <!-- אייקון מספר -->
+                        <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm border border-blue-500/30">
+                            ${id}
+                        </div>
+                        <!-- שדה שם לעריכה -->
+                        <input type="text" 
+                               value="טיימר ${id}" 
+                               onfocus="this.select()"
+                               class="title-input w-full text-lg px-2 py-1"
+                               placeholder="שם הטיימר...">
+                    </div>
+                    <div id="status-badge-${id}" class="status-badge">
+                        ממתין
+                    </div>
+                </div>
+
+                <!-- איזור הגדרה (דקות/שניות) -->
+                <div id="setup-${id}" class="mb-auto">
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- דקות -->
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1 font-bold">דקות</label>
+                            <input type="number" id="min-${id}" placeholder="00" min="0" max="999" 
+                                class="input-dark w-full p-3 text-center text-xl rounded-xl mb-2 font-bold placeholder-slate-600">
+                            <div class="grid grid-cols-3 gap-1">
+                                <button onclick="setInputVal('min-${id}', 1)" class="btn-quick rounded p-1">+1</button>
+                                <button onclick="setInputVal('min-${id}', 5)" class="btn-quick rounded p-1">+5</button>
+                                <button onclick="setInputVal('min-${id}', 10)" class="btn-quick rounded p-1">+10</button>
+                            </div>
+                        </div>
+
+                        <!-- שניות -->
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1 font-bold">שניות</label>
+                            <input type="number" id="sec-${id}" placeholder="00" min="0" max="59" 
+                                class="input-dark w-full p-3 text-center text-xl rounded-xl mb-2 font-bold placeholder-slate-600">
+                            <div class="grid grid-cols-3 gap-1">
+                                <button onclick="setInputVal('sec-${id}', 15)" class="btn-quick rounded p-1">+15</button>
+                                <button onclick="setInputVal('sec-${id}', 30)" class="btn-quick rounded p-1">+30</button>
+                                <button onclick="setInputVal('sec-${id}', 45)" class="btn-quick rounded p-1">+45</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- היסטוריה (אחרונים) -->
+                    <div class="mt-4 pt-3 border-t border-slate-700/50">
+                        <div class="text-[10px] text-slate-500 font-bold mb-2 flex justify-between items-center">
+                            <span>היסטוריה (3 אחרונים)</span>
+                            <i class="fas fa-history text-slate-600"></i>
+                        </div>
+                        <div id="history-container-${id}" class="flex gap-2 flex-wrap min-h-[1.5rem]">
+                            <!-- כפתורי היסטוריה יוזרקו לכאן -->
+                            <span class="text-[10px] text-slate-600 italic">אין נתונים</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- תצוגת זמן (מוסתר בהתחלה) -->
+                <div id="display-${id}" class="hidden mb-auto py-4 text-center">
+                    <div class="display-text text-6xl font-bold tracking-tight mb-2 text-white" id="countdown-${id}">00:00</div>
+                    
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700/50">
+                        <span class="text-xs text-slate-400">זמן יעד:</span>
+                        <span id="original-${id}" class="text-sm font-mono text-blue-300 font-bold">00:00</span>
+                    </div>
+                </div>
+
+                <!-- פס התקדמות -->
+                <div class="h-1.5 bg-slate-800 rounded-full w-full mb-6 mt-4 relative overflow-hidden">
+                    <div id="progress-${id}" class="absolute h-full right-0 top-0 bg-gradient-to-l from-blue-500 to-purple-500 w-0 transition-all duration-1000 ease-linear rounded-full"></div>
+                </div>
+
+                <!-- כפתורי שליטה -->
+                <div class="grid grid-cols-2 gap-3 mt-auto">
+                    <button onclick="startTimer(${id})" id="btn-start-${id}" class="btn-action btn-start py-3">
+                        התחל
+                    </button>
+                    
+                    <button onclick="pauseTimer(${id})" id="btn-pause-${id}" class="btn-action btn-pause hidden py-3">
+                        השהה
+                    </button>
+                    
+                    <button onclick="resumeTimer(${id})" id="btn-resume-${id}" class="btn-action btn-start hidden py-3">
+                        המשך
+                    </button>
+
+                    <button onclick="resetTimer(${id})" class="btn-action btn-reset py-3">
+                        אפס
+                    </button>
+                </div>
+            </div>
+            `;
+        }
+
+        function initApp() {
+            const container = document.getElementById('timers-grid');
+            let html = '';
+            for (let i = 1; i <= TOTAL_TIMERS; i++) {
+                html += createTimerHTML(i);
+                timersState[i] = {
+                    totalSeconds: 0,
+                    remainingSeconds: 0,
+                    intervalId: null,
+                    isRunning: false,
+                    isPaused: false
+                };
+            }
+            container.innerHTML = html;
+            
+            // Render History for all timers
+            for (let i = 1; i <= TOTAL_TIMERS; i++) {
+                renderHistoryUI(i);
+            }
+        }
+
+        // Logic for History
+        function saveHistory(id, m, s) {
+            if (!timersHistory[id]) timersHistory[id] = [];
+            
+            // Check if this specific time is already the most recent one (avoid duplicates at the top)
+            const newEntry = { m: parseInt(m), s: parseInt(s) };
+            const currentHistory = timersHistory[id];
+            
+            if (currentHistory.length > 0) {
+                const last = currentHistory[0];
+                if (last.m === newEntry.m && last.s === newEntry.s) {
+                    return; // Don't save duplicate consecutive entry
+                }
+            }
+            
+            // Add to start
+            timersHistory[id].unshift(newEntry);
+            
+            // Keep only last 3
+            if (timersHistory[id].length > 3) {
+                timersHistory[id] = timersHistory[id].slice(0, 3);
+            }
+            
+            // Save and Render
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(timersHistory));
+            renderHistoryUI(id);
+        }
+
+        function renderHistoryUI(id) {
+            const container = document.getElementById(`history-container-${id}`);
+            const history = timersHistory[id] || [];
+            
+            if (history.length === 0) {
+                container.innerHTML = '<span class="text-[10px] text-slate-600 italic">אין נתונים</span>';
+                return;
+            }
+            
+            let html = '';
+            history.forEach((entry) => {
+                const timeString = `${entry.m.toString().padStart(2, '0')}:${entry.s.toString().padStart(2, '0')}`;
+                html += `
+                    <button onclick="restoreHistory(${id}, ${entry.m}, ${entry.s})" class="btn-history">
+                        <i class="fas fa-clock text-[10px]"></i> ${timeString}
+                    </button>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function restoreHistory(id, m, s) {
+            document.getElementById(`min-${id}`).value = m;
+            document.getElementById(`sec-${id}`).value = s;
+            // Visual feedback
+            const btn = document.getElementById(`btn-start-${id}`);
+            btn.classList.add('animate-bounce');
+            setTimeout(() => btn.classList.remove('animate-bounce'), 500);
+        }
+
+        const formatTime = (s) => {
+            const m = Math.floor(s / 60);
+            const sec = s % 60;
+            return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        };
+
+        const playSound = () => {
+            const audio = document.getElementById('alarm-sound');
+            if (audio.paused) {
+                audio.currentTime = 0;
+                audio.play().catch(e => console.log("Audio play failed:", e));
+            }
+        };
+
+        const stopSound = (excludedId) => {
+            const audio = document.getElementById('alarm-sound');
+            let anyOtherRinging = false;
+            for (let i = 1; i <= TOTAL_TIMERS; i++) {
+                if (i === excludedId) continue;
+                const card = document.getElementById(`card-${i}`);
+                if (card && card.classList.contains('timer-finished')) {
+                    anyOtherRinging = true;
+                    break;
+                }
+            }
+            if (!anyOtherRinging) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        };
+
+        function setInputVal(elementId, value) {
+            const input = document.getElementById(elementId);
+            input.value = value;
+            input.focus();
+        }
+
+        function startTimer(id) {
+            const minInput = document.getElementById(`min-${id}`);
+            const secInput = document.getElementById(`sec-${id}`);
+            
+            const minutes = parseInt(minInput.value) || 0;
+            const seconds = parseInt(secInput.value) || 0;
+            const totalSec = (minutes * 60) + seconds;
+
+            if (totalSec <= 0) return alert("נא להזין זמן גדול מ-0");
+
+            // SAVE HISTORY BEFORE STARTING
+            saveHistory(id, minutes, seconds);
+
+            timersState[id].totalSeconds = totalSec;
+            timersState[id].remainingSeconds = totalSec;
+            timersState[id].isRunning = true;
+            timersState[id].isPaused = false;
+
+            document.getElementById(`setup-${id}`).classList.add('hidden');
+            document.getElementById(`display-${id}`).classList.remove('hidden');
+            
+            document.getElementById(`original-${id}`).innerText = formatTime(totalSec);
+            document.getElementById(`countdown-${id}`).innerText = formatTime(totalSec);
+            
+            document.getElementById(`btn-start-${id}`).classList.add('hidden');
+            document.getElementById(`btn-pause-${id}`).classList.remove('hidden');
+            document.getElementById(`btn-resume-${id}`).classList.add('hidden'); 
+            
+            updateStatus(id, "פעיל", "text-blue-400 bg-blue-500/10");
+            
+            runInterval(id);
+        }
+
+        function runInterval(id) {
+            if (timersState[id].intervalId) clearInterval(timersState[id].intervalId);
+
+            timersState[id].intervalId = setInterval(() => {
+                if (timersState[id].remainingSeconds > 0) {
+                    timersState[id].remainingSeconds--;
+                    updateTimerUI(id);
+                } else {
+                    finishTimer(id);
+                }
+            }, 1000);
+            
+            updateTimerUI(id); 
+        }
+
+        function updateTimerUI(id) {
+            const state = timersState[id];
+            const display = document.getElementById(`countdown-${id}`);
+            const progress = document.getElementById(`progress-${id}`);
+            
+            display.innerText = formatTime(state.remainingSeconds);
+            
+            const percent = (state.remainingSeconds / state.totalSeconds) * 100;
+            progress.style.width = `${percent}%`;
+            
+            // צבע משתנה לקראת הסוף
+            if (percent < 20) {
+                progress.classList.remove('from-blue-500', 'to-purple-500');
+                progress.classList.add('bg-red-500'); 
+                progress.style.background = '#ef4444'; // Red-500
+            } else {
+                progress.classList.remove('bg-red-500');
+                // אין צורך להחזיר את הגרדיאנט בקוד כיוון שהוא מוגדר ב-CSS הבסיסי, אלא אם כן נמחק.
+                // נשאיר את זה פשוט:
+            }
+        }
+
+        function pauseTimer(id) {
+            clearInterval(timersState[id].intervalId);
+            timersState[id].isPaused = true;
+            
+            updateStatus(id, "מושהה", "text-amber-400 bg-amber-500/10");
+            
+            document.getElementById(`btn-pause-${id}`).classList.add('hidden');
+            document.getElementById(`btn-resume-${id}`).classList.remove('hidden');
+        }
+
+        function resumeTimer(id) {
+            timersState[id].isPaused = false;
+            updateStatus(id, "פעיל", "text-blue-400 bg-blue-500/10");
+            
+            document.getElementById(`btn-resume-${id}`).classList.add('hidden');
+            document.getElementById(`btn-pause-${id}`).classList.remove('hidden');
+            
+            runInterval(id);
+        }
+
+        function resetTimer(id) {
+            clearInterval(timersState[id].intervalId);
+            
+            if (document.getElementById(`card-${id}`).classList.contains('timer-finished')) {
+                stopSound(id);
+            }
+
+            const state = timersState[id];
+            
+            state.isRunning = false;
+            state.isPaused = false;
+            state.remainingSeconds = 0;
+            state.totalSeconds = 0;
+
+            document.getElementById(`setup-${id}`).classList.remove('hidden');
+            document.getElementById(`display-${id}`).classList.add('hidden');
+            
+            document.getElementById(`min-${id}`).value = '';
+            document.getElementById(`sec-${id}`).value = '';
+
+            document.getElementById(`btn-start-${id}`).classList.remove('hidden');
+            document.getElementById(`btn-pause-${id}`).classList.add('hidden');
+            document.getElementById(`btn-resume-${id}`).classList.add('hidden');
+            
+            const progress = document.getElementById(`progress-${id}`);
+            progress.style.width = '0%';
+            progress.style.background = ''; // Reset gradient override
+            
+            const card = document.getElementById(`card-${id}`);
+            card.classList.remove('timer-finished');
+            
+            updateStatus(id, "ממתין", "");
+        }
+
+        function finishTimer(id) {
+            clearInterval(timersState[id].intervalId);
+            timersState[id].isRunning = false;
+            
+            document.getElementById(`countdown-${id}`).innerText = "00:00";
+            document.getElementById(`progress-${id}`).style.width = '0%';
+            
+            const card = document.getElementById(`card-${id}`);
+            card.classList.add('timer-finished');
+            
+            updateStatus(id, "הסתיים!", "text-red-300 bg-red-500/20");
+            
+            document.getElementById(`btn-pause-${id}`).classList.add('hidden');
+            document.getElementById(`btn-resume-${id}`).classList.add('hidden');
+            
+            playSound();
+        }
+
+        function updateStatus(id, text, classMode) {
+            const badge = document.getElementById(`status-badge-${id}`);
+            badge.innerText = text;
+            badge.className = `status-badge ${classMode}`;
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>

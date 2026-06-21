@@ -1,0 +1,620 @@
+/* ============================================================
+   Ramada Jerusalem Hotel — Kiosk Lobby Display (32")
+   Design: Dark header/footer, cream center, bold gold accents
+   ============================================================ */
+
+/* --- Brand Fonts (Preserved) --- */
+@font-face { font-family: 'Fedra Sans'; src: url('fonts/FedraSansH+L-Book.otf') format('opentype'); font-weight: 400; }
+@font-face { font-family: 'Fedra Sans'; src: url('fonts/FedraSansH+L-Medium.otf') format('opentype'); font-weight: 500; }
+@font-face { font-family: 'Fedra Sans'; src: url('fonts/FedraSansH+L-Demi.otf') format('opentype'); font-weight: 700; }
+@font-face { font-family: 'Cassia'; src: url('fonts/CassiaRegular.otf') format('opentype'); font-weight: 400; }
+@font-face { font-family: 'Cassia'; src: url('fonts/CassiaBook102422.otf') format('opentype'); font-weight: 300; }
+
+/* --- Root Variables — Ramada Jerusalem --- */
+:root {
+    --gold-primary: #c5a47e;
+    --gold-muted: #a08a6a;
+    --gold-light: #ddc9a8;
+    --gold-dark: #8c7354;
+
+    --text-main: #333333;
+    --text-secondary: #c5a47e;
+
+    --surface-dark: #1a1a2e;
+    --cream: #f5f0eb;
+    --cream-dark: #ede6dc;
+
+    --glass-bg: rgba(237, 230, 220, 0.92);
+    --glass-border: 1px solid rgba(197, 164, 126, 0.4);
+    --glass-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+    --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+    --active-gold-bg: linear-gradient(135deg, #c5a47e, #b8956b);
+    --active-text-dark: #ffffff;
+}
+
+/* --- General Layout --- */
+body { 
+    margin: 0; padding: 0; 
+    font-family: 'Assistant', 'Roboto Condensed', 'Fedra Sans', sans-serif; 
+    background: var(--cream);
+    color: var(--text-main); 
+    display: flex; flex-direction: column; 
+    align-items: center; justify-content: flex-start; 
+    height: 100vh; 
+    text-align: center; 
+    box-sizing: border-box; 
+    overflow: hidden; 
+}
+
+/* Assistant for all numbers */
+.floor-indicator, .clock-time, .elevator-id, .eta-result, .status-time, .number {
+    font-family: 'Assistant', 'Roboto Condensed', sans-serif;
+}
+
+/* --- Top Logo — on light header strip --- */
+.top-logo {
+    display: block;
+    max-height: 160px; 
+    width: auto;
+    margin: 0 auto;
+    padding: 20px 0 14px;
+    background: transparent;
+    mix-blend-mode: multiply;
+    filter: none;
+    flex-shrink: 0;
+}
+
+/* Light header behind logo with gold bottom border */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 200px;
+    background: #fff;
+    border-bottom: 3px solid var(--gold-primary);
+    z-index: -1;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* --- Bottom Logo --- */
+.bottom-logo {
+    position: fixed;
+    bottom: 10px; left: 20px;
+    max-height: 40px;
+    opacity: 0.5; z-index: 200; 
+    pointer-events: none;
+}
+
+/* --- Display Container --- */
+#displayContainer { 
+    display: flex; width: 100%; 
+    flex-direction: column; 
+    align-items: center; 
+    position: relative; flex: 1; 
+    justify-content: flex-start; 
+    overflow: hidden;
+    padding-top: 10px;
+}
+#displayContainer::-webkit-scrollbar { display: none; }
+
+/* --- Shabbat Indicator --- */
+#main-shabbat-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    color: var(--gold-primary);
+    font-size: 2.5em; 
+    font-weight: 700;
+    margin-top: 5px; margin-bottom: 15px; 
+    text-shadow: 0 2px 6px rgba(197, 164, 126, 0.2);
+    flex-shrink: 0; 
+}
+
+.shabbat-candle-svg {
+    width: 28px; height: auto;
+    filter: drop-shadow(0 2px 6px rgba(197, 164, 126, 0.4));
+}
+
+/* --- Dashboard Grid --- */
+.dashboard-container { 
+    display: flex; flex-wrap: wrap; 
+    justify-content: center; 
+    align-content: center;
+    gap: 15px; 
+    width: 100%; max-width: 1800px; 
+    flex: 1;
+    min-height: 0;
+    transition: all 0.5s ease;
+    padding: 10px;
+}
+
+/* ============================================
+   ELEVATOR PANEL — Cream card on cream bg
+   ============================================ */
+.elevator-panel { 
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: 20px; 
+    box-shadow: var(--glass-shadow);
+    padding: 20px;  
+    width: 540px; 
+    position: relative; box-sizing: border-box; 
+    display: flex; flex-direction: column; 
+    align-items: center; justify-content: center;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+    min-height: 0;
+    flex: 1 1 540px;
+    max-width: 50%;
+    overflow: hidden;
+}
+
+/* Gold accent top line */
+.elevator-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    opacity: 0.5;
+}
+
+.panel-side-floor { display: flex; justify-content: center; align-items: center; flex: 1; }
+.panel-side-info { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+
+/* --- SINGLE ELEVATOR VIEW (Desktop) --- */
+@media (min-width: 600px) {
+    .elevator-panel:only-child {
+        width: 90%; max-width: 900px;
+        flex-direction: row; 
+        justify-content: space-around;
+        align-items: center;
+        padding: 40px; gap: 20px;
+        border-radius: 28px;
+        flex: 0 0 auto;
+    }
+    .elevator-panel:only-child .panel-side-floor {
+        flex: 1;
+        border-left: 1px solid rgba(197, 164, 126, 0.3); 
+        padding-left: 40px;
+    }
+    .elevator-panel:only-child .floor-indicator {
+        font-size: 14em; line-height: 0.8;
+    }
+    .elevator-panel:only-child .panel-side-info { flex: 1; align-items: center; gap: 20px; }
+    .elevator-panel:only-child .elevator-id { margin-bottom: 10px; }
+    .elevator-panel:only-child .elev-name { font-size: 9em; }
+    .elevator-panel:only-child .elev-label { font-size: 1.3rem; }
+    .elevator-panel:only-child .direction-status { width: 120px; height: 120px; }
+    .elevator-panel:only-child .elevator-arrow-svg, 
+    .elevator-panel:only-child .stop-status-svg { width: 100px; height: 100px; }
+    .elevator-panel:only-child .eta-display { border-top: none; }
+    .elevator-panel:only-child .eta-result { font-size: 3em; }
+    .elevator-panel:only-child .floor-label { font-size: 1.2em; }
+    .elevator-panel:only-child.approaching .panel-side-floor { border-left-color: rgba(255,255,255,0.3); }
+}
+
+/* ============================================
+   APPROACHING ANIMATION
+   ============================================ */
+@keyframes pulse-gold {
+    0%   { box-shadow: 0 0 15px rgba(197, 164, 126, 0.2); transform: scale(1.01); }
+    50%  { box-shadow: 0 0 40px rgba(197, 164, 126, 0.45); transform: scale(1.03); border-color: var(--gold-primary); }
+    100% { box-shadow: 0 0 15px rgba(197, 164, 126, 0.2); transform: scale(1.01); }
+}
+
+.elevator-panel.approaching {
+    background: var(--active-gold-bg);
+    border-color: var(--gold-primary);
+    z-index: 10;
+    animation: pulse-gold 2s infinite ease-in-out;
+}
+.elevator-panel.approaching::before { opacity: 0; }
+
+/* ============================================
+   ELEVATOR NAME — Two-line: small "מעלית" + big letter
+   ============================================ */
+.elevator-id { 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    color: var(--surface-dark);
+    margin-bottom: 8px;
+    transition: color 0.3s;
+    line-height: 1;
+}
+
+/* Small "מעלית" label */
+.elev-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--gold-dark);
+    letter-spacing: 0.1em;
+    opacity: 0.85;
+}
+
+/* Big elevator letter — ⅔ of floor indicator */
+.elev-name {
+    font-size: 6em;
+    font-weight: 700;
+    color: var(--gold-primary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 0.9;
+}
+
+/* Approaching overrides */
+.elevator-panel.approaching .elev-label { color: rgba(255,255,255,0.7); }
+.elevator-panel.approaching .elev-name { color: #fff; }
+
+/* --- Floor Number --- */
+.floor-indicator { 
+    font-size: 9em; font-weight: 400; 
+    color: var(--text-main);
+    line-height: 1; margin: 0;
+    transition: color 0.3s;
+}
+.elevator-panel.approaching .floor-indicator { color: #fff; font-weight: 500; text-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+
+/* --- Direction --- */
+.direction-status { display: flex; align-items: center; justify-content: center; height: 60px; width: 60px; position: relative; margin-bottom: 5px; }
+
+.elevator-arrow-svg {
+    width: 50px; height: 50px;
+    fill: var(--gold-primary);
+    filter: drop-shadow(0 2px 4px rgba(197, 164, 126, 0.25));
+    transition: transform 0.3s ease, fill 0.3s;
+}
+.elevator-panel.approaching .elevator-arrow-svg { fill: #fff; filter: none; }
+
+.arrow-up { transform: rotate(0deg); }
+.arrow-down { transform: rotate(180deg); }
+
+.stop-status-svg { width: 55px; height: 55px; overflow: visible; }
+.stop-ring {
+    fill: none; stroke: var(--gold-primary);
+    stroke-width: 4; stroke-linecap: round;
+    transform-origin: center; transform: rotate(-90deg);
+    stroke-dasharray: 283; stroke-dashoffset: 283;
+    filter: drop-shadow(0 2px 4px rgba(197, 164, 126, 0.25));
+    animation: ringLoad 3s ease-in-out infinite alternate;
+    transition: stroke 0.3s;
+}
+.stop-bars {
+    fill: var(--gold-primary);
+    filter: drop-shadow(0 2px 4px rgba(197, 164, 126, 0.25));
+    transform-origin: center;
+    animation: barsPulse 2s ease-in-out infinite;
+    transition: fill 0.3s;
+}
+.elevator-panel.approaching .stop-ring { stroke: #fff; filter: none; }
+.elevator-panel.approaching .stop-bars { fill: #fff; filter: none; }
+
+@keyframes flowAnimation { 0% { transform: translateY(20%); opacity: 0; } 30% { opacity: 1; } 70% { opacity: 1; } 100% { transform: translateY(-40%); opacity: 0; } }
+.elevator-arrow-path { animation: flowAnimation 1.5s infinite linear; }
+@keyframes ringLoad { 0% { stroke-dashoffset: 283; } 20% { stroke-dashoffset: 283; } 100% { stroke-dashoffset: 0; } }
+@keyframes barsPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+/* --- ETA Section --- */
+.eta-display {
+    border-top: 1px solid rgba(197, 164, 126, 0.2);
+    width: 100%; padding-top: 10px; margin-top: 5px;
+    text-align: center; transition: border-color 0.3s;
+}
+.elevator-panel.approaching .eta-display { border-top-color: rgba(255,255,255,0.3); }
+
+.floor-label { font-size: 0.9em; color: var(--gold-dark); margin-bottom: 2px; transition: color 0.3s; font-weight: 500; }
+.elevator-panel.approaching .floor-label { color: rgba(255,255,255,0.8); font-weight: 600; }
+
+.eta-result { 
+    font-size: 1.5em; font-weight: 600; 
+    color: var(--text-main);
+    min-height: 1.5em;
+    transition: all 0.3s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.elevator-panel.approaching .eta-result { color: #fff; font-weight: 700; font-size: 2em; text-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+
+/* --- Mode Toggling --- */
+body.shabbat-mode-active #main-shabbat-indicator { display: flex; }
+body.shabbat-mode-active .dashboard-container { display: flex; }
+body:not(.shabbat-mode-active) .dashboard-container { display: none !important; }
+body:not(.shabbat-mode-active) #clockContainer { display: flex !important; }
+body.weekday-mode .eta-display { display: none !important; }
+body.weekday-mode .dashboard-container { display: flex !important; }
+
+/* ============================================
+   CLOCK CONTAINER (Weekday Mode)
+   ============================================ */
+#clockContainer {
+    display: none; width: 100%; max-width: 600px; 
+    margin: 0 auto;
+    flex-direction: column; justify-content: center; 
+    align-items: center; min-height: 0; flex: 1;
+}
+
+.clock-panel {
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: 28px;
+    box-shadow: var(--glass-shadow);
+    padding: 2em; width: 100%;
+    text-align: center; position: relative; box-sizing: border-box;
+}
+
+.clock-time { 
+    font-size: 5.5em; font-weight: 300; 
+    color: var(--text-main); margin: 0; line-height: 1; 
+    font-variant-numeric: tabular-nums;
+}
+.clock-date { font-size: 1.5em; font-weight: 500; color: var(--gold-primary); margin-top: 10px; letter-spacing: 1px; }
+.clock-hebrew-date { font-size: 1.2em; font-weight: 400; color: var(--gold-dark); margin-top: 5px; }
+
+/* --- Analog Clock --- */
+#analogClockWrapper { display: none; width: 100%; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 20px; }
+.analog-clock-panel {
+    width: 280px; height: 280px; position: relative; 
+    background: rgba(255, 255, 255, 0.6); 
+    border: 4px solid var(--gold-primary); border-radius: 50%; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    margin: 0 auto 20px auto;
+}
+.analog-clock-panel .hand { width: 50%; height: 4px; background: var(--gold-dark); position: absolute; top: 50%; transform-origin: 100%; transform: rotate(90deg); border-radius: 4px; border: none; }
+.analog-clock-panel .hour-hand { width: 30%; left: 20%; height: 6px; background: var(--text-main); }
+.analog-clock-panel .minute-hand { width: 40%; left: 10%; height: 4px; background: var(--gold-primary); }
+.analog-clock-panel .second-hand { display: none !important; }
+.analog-clock-panel .center-dot { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; background: var(--text-main); border: 3px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; }
+.analog-clock-panel .number { position: absolute; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: 500; color: var(--text-main); transform: translate(-50%, -50%); font-family: 'Assistant', 'Roboto Condensed', sans-serif; }
+.analog-clock-panel .number-12 { top: 8%; left: 50%; } .analog-clock-panel .number-1 { top: 13.4%; left: 71.7%; } .analog-clock-panel .number-2 { top: 28.3%; left: 86.6%; } .analog-clock-panel .number-3 { top: 50%; left: 92%; } .analog-clock-panel .number-4 { top: 71.7%; left: 86.6%; } .analog-clock-panel .number-5 { top: 86.6%; left: 71.7%; } .analog-clock-panel .number-6 { top: 92%; left: 50%; } .analog-clock-panel .number-7 { top: 86.6%; left: 28.3%; } .analog-clock-panel .number-8 { top: 71.7%; left: 13.4%; } .analog-clock-panel .number-9 { top: 50%; left: 8%; } .analog-clock-panel .number-10 { top: 28.3%; left: 13.4%; } .analog-clock-panel .number-11 { top: 13.4%; left: 28.3%; }
+.analog-clock-date-container { text-align: center; }
+.analog-clock-date { font-size: 1.5em; color: var(--gold-primary); font-weight: 500; }
+.analog-clock-hebrew-date { font-size: 1.2em; color: var(--text-main); }
+
+/* ============================================
+   FOOTER CONTROLS
+   ============================================ */
+.footer-controls {
+    position: fixed; bottom: 10px; left: 0; width: 100%; 
+    padding: 10px; display: flex; justify-content: center; align-items: center; 
+    z-index: 100; gap: 15px; box-sizing: border-box; pointer-events: none; 
+}
+.control-btn {
+    pointer-events: auto;
+    background: rgba(255,255,255,0.85); 
+    border: 1px solid rgba(197, 164, 126, 0.4);
+    color: var(--gold-primary);
+    border-radius: 50%; width: 50px; height: 50px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2em; cursor: pointer; transition: all 0.3s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.control-btn:hover { background: var(--gold-primary); color: #fff; }
+body.shabbat-mode-active .footer-controls { justify-content: flex-start; padding-right: 20px; }
+
+/* --- Modal & Notifications --- */
+.modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(26, 26, 46, 0.6); backdrop-filter: blur(15px); align-items: center; justify-content: center; }
+.modal.show { display: flex; }
+.modal-content { 
+    background: linear-gradient(135deg, #fff, #f5f0eb);
+    padding: 30px; 
+    border: 1px solid rgba(197, 164, 126, 0.3);
+    border-radius: 24px; width: 90%; max-width: 450px; 
+    text-align: center; position: relative; 
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.modal-title { color: var(--gold-primary); margin-top: 0; }
+.modal-text { color: var(--text-main); margin-bottom: 20px; }
+.modal-close { position: absolute; top: 15px; left: 20px; color: var(--gold-dark); font-size: 32px; font-weight: bold; cursor: pointer; line-height: 1; transition: color 0.2s; }
+.modal-close:hover { color: var(--gold-primary); }
+.qr-container { margin: 10px auto; padding: 15px; background: #fff; border-radius: 16px; display: inline-block; position: relative; border: 1px solid rgba(197,164,126,0.15); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+#whatsappQRContainer { width: 180px !important; height: 180px !important; }
+.qr-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: #fff; border-radius: 8px; padding: 4px; }
+
+.notification { visibility: hidden; opacity: 0; min-width: 200px; background: var(--gold-primary); color: #fff; text-align: center; border-radius: 50px; padding: 12px 25px; position: fixed; z-index: 3001; left: 50%; top: 20px; font-size: 1em; transform: translateX(-50%) translateY(-20px); transition: all 0.4s; font-weight: 600; box-shadow: 0 8px 25px rgba(197,164,126,0.3); }
+.notification.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ============================================
+   BOTTOM STATUS BAR — Dark like Ramada footer
+   ============================================ */
+.bottom-status-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface-dark);
+    border-top: 2px solid rgba(197, 164, 126, 0.3);
+    padding: 8px 15px;
+    text-align: center; font-size: 1em; 
+    color: rgba(255,255,255,0.7);
+    z-index: 50; display: none;
+}
+.bottom-status-bar .status-time { color: var(--gold-primary) !important; font-weight: 600; }
+.bottom-status-bar #statusDate { color: var(--gold-light) !important; }
+.bottom-status-bar #statusHebrewDate { color: rgba(255,255,255,0.6) !important; }
+body.shabbat-mode-active .bottom-status-bar { display: flex; }
+
+/* Error Screen */
+#errorScreen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; color: var(--gold-primary); padding: 20px; }
+
+/* ============================================
+   CRITICAL OVERRIDES — Approaching State
+   ============================================ */
+.elevator-panel.approaching, .elevator-panel:only-child.approaching { 
+    background: var(--active-gold-bg) !important; 
+    border-color: var(--gold-primary) !important; 
+}
+.elevator-panel.approaching .floor-indicator, 
+.elevator-panel:only-child.approaching .floor-indicator, 
+.elevator-panel.approaching .elevator-id, 
+.elevator-panel:only-child.approaching .elevator-id, 
+.elevator-panel.approaching .elev-name, 
+.elevator-panel:only-child.approaching .elev-name, 
+.elevator-panel.approaching .eta-result, 
+.elevator-panel:only-child.approaching .eta-result, 
+.elevator-panel.approaching .floor-label { 
+    color: #fff !important; 
+}
+.elevator-panel.approaching .elev-label, 
+.elevator-panel:only-child.approaching .elev-label { 
+    color: rgba(255,255,255,0.7) !important; 
+}
+.elevator-panel.approaching .elevator-arrow-svg, 
+.elevator-panel:only-child.approaching .elevator-arrow-svg { fill: #fff !important; }
+.elevator-panel.approaching .stop-ring, 
+.elevator-panel:only-child.approaching .stop-ring { stroke: #fff !important; }
+.elevator-panel.approaching .stop-bars, 
+.elevator-panel:only-child.approaching .stop-bars { fill: #fff !important; }
+
+/* ============================================================
+   32" LOBBY DISPLAY — Landscape (typical 1920×1080)
+   ============================================================ */
+@media (min-width: 1200px) and (orientation: landscape) {
+    body::before { height: 220px; }
+    .top-logo { max-height: 180px; padding: 22px 0 14px; }
+
+    #main-shabbat-indicator { font-size: 3em; gap: 25px; margin-bottom: 20px; }
+    .shabbat-candle-svg { width: 35px; }
+
+    .dashboard-container { 
+        gap: 20px; padding: 15px 30px;
+        align-content: center;
+    }
+    
+    .elevator-panel { 
+        padding: 25px; border-radius: 24px;
+        flex: 1 1 calc(50% - 10px);
+        max-width: calc(50% - 10px);
+    }
+    .elevator-panel::before { height: 4px; }
+
+    /* שם מעלית — שני שליש מגודל הקומה */
+    .elev-name { font-size: 6.5em; }
+    .elev-label { font-size: 1.1rem; }
+    .floor-indicator { font-size: 10em; }
+    .direction-status { height: 70px; width: 70px; }
+    .elevator-arrow-svg { width: 60px; height: 60px; }
+    .stop-status-svg { width: 65px; height: 65px; }
+    .floor-label { font-size: 1.1em; }
+    .eta-result { font-size: 1.8em; }
+    .elevator-panel.approaching .eta-result { font-size: 2.5em; }
+}
+
+/* ============================================================
+   LANDSCAPE SHORT SCREENS (Raspberry Pi / small displays)
+   ============================================================ */
+@media (orientation: landscape) and (max-height: 640px) {
+    body { padding: 0; }
+    body::before { height: 10vh; }
+    .top-logo { max-height: 8vh; margin: 0 auto; padding: 1vh 0; }
+    
+    #displayContainer { height: 100vh; padding-bottom: 50px; padding-top: 0; }
+    #main-shabbat-indicator { font-size: 4vh; margin: 0 0 1vh 0; gap: 2vh; }
+    .shabbat-candle-svg { width: 5vh; }
+    
+    .dashboard-container { padding: 1vh; gap: 1.5vh; align-content: center; }
+    
+    /* Single elevator — side-by-side layout */
+    .elevator-panel:only-child { 
+        width: 96vw; height: auto; max-height: 72vh; min-height: 0; 
+        padding: 2vmin; margin: 0 auto; 
+        flex-direction: row;
+        justify-content: center; align-items: center; gap: 0; 
+    }
+    .elevator-panel:only-child .panel-side-info { flex: 0 0 45%; justify-content: center; gap: 1vh; }
+    .elevator-panel:only-child .elevator-id { margin: 0; line-height: 1; }
+    .elevator-panel:only-child .elev-name { font-size: 20vh; font-weight: 700; }
+    .elevator-panel:only-child .elev-label { font-size: 2vh; }
+    .elevator-panel:only-child .direction-status { width: 14vh; height: 14vh; margin: 0; }
+    .elevator-panel:only-child .elevator-arrow-svg, 
+    .elevator-panel:only-child .stop-status-svg { width: 12vh; height: 12vh; }
+    .elevator-panel:only-child .eta-display { margin: 0; padding: 0; border: none; }
+    .elevator-panel:only-child .floor-label { font-size: 2.5vh; } 
+    .elevator-panel:only-child .eta-result { font-size: 6vh; line-height: 1; margin-top: 0; }
+    .elevator-panel:only-child .panel-side-floor { 
+        flex: 0 0 55%; padding: 0; 
+        border-left: 1px solid rgba(197, 164, 126, 0.3); 
+        display: flex; justify-content: center; align-items: center; 
+    }
+    .elevator-panel:only-child .floor-indicator { font-size: 32vh; line-height: 0.8; letter-spacing: -1vh; }
+    
+    /* Multiple elevators — row */
+    .dashboard-container:not(:has(.elevator-panel:only-child)) { 
+        display: flex; flex-wrap: nowrap; width: 100%; 
+        gap: 2vmin; justify-content: center; align-items: center; 
+    }
+    .elevator-panel:not(:only-child) { 
+        flex: 0 1 30vw; height: 60vh; min-height: 0; padding: 2vmin; 
+    }
+    .elevator-panel:not(:only-child) .elev-name { font-size: 13vmin; font-weight: 700; }
+    .elevator-panel:not(:only-child) .elev-label { font-size: 2vmin; }
+    .elevator-panel:not(:only-child) .floor-indicator { font-size: 20vmin; }
+    
+    .footer-controls { bottom: 2vmin; }
+    .bottom-logo { max-height: 8vmin; bottom: 2vmin; left: 2vmin; }
+}
+
+/* ============================================================
+   PORTRAIT MOBILE
+   ============================================================ */
+@media (max-width: 480px) and (orientation: portrait) {
+    body::before { height: 120px; }
+    .top-logo { max-height: 80px; padding: 10px 0 8px; }
+    
+    #main-shabbat-indicator { font-size: 1.8em; margin-bottom: 15px; }
+    .dashboard-container { gap: 10px; padding: 8px; }
+    
+    .elevator-panel { 
+        width: 46%; min-height: 220px; padding: 15px 10px;
+        flex: 1 1 46%;
+        max-width: 48%;
+    }
+    .elev-name { font-size: 2.6em; }
+    .elev-label { font-size: 0.7rem; }
+    .floor-indicator { font-size: 4em; }
+    .direction-status { height: 40px; width: 40px; }
+    .elevator-arrow-svg { width: 35px; height: 35px; }
+    .stop-status-svg { width: 38px; height: 38px; }
+    .eta-result { font-size: 1em; }
+    
+    .elevator-panel:only-child { 
+        flex-direction: column; width: 300px; gap: 0; height: auto;
+        flex: 0 0 auto; max-width: 90%;
+    }
+    .elevator-panel:only-child .panel-side-floor { border-left: none; padding-left: 0; }
+    .elevator-panel:only-child .floor-indicator { font-size: 5.5em; }
+    .elevator-panel:only-child .elev-name { font-size: 3.5em; }
+}
+
+/* ============================================================
+   PORTRAIT TABLET / 32" Portrait  (768 × 1366 when rotated)
+   390px overhead = header(180) + shabbat(55) + top(10) + gap(12) + bottom(130)
+   ============================================================ */
+@media (min-width: 481px) and (orientation: portrait) {
+    body::before { height: 180px; }
+    .top-logo { max-height: 140px; }
+
+    .dashboard-container {
+        gap: 12px;
+        padding: 10px 12px;
+        align-content: flex-start;
+    }
+    .elevator-panel {
+        flex: 0 0 calc(50% - 6px);
+        max-width: calc(50% - 6px);
+        /* Fixed height so 2 rows always fit — content clips instead of overflows */
+        height: calc((100vh - 410px) / 2);
+        min-height: 100px;
+        overflow: hidden;
+        padding: 14px;
+    }
+
+    /* Scale every text element to viewport height */
+    .floor-indicator  { font-size: 9vh; }
+    .elev-name        { font-size: 6vh; }
+    .elev-label       { font-size: 1.2vh; }
+    .direction-status { height: 5vh; width: 5vh; }
+    .elevator-arrow-svg { width: 4vh;   height: 4vh;   }
+    .stop-status-svg    { width: 4.5vh; height: 4.5vh; }
+    .floor-label  { font-size: 1.3vh; }
+    .eta-result   { font-size: 2vh; }
+    .elevator-panel.approaching .eta-result { font-size: 2.5vh; }
+}

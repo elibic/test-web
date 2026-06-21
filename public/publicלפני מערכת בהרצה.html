@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעלית שבת - תצוגת קיוסק ציבורית</title>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;700&family=Roboto+Condensed:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="stylesheet" href="kiosk-style.css">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    
+    <!-- Firebase SDK (Compat v8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Configuration & Logic -->
+    <script src="/firebase-config.js"></script>
+
+    <!-- Internal Overrides for Public Kiosk Specifics -->
+    <style>
+        /* Hide old floating bottom-logo — it's now inside the bar */
+        .bottom-logo { display: none !important; }
+
+        /* === Unified Bottom Bar === */
+        .bottom-status-bar {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 40px;
+            font-size: 1.3em;
+            direction: rtl;
+        }
+
+        /* QR side */
+        .bar-qr-side {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            direction: rtl;
+        }
+        .bar-qr-code {
+            flex-shrink: 0;
+            background: #fff;
+            border-radius: 12px;
+            padding: 7px;
+            line-height: 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(197, 164, 126, 0.3);
+            /* Protrude above the bar */
+            margin-top: -65px;
+            position: relative;
+            z-index: 55;
+        }
+        .bar-qr-code canvas {
+            display: block;
+            width: 150px !important;
+            height: 150px !important;
+        }
+        .bar-qr-text {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .bar-qr-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--gold-primary);
+        }
+        .bar-qr-sub {
+            font-size: 0.92em;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 400;
+        }
+
+        /* Center logo — exactly centered */
+        .bar-logo-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin: 0 auto;
+        }
+        .bar-powered-logo {
+            max-height: 50px;
+            width: auto;
+            opacity: 0.85;
+            filter: brightness(1.2);
+        }
+
+        /* Time side */
+        .bar-time-side {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            direction: rtl;
+        }
+        .bar-time-side .status-time {
+            color: var(--gold-primary) !important;
+            font-weight: 700;
+            font-size: 1.5em;
+        }
+        .bar-time-side #statusDate {
+            color: var(--gold-light) !important;
+            font-size: 1.05em;
+        }
+        .bar-time-side #statusHebrewDate {
+            color: rgba(255,255,255,0.65) !important;
+            font-size: 1.05em;
+        }
+        .bar-separator {
+            color: rgba(255,255,255,0.25);
+            font-weight: 300;
+            font-size: 1.1em;
+        }
+
+        @media (orientation: portrait) {
+            .dashboard-container {
+                margin-top: 0;
+                padding-bottom: 130px;
+            }
+            .elevator-panel:only-child {
+                margin-top: 10vh;
+            }
+            /* Removed margin-top: 2vh on non-solo panels — was creating excess gap */
+        }
+
+        /* 32" Landscape */
+        @media (min-width: 1200px) and (orientation: landscape) {
+            .bottom-status-bar { padding: 22px 60px; font-size: 1.5em; }
+            .bar-qr-code canvas { width: 180px !important; height: 180px !important; }
+            .bar-qr-code { padding: 8px; border-radius: 14px; margin-top: -80px; }
+            .bar-qr-title { font-size: 1.4em; }
+            .bar-qr-sub { font-size: 1em; }
+            .bar-time-side .status-time { font-size: 1.6em; }
+            .bar-time-side #statusDate { font-size: 1.1em; }
+            .bar-time-side #statusHebrewDate { font-size: 1.1em; }
+            .bar-qr-side { gap: 28px; }
+            .bar-powered-logo { max-height: 55px; }
+            .bar-time-side { gap: 15px; }
+        }
+        
+        @media (orientation: landscape) and (max-height: 640px) {
+            #displayContainer {
+                padding-bottom: 100px;
+            }
+            .bottom-status-bar { font-size: 1em; padding: 10px 18px; }
+            .bar-qr-code canvas { width: 75px !important; height: 75px !important; }
+            .bar-qr-code { padding: 4px; border-radius: 8px; margin-top: -35px; }
+            .bar-qr-side { gap: 12px; }
+            .bar-qr-title { font-size: 1em; }
+            .bar-qr-sub { font-size: 0.75em; }
+            .bar-powered-logo { max-height: 30px; }
+        }
+
+        /* Portrait medium — 32" TV rotated (768px wide) */
+        @media (min-width: 481px) and (orientation: portrait) {
+            .bottom-status-bar {
+                padding: 10px 16px;
+                font-size: 1em;
+            }
+            .bar-qr-code canvas { width: 100px !important; height: 100px !important; }
+            .bar-qr-code { padding: 5px; border-radius: 10px; margin-top: -42px; }
+            .bar-qr-title { font-size: 1em; }
+            .bar-qr-sub { font-size: 0.78em; }
+            .bar-time-side .status-time { font-size: 1.15em; }
+            .bar-time-side #statusDate { font-size: 0.88em; }
+            .bar-time-side #statusHebrewDate { font-size: 0.88em; }
+            .bar-qr-side { gap: 12px; }
+            .bar-time-side { gap: 8px; }
+            .bar-powered-logo { max-height: 34px; }
+            .bar-separator { font-size: 0.9em; }
+        }
+
+        @media (max-width: 480px) and (orientation: portrait) {
+            .bottom-status-bar {
+                flex-direction: column;
+                gap: 8px;
+                padding: 14px 15px;
+                font-size: 1em;
+            }
+            .bar-qr-side { justify-content: center; }
+            .bar-qr-code { margin-top: -28px; }
+            .bar-time-side { justify-content: center; }
+            .bar-logo-center { order: -1; }
+            .bar-powered-logo { max-height: 32px; }
+        }
+    </style>
+</head>
+
+<body class="weekday-mode">
+    
+    <div id="errorScreen">
+        <i class="fas fa-exclamation-triangle" style="font-size: 4em; margin-bottom: 20px; color: var(--gold-primary);"></i>
+        <h2 style="color: var(--text-main);">שגיאת קונפיגורציה</h2>
+        <p style="color: var(--text-main);">לא הוגדרה קומה עבור מסך זה.</p>
+        <p style="direction: ltr; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 4px; color: var(--text-main); border: 1px solid var(--gold-primary);">
+            Add <b>?floor=X</b> to the URL.<br>Example: <i>kiosk.html?floor=5</i>
+        </p>
+    </div>
+
+    <!-- Top Logo -->
+    <img id="mainLogo" class="top-logo" src="" alt="Main Logo">
+
+    <div id="displayContainer">
+        
+        <div id="main-shabbat-indicator">
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M35 190 C 40 170, 60 170, 65 190" />
+                <rect x="42" y="90" width="16" height="100" rx="2" />
+                <path d="M50 90 V 80" />
+                <path d="M50 75 C 45 60, 55 40, 50 20 C 45 40, 55 60, 50 75 Z" />
+            </svg>
+            
+            <span>שבת שלום</span>
+            
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M35 190 C 40 170, 60 170, 65 190" />
+                <rect x="42" y="90" width="16" height="100" rx="2" />
+                <path d="M50 90 V 80" />
+                <path d="M50 75 C 45 60, 55 40, 50 20 C 45 40, 55 60, 50 75 Z" />
+            </svg>
+        </div>
+        
+        <div class="dashboard-container"></div>
+        
+    </div>
+    
+    <div class="notification" id="notificationPopup"></div>
+    
+    <div class="bottom-status-bar" id="bottomStatusBar">
+        <!-- QR + promo text -->
+        <div class="bar-qr-side">
+            <div class="bar-qr-code" id="qrPromoCode"></div>
+            <div class="bar-qr-text">
+                <span class="bar-qr-title">מעלית שבת אצלכם בסלון</span>
+                <span class="bar-qr-sub">סרקו וצאו בדיוק בזמן - בלי לחכות במסדרון</span>
+            </div>
+        </div>
+        <!-- Center: Powered by logo -->
+        <div class="bar-logo-center">
+            <img id="poweredByLogo" src="" alt="Powered By Logo" class="bar-powered-logo">
+        </div>
+        <!-- Date & time -->
+        <div class="bar-time-side">
+            <span class="status-time" id="statusTime" style="font-weight:500;">00:00:00</span>
+            <span class="bar-separator">|</span>
+            <span id="statusDate"></span>
+            <span class="bar-separator">|</span>
+            <span id="statusHebrewDate"></span>
+        </div>
+    </div>
+
+    <!-- Main Logic -->
+    <script src="kiosk-logic.js"></script>
+
+    <!-- Split elevator names + Generate QR -->
+    <script>
+    (function() {
+        // === Elevator name splitter ===
+        function splitElevatorId(el) {
+            var text = el.textContent.trim();
+            if (el.querySelector('.elev-label')) return;
+            var match = text.match(/^(מעלית)\s*(.+)$/);
+            if (match) {
+                el.innerHTML = '<span class="elev-label">' + match[1] + '</span><span class="elev-name">' + match[2] + '</span>';
+            }
+        }
+        function processAll() {
+            document.querySelectorAll('.elevator-id').forEach(splitElevatorId);
+        }
+        var obs = new MutationObserver(function(mutations) {
+            mutations.forEach(function(m) {
+                m.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                        if (node.classList && node.classList.contains('elevator-id')) splitElevatorId(node);
+                        node.querySelectorAll && node.querySelectorAll('.elevator-id').forEach(splitElevatorId);
+                    }
+                });
+            });
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+        var tries = 0;
+        var iv = setInterval(function() { processAll(); if (++tries > 20) clearInterval(iv); }, 500);
+
+        // === QR Code generation ===
+        var qrContainer = document.getElementById('qrPromoCode');
+        if (qrContainer && typeof QRCode !== 'undefined') {
+            QRCode.toCanvas(document.createElement('canvas'), 'https://ramada.econtrol.co.il/', {
+                width: 256,
+                margin: 1,
+                color: { dark: '#1a1a2e', light: '#ffffff' }
+            }, function(err, canvas) {
+                if (!err && canvas) {
+                    canvas.style.borderRadius = '10px';
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    qrContainer.appendChild(canvas);
+                }
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

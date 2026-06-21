@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול הגדרות מעלית שבת</title>
+    <link href="https://fonts.googleapis.com/css?family=Heebo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Heebo', Arial, sans-serif; background: linear-gradient(120deg, #141E30 0%, #243B55 100%); color: #ecd08f; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 20px; box-sizing: border-box; }
+        h1, h2 { color: #ecd08f; margin-bottom: 20px; }
+        .container { background: rgba(20, 30, 48, 0.97); border-radius: 28px; box-shadow: 0 6px 48px #0007, 0 1.5px 3px #ecd08f40 inset; padding: 30px; width: 90%; max-width: 800px; border: 2px solid #ecd08f; }
+        .form-group { margin-bottom: 20px; text-align: right; }
+        label { display: block; color: #ecd08f; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ecd08f; border-radius: 8px; background-color: rgba(255, 255, 255, 0.1); color: #ecd08f; box-sizing: border-box; font-family: inherit; font-size: 0.95em; }
+        button { background: linear-gradient(90deg, #262c43 60%, #14192c 100%); color: #ecd08f; border: 2px solid #ecd08f; border-radius: 18px; font-size: 1.1em; font-family: inherit; padding: 10px 25px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 25px #ecd08f18; transition: all 0.2s; width: 100%; margin-top: 10px;}
+        button:hover { background: linear-gradient(90deg, #1c2130 80%, #fcdf83 120%); color: #ffe9a1; }
+        .social-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #333; border-color: #fff; }
+        .social-btn:hover { background: #f0f0f0; color: #000; }
+        .back-btn { background: transparent; border-color: #ecd08f80; }
+        .auth-view { display: none; flex-direction: column; gap: 15px; }
+        .auth-view.active { display: flex; }
+        .forgot-password { color: #ecd08f; text-decoration: underline; cursor: pointer; font-size: 0.9em; text-align: center; margin-top: 15px; display: block; }
+        .elevator-config { border: 1px solid #ecd08f; padding: 20px; margin-bottom: 25px; border-radius: 15px; text-align: right; background: rgba(255, 255, 255, 0.03); }
+        .elevator-config h3 { border-bottom: 1px solid #ecd08f50; padding-bottom: 10px; margin-top: 0; }
+        .notification { visibility: hidden; opacity: 0; min-width: 200px; background: #ecd08f; color: #243B55; text-align: center; border-radius: 12px; padding: 15px 25px; position: fixed; z-index: 1001; left: 50%; bottom: 50px; font-size: 1em; transform: translateX(-50%); box-shadow: 0 2px 18px #0007; transition: opacity 0.3s, visibility 0.3s; font-weight: bold; }
+        .notification.show { visibility: visible; opacity: 1; }
+        .logout-btn { background-color: #d32f2f; border-color: #d32f2f; margin-top: 10px; width: auto; }
+        
+        .row-group { display: flex; gap: 15px; flex-wrap: wrap; }
+        .row-group .form-group { flex: 1; min-width: 140px; }
+        .section-title { color: #ffe37c; font-size: 1em; margin-top: 15px; margin-bottom: 10px; border-bottom: 1px dashed #ecd08f50; display: inline-block;}
+
+        /* מתגים */
+        .toggle-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #ecd08f; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .toggle-label { font-size: 0.9em; font-weight: bold; color: #ecd08f; }
+        
+        .info-text { font-size: 0.8em; color: #aaa; margin-top: 4px; display: block; line-height: 1.3; }
+    </style>
+</head>
+<body>
+
+    <div id="authContainer" class="container">
+        <h2>כניסה לניהול הגדרות</h2>
+        <div id="auth-main" class="auth-view active">
+            <button id="googleSignInBtn" class="social-btn">התחבר עם Google</button>
+            <button id="phoneSignInBtn">התחבר עם מספר טלפון</button>
+            <button id="emailSignInBtn">התחבר עם אימייל וסיסמה</button>
+        </div>
+        <div id="auth-email" class="auth-view">
+            <form id="loginForm">
+                <input type="email" id="loginEmail" placeholder="אימייל" required>
+                <input type="password" id="loginPassword" placeholder="סיסמה" required>
+                <button type="submit">התחבר</button>
+                <a class="forgot-password" id="forgotPasswordLink">שכחתי סיסמה</a>
+            </form>
+            <button class="back-btn" data-target="auth-main">חזור</button>
+        </div>
+        <div id="auth-phone-step1" class="auth-view">
+            <input type="tel" id="phoneNumber" placeholder="הכנס מספר טלפון (לדוגמה: 0501234567)">
+            <button id="sendCodeBtn">שלח קוד אימות</button>
+            <div id="recaptcha-container"></div>
+            <button class="back-btn" data-target="auth-main">חזור</button>
+        </div>
+        <div id="auth-phone-step2" class="auth-view">
+             <input type="number" id="verificationCode" placeholder="הכנס קוד בן 6 ספרות">
+             <button id="verifyCodeBtn">אמת קוד והתחבר</button>
+             <button class="back-btn" data-target="auth-phone-step1">חזור</button>
+        </div>
+    </div>
+
+    <div id="settingsContainer" class="container" style="display: none;">
+        <h1>ניהול הגדרות מעלית שבת</h1>
+        <h2 id="welcomeUser"></h2>
+        <p style="font-size:0.9em; margin-bottom:20px; color:#bbb;">הגדר את הפרמטרים עבור כל מעלית בנפרד.</p>
+        
+        <form id="settingsForm">
+            <div id="elevatorConfigsContainer"></div>
+            <button type="submit">שמור הגדרות</button>
+        </form>
+        <button id="logoutBtn" class="logout-btn">התנתק</button>
+    </div>
+
+    <div class="notification" id="notificationPopup"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyABExU11JS2KsumwG5z6-X_Tnn_OJZkusg",
+            authDomain: "nitzaelev.firebaseapp.com",
+            databaseURL: "https://nitzaelev-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "nitzaelev",
+            storageBucket: "nitzaelev.firebasestorage.app",
+            messagingSenderId: "922911314024",
+            appId: "1:922911314024:web:560493db03aa477cd7ebdd",
+            measurementId: "G-6BQ4RTV03F"
+        };        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        const ui = {
+            authContainer: document.getElementById('authContainer'),
+            settingsContainer: document.getElementById('settingsContainer'),
+            notificationPopup: document.getElementById('notificationPopup'),
+            welcomeUser: document.getElementById('welcomeUser'),
+            authViews: document.querySelectorAll('.auth-view'),
+            googleSignInBtn: document.getElementById('googleSignInBtn'),
+            phoneSignInBtn: document.getElementById('phoneSignInBtn'),
+            emailSignInBtn: document.getElementById('emailSignInBtn'),
+            sendCodeBtn: document.getElementById('sendCodeBtn'),
+            verifyCodeBtn: document.getElementById('verifyCodeBtn'),
+            logoutBtn: document.getElementById('logoutBtn'),
+            forgotPasswordLink: document.getElementById('forgotPasswordLink'),
+            loginForm: document.getElementById('loginForm'),
+            phoneNumberInput: document.getElementById('phoneNumber'),
+            verificationCodeInput: document.getElementById('verificationCode'),
+            settingsForm: document.getElementById('settingsForm'),
+            elevatorConfigsContainer: document.getElementById('elevatorConfigsContainer')
+        };
+
+        function showNotification(message, isError = false) {
+            ui.notificationPopup.textContent = message;
+            ui.notificationPopup.style.backgroundColor = isError ? '#d32f2f' : '#ecd08f';
+            ui.notificationPopup.style.color = isError ? '#fff' : '#243B55';
+            ui.notificationPopup.classList.add('show');
+            setTimeout(() => ui.notificationPopup.classList.remove('show'), 4000);
+        }
+        function showAuthView(viewId) {
+            ui.authViews.forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+        function normalizeIsraeliPhoneNumber(phone) {
+            let cleaned = ('' + phone).replace(/\D/g, '');
+            if (cleaned.length === 10 && cleaned.startsWith('0')) return '+972' + cleaned.substring(1);
+            if (cleaned.length === 12 && cleaned.startsWith('972')) return '+' + cleaned;
+            return null;
+        }
+
+        ui.googleSignInBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => showNotification(error.message, true));
+        });
+        ui.phoneSignInBtn.addEventListener('click', () => showAuthView('auth-phone-step1'));
+        ui.emailSignInBtn.addEventListener('click', () => showAuthView('auth-email'));
+        document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', (e) => showAuthView(e.target.dataset.target)));
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const userEmail = user.email;
+                const userPhone = user.phoneNumber;
+                let checkRef;
+                if(userEmail) checkRef = database.ref('allowed_users').child(userEmail.replace(/\./g, '_'));
+                else if(userPhone) checkRef = database.ref('allowed_phone_numbers').child(userPhone);
+                
+                if (checkRef) {
+                    checkRef.once('value').then(snapshot => {
+                        if (snapshot.exists() && snapshot.val() === true) {
+                            ui.authContainer.style.display = 'none';
+                            ui.settingsContainer.style.display = 'block';
+                            ui.welcomeUser.textContent = `ברוך הבא, ${user.displayName || user.email || user.phoneNumber}`;
+                            loadSettings();
+                        } else {
+                            showNotification('אין לך הרשאת גישה.', true);
+                            auth.signOut();
+                        }
+                    });
+                } else {
+                    showNotification('אין לך הרשאת גישה.', true);
+                    auth.signOut();
+                }
+            } else {
+                ui.authContainer.style.display = 'block';
+                ui.settingsContainer.style.display = 'none';
+                showAuthView('auth-main');
+            }
+        });
+
+        ui.loginForm.addEventListener('submit', e => {
+            e.preventDefault();
+            auth.signInWithEmailAndPassword(e.target.loginEmail.value, e.target.loginPassword.value).catch(error => showNotification(error.message, true));
+        });
+
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {'size': 'invisible'});
+        ui.sendCodeBtn.addEventListener('click', () => {
+            const phone = normalizeIsraeliPhoneNumber(ui.phoneNumberInput.value);
+            if (!phone) return showNotification('מספר לא תקין', true);
+            auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
+                .then(res => { window.confirmationResult = res; showNotification('קוד נשלח לנייד.'); showAuthView('auth-phone-step2'); })
+                .catch(err => showNotification(err.message, true));
+        });
+        ui.verifyCodeBtn.addEventListener('click', () => {
+            window.confirmationResult.confirm(ui.verificationCodeInput.value).catch(err => showNotification(err.message, true));
+        });
+        ui.logoutBtn.addEventListener('click', () => auth.signOut());
+
+        let globalSettingsBackup = {};
+
+        function loadSettings() {
+            database.ref('settings').once('value').then(snapshot => {
+                globalSettingsBackup = snapshot.val() || {};
+                return database.ref('elevator_configs').once('value');
+            }).then(snapshot => {
+                const configs = snapshot.val() || {};
+                ui.elevatorConfigsContainer.innerHTML = '';
+                Object.keys(configs).sort().forEach(id => {
+                    const div = document.createElement('div');
+                    div.className = 'elevator-config';
+                    
+                    const config = configs[id];
+                    // --- לוגיקת מיגרציה חכמה ---
+                    const oldStops = (config.STOPPING_FLOORS || []).join(', ');
+                    const oldMode = config.SHABBAT_MODE || 'full';
+                    
+                    // ברירת מחדל: אם יש נתונים בפורמט החדש, השתמש בהם.
+                    // אם אין, השתמש בלוגיקה הישנה כדי לאכלס אותם
+                    let stopsUpVal = config.STOPPING_FLOORS_UP ? config.STOPPING_FLOORS_UP.join(', ') : '';
+                    let stopsDownVal = config.STOPPING_FLOORS_DOWN ? config.STOPPING_FLOORS_DOWN.join(', ') : '';
+                    
+                    if (!config.STOPPING_FLOORS_UP && !config.STOPPING_FLOORS_DOWN && oldStops) {
+                        if (oldMode === 'full') {
+                            stopsUpVal = oldStops;
+                            stopsDownVal = oldStops;
+                        } else if (oldMode === 'express_up') {
+                            stopsUpVal = ''; // ריק = אקספרס
+                            stopsDownVal = oldStops;
+                        } else if (oldMode === 'stops_up') {
+                            stopsUpVal = oldStops;
+                            stopsDownVal = ''; // ריק = אקספרס
+                        }
+                    }
+
+                    const visible = (config.VISIBLE_FLOORS || config.STOPPING_FLOORS || []).join(', ');
+                    const topFloor = config.TOP_FLOOR !== undefined ? config.TOP_FLOOR : (globalSettingsBackup.TOP_FLOOR || '');
+                    const bottomFloor = config.BOTTOM_FLOOR !== undefined ? config.BOTTOM_FLOOR : (globalSettingsBackup.BOTTOM_FLOOR || '');
+                    const timePerFloor = config.TIME_PER_FLOOR !== undefined ? config.TIME_PER_FLOOR : (globalSettingsBackup.TIME_PER_FLOOR || '');
+                    const expressUp = config.EXPRESS_TIME_UP !== undefined ? config.EXPRESS_TIME_UP : (globalSettingsBackup.EXPRESS_TIME_UP || '');
+                    const expressDown = config.EXPRESS_TIME_DOWN !== undefined ? config.EXPRESS_TIME_DOWN : (globalSettingsBackup.EXPRESS_TIME_DOWN || '');
+                    
+                    const zeroWaitActive = config.ZERO_FLOOR_WAIT_ACTIVE || false;
+                    const zeroWaitSeconds = config.ZERO_FLOOR_WAIT_SECONDS || '';
+                    const breakActive = config.SHABBAT_BREAK_ACTIVE || false;
+                    const breakStart = config.SHABBAT_BREAK_START || '';
+                    const breakEnd = config.SHABBAT_BREAK_END || '';
+
+                    div.innerHTML = `
+                        <h3>מעלית ${id}</h3>
+                        
+                        <div class="section-title">פיזיות וזמנים</div>
+                        <div class="row-group">
+                             <div class="form-group"><label>קומה עליונה:</label><input type="text" id="top-${id}" value="${topFloor}"></div>
+                             <div class="form-group"><label>קומה תחתונה:</label><input type="text" id="bottom-${id}" value="${bottomFloor}"></div>
+                             <div class="form-group">
+                                <label>זמן בין קומות (שניות):</label>
+                                <input type="number" id="time-${id}" value="${timePerFloor}" step="0.1">
+                                <small class="info-text">רלוונטי כאשר יש עצירות</small>
+                             </div>
+                        </div>
+
+                        <div class="section-title">קומות עצירה (לוגיקה אוטומטית)</div>
+                        <p style="font-size:0.8em; color:#bbb; margin-bottom:15px; margin-top:0;">אם השדה ריק, המעלית תיסע רצוף (אקספרס). אם יש מספרים, היא תעצור בהם.</p>
+                        
+                        <div class="form-group">
+                            <label style="color: #ecd08f;">קומות עצירה - בעלייה:</label>
+                            <input type="text" id="stopsUp-${id}" data-elevator-id="${id}" value="${stopsUpVal}" placeholder="לדוגמה: 0, 1, 2 (השאר ריק לאקספרס)">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label style="color: #ecd08f;">קומות עצירה - בירידה:</label>
+                            <input type="text" id="stopsDown-${id}" value="${stopsDownVal}" placeholder="לדוגמה: 3, 2, 1 (השאר ריק לאקספרס)">
+                        </div>
+
+                        <div class="section-title">זמני נסיעה רציפה (כשיש 0 עצירות)</div>
+                        <div class="row-group">
+                            <div class="form-group"><label>זמן אקספרס בעלייה:</label><input type="number" id="expressUp-${id}" value="${expressUp}"></div>
+                            <div class="form-group"><label>זמן אקספרס בירידה:</label><input type="number" id="expressDown-${id}" value="${expressDown}"></div>
+                        </div>
+
+                        <div class="section-title">המתנה בלובי (0)</div>
+                        <div class="toggle-container">
+                            <label class="switch"><input type="checkbox" id="zeroWaitActive-${id}" ${zeroWaitActive ? 'checked' : ''}><span class="slider"></span></label>
+                            <span class="toggle-label">הפעל המתנה</span>
+                        </div>
+                        <div class="form-group"><label>זמן המתנה (שניות):</label><input type="number" id="zeroWaitSeconds-${id}" value="${zeroWaitSeconds}"></div>
+
+                        <div class="section-title">הפסקת שבת</div>
+                        <div class="toggle-container">
+                            <label class="switch"><input type="checkbox" id="breakActive-${id}" ${breakActive ? 'checked' : ''}><span class="slider"></span></label>
+                            <span class="toggle-label">הפעל הפסקה</span>
+                        </div>
+                        <div class="row-group">
+                            <div class="form-group"><label>התחלה (HH:MM):</label><input type="time" id="breakStart-${id}" value="${breakStart}"></div>
+                            <div class="form-group"><label>סיום (HH:MM):</label><input type="time" id="breakEnd-${id}" value="${breakEnd}"></div>
+                        </div>
+
+                        <div class="section-title">קומות תצוגה</div>
+                        <div class="form-group"><label style="color: #4caf50;">אילו קומות להציג במסך:</label><input type="text" id="visible-${id}" value="${visible}"></div>
+                    `;
+                    ui.elevatorConfigsContainer.appendChild(div);
+                });
+            });
+        }
+
+        ui.settingsForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const elevatorConfigsData = {};
+            const processedIds = new Set();
+            document.querySelectorAll('[data-elevator-id]').forEach(input => processedIds.add(input.dataset.elevatorId));
+
+            processedIds.forEach(id => {
+                const stopInputUp = document.getElementById(`stopsUp-${id}`);
+                const stopInputDown = document.getElementById(`stopsDown-${id}`);
+                const visibleInput = document.getElementById(`visible-${id}`);
+                
+                const upList = stopInputUp.value.split(',').map(s => s.trim()).filter(Boolean);
+                const downList = stopInputDown.value.split(',').map(s => s.trim()).filter(Boolean);
+
+                const combinedStops = [...new Set([...upList, ...downList])];
+
+                elevatorConfigsData[id] = { 
+                    STOPPING_FLOORS: combinedStops,
+                    STOPPING_FLOORS_UP: upList,
+                    STOPPING_FLOORS_DOWN: downList,
+                    VISIBLE_FLOORS: visibleInput.value.split(',').map(s => s.trim()).filter(Boolean),
+                    TOP_FLOOR: document.getElementById(`top-${id}`).value,
+                    BOTTOM_FLOOR: document.getElementById(`bottom-${id}`).value,
+                    TIME_PER_FLOOR: parseFloat(document.getElementById(`time-${id}`).value) || 0,
+                    SHABBAT_MODE: 'automatic_split', // מצב קבוע
+                    EXPRESS_TIME_UP: parseFloat(document.getElementById(`expressUp-${id}`).value) || 0,
+                    EXPRESS_TIME_DOWN: parseFloat(document.getElementById(`expressDown-${id}`).value) || 0,
+                    ZERO_FLOOR_WAIT_ACTIVE: document.getElementById(`zeroWaitActive-${id}`).checked,
+                    ZERO_FLOOR_WAIT_SECONDS: parseFloat(document.getElementById(`zeroWaitSeconds-${id}`).value) || 0,
+                    SHABBAT_BREAK_ACTIVE: document.getElementById(`breakActive-${id}`).checked,
+                    SHABBAT_BREAK_START: document.getElementById(`breakStart-${id}`).value,
+                    SHABBAT_BREAK_END: document.getElementById(`breakEnd-${id}`).value
+                };
+            });
+
+            database.ref('elevator_configs').update(elevatorConfigsData)
+            .then(() => showNotification('ההגדרות נשמרו בהצלחה!'))
+            .catch(error => showNotification('שגיאה בשמירה', true));
+        });
+    </script>
+</body>
+</html>

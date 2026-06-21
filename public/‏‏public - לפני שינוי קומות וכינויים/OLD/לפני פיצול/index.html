@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעלית שבת בזמן אמת</title>
+    <link href="https://fonts.googleapis.com/css?family=Heebo:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="manifest" href="manifest.json">
+<style>
+    * {
+    -webkit-tap-highlight-color: transparent;
+}
+    body { margin: 0; padding: 10px; font-family: 'Heebo', Arial, sans-serif; background: linear-gradient(120deg, #141E30 0%, #243B55 100%); color: #ecd08f; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; text-align: center; box-sizing: border-box; padding-top: 40px;}
+    .logo-holder { margin-bottom: 5px; }
+    .logo-holder img { width: 150px; height: 150px; object-fit: contain; border-radius: 18px; display: block; margin: 0 auto; }
+    .dashboard-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; max-width: 1200px; }
+    .elevator-panel { background: rgba(20, 30, 48, 0.97); border-radius: 28px; box-shadow: 0 6px 48px #0007, 0 1.5px 3px #ecd08f40 inset; padding: 1em; width: 300px; text-align: center; border: 2px solid #ecd08f; position: relative; box-sizing: border-box; transition: all 0.3s; }
+    .floor-label { font-size: 1em; font-weight: 600; margin: 0; color: #ecd08f; }
+    .elevator-id { font-size: 1.3em; font-weight: 800; margin-bottom: 0.3em; }
+    .floor-indicator { font-size: 3.5em; font-weight: 800; color: #ecd08f; margin: 0.2em 0; text-shadow: 0 0 12px #243b5599; }
+    .direction-status { display: flex; align-items: center; justify-content: center; gap: 0.5em; margin: 0.5em 0; font-size: 1em; font-weight: 500; }
+    .direction-icon { font-size: 1.8em; animation: bounce 1.4s infinite; filter: drop-shadow(0 0 10px #ecd08f70); }
+    .direction-up { color: #ffe37c; }
+    .direction-down { color: #ffe37c; }
+    .direction-neutral { color: #ecd08f; animation: none; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } 60% { transform: translateY(-2px); } }
+    .eta-result { font-size: 1.1em; font-weight: bold; min-height: 24px; margin-top: 0.5em; border-top: 1px solid rgba(236, 208, 143, 0.2); padding-top: 0.5em; }
+    .floor-select-button { width: 100%; padding: 10px; font-size: 1em; font-weight: bold; font-family: 'Heebo', sans-serif; border-radius: 8px; border: 1px solid #ecd08f; background-color: rgba(255, 255, 255, 0.1); color: #ecd08f; cursor: pointer; margin-top: 0.5em; box-sizing: border-box; }
+    .screen-button { background: linear-gradient(90deg, #262c43 60%, #14192c 100%); color: #ecd08f; border: 2px solid #ecd08f; border-radius: 18px; font-size: 1em; font-family: inherit; padding: 0.6em 1.5em; cursor: pointer; font-weight: bold; box-shadow: 0 2px 25px #ecd08f18; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.7em; }
+    .screen-button:hover { background: linear-gradient(90deg, #1c2130 80%, #fcdf83 120%); color: #ffe9a1; }
+    .screen-button.active { background: #171c2c; cursor: default; box-shadow: 0 4px 22px #ecd08f33; }
+    .screen-button .fa-check-circle { color: #ecd08f; font-size: 1.15em; filter: drop-shadow(0 0 2px #c0ab5a70); }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
+    .modal-on-top { z-index: 1001; }
+    .modal-content { background-color: #141E30; padding: 25px; border: 1px solid #ecd08f; width: 85%; max-width: 400px; border-radius: 15px; text-align: center; position: relative; }
+    .modal-content .screen-button { margin-top: 15px; }
+    .close-button { color: #aaa; position: absolute; left: 15px; top: 5px; font-size: 32px; font-weight: bold; cursor: pointer; }
+    .floor-buttons { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 20px; }
+    .floor-button { padding: 15px 10px; font-size: 1.2em; font-weight: bold; border-radius: 8px; border: 1px solid #ecd08f; background-color: rgba(255, 255, 255, 0.1); color: #ecd08f; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+    .floor-button.selected { background-color: #ecd08f; color: #141E30; border-color: #fff; }
+    .notification-popup { visibility: hidden; opacity: 0; min-width: 200px; background: #ecd08f; color: #243B55; text-align: center; border-radius: 12px; padding: 18px 30px; position: fixed; z-index: 1001; left: 50%; bottom: 50px; font-size: 1.14em; transform: translateX(-50%); box-shadow: 0 2px 18px #0007; transition: opacity 0.3s, visibility 0.3s; font-weight: bold; }
+    .notification-popup.show { visibility: visible; opacity: 1; }
+    .footer-info { margin-top: 2em; color: #cfcfcf; font-size: 0.7em; opacity: 0.90; text-align: center; }
+    .footer-info p { margin: 0.5em 0; }
+    .contact-link { color: #ecd08f; text-decoration: underline; font-weight: bold; }
+    .lang-toggle { background: rgba(255, 255, 255, 0.1); border: 1px solid #ecd08f; color: #ecd08f; font-size: 0.9em; cursor: pointer; font-family: inherit; font-weight: bold; transition: all 0.2s; padding: 8px 15px; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5em; }
+    #main-controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px; width: 95%; margin-top: 30px; }
+    #main-controls .screen-button { height: 60px; } /* יישור גובה כפתורים */
+    #settingsButton { width: 60px; height: 60px; background: linear-gradient(145deg, #2a415c, #1a2a3f); color: #ecd08f; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: 2px solid #ecd08f; transition: all 0.3s ease; flex-shrink: 0; }
+    #settingsButton:hover { transform: scale(1.1) rotate(45deg); box-shadow: 0 6px 20px rgba(236, 208, 143, 0.3); }
+    #selectedFloorDisplay { color: #cfcfcf; font-size: 1em; margin-bottom: 15px; width: 100%; text-align: center; }
+    .lang-toggle-wrapper { margin-top: 25px; }
+
+@media (max-width: 768px) {
+    .dashboard-container { 
+        gap: 5px; /* צמצום רווחים */
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    .elevator-panel { 
+        width: 31%; 
+        padding: 0.8em; 
+        min-width: 100px;
+    }
+    .floor-indicator { font-size: 2.8em; } /* הקטנת הפונט */
+    .elevator-id { font-size: 1.1em; }
+    #main-controls { margin-top: 20px; }
+}</style>
+</head>
+<body>
+    <div class="logo-holder">
+        <img src="https://firebasestorage.googleapis.com/v0/b/nitzaelev.firebasestorage.app/o/%D7%9C%D7%95%D7%92%D7%953.png?alt=media&token=f2af3146-d80e-44b7-bf28-e557b5254291" alt="לוגו">
+    </div>
+
+    <div class="dashboard-container"></div>
+    
+    <div id="main-controls">
+        <p id="selectedFloorDisplay"></p>
+        <button class="screen-button" onclick="requestScreenLock()" id="screenLockButton"></button>
+        <div id="settingsButton" onclick="openFloorModal()">
+            <i class="fas fa-cog"></i>
+        </div>
+    </div>
+
+    <div class="lang-toggle-wrapper">
+        <button class="lang-toggle" onclick="toggleLanguage()" id="languageButton">
+            <i class="fas fa-globe"></i> <span></span>
+        </button>
+    </div>
+
+    <div id="floorModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeFloorModal()">&times;</span>
+            <h2 id="modalTitle" class="floor-label"></h2>
+            <div id="floorButtonsContainer" class="floor-buttons"></div>
+            <button id="confirmFloorBtn" class="floor-button" style="margin-top: 20px; width: 100%;"></button>
+        </div>
+    </div>
+    
+    <div id="initialPromptModal" class="modal">
+        <div class="modal-content">
+            <h2 id="promptTitle" class="floor-label"></h2>
+            <p id="promptText" style="margin: 15px 0; line-height: 1.6;"></p>
+            <button id="promptCloseBtn" class="floor-button" style="width: 100%;"></button>
+        </div>
+    </div>
+
+    <div class="notification-popup" id="notificationPopup"></div>
+    <div class="footer-info" id="footerInfo"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+  apiKey: "AIzaSyABExU11JS2KsumwG5z6-X_Tnn_OJZkusg",
+  authDomain: "nitzaelev.firebaseapp.com",
+  databaseURL: "https://nitzaelev-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "nitzaelev",
+  storageBucket: "nitzaelev.firebasestorage.app",
+  messagingSenderId: "922911314024",
+  appId: "1:922911314024:web:560493db03aa477cd7ebdd",
+  measurementId: "G-6BQ4RTV03F"
+        };        
+        const languageTexts = {
+            he: {
+                dir: 'rtl', langBtn: "English",
+                dirUp: "בעלייה", dirDown: "בירידה", dirHold: "עצרה",
+                loading: "ממתין לנתונים...",
+                keepScreen: "השאר מסך דולק", keepScreenActive: "המסך יישאר דולק",
+                popup: "כדי להבטיח שהמסך יישאר דולק לאורך השבת, מומלץ לחבר את המכשיר למטען.", popupError: "הפעולה נכשלה",
+                myFloorLabel: "הקומה שלי:", selectFloor: "יש לבחור קומה", selectedFloorPrefix: "קומה: ",
+                modalTitle: "בחר קומה", confirmButton: "אישור",
+                etaResultPrefix: "זמן הגעה משוער: ", etaResultSuffix: " דקות",
+                etaNow: "המעלית כאן", etaNonStopping: "לא עוצרת בקומה זו",
+                initialPromptTitle: "ברוכים הבאים!", initialPromptText: "יש לחבר את המכשיר למטען וללחוץ על כפתור 'השאר מסך דולק' - כדי להבטיח שהמסך יישאר פעיל לאורך השבת", initialPromptButton: "הבנתי",
+                displaySelectedFloor: (floor) => `הקומה שנבחרה: ${floor}`,
+                displayNoFloorSelected: "יש לבחור קומה בכפתור ההגדרות לחישוב זמן הגעה משוער",
+                footer: `<p>מופעל ע"י ECONTROL פתרונות מתקדמים לבקרה וניהול מבנים</p><p><a class="contact-link" href="https://wa.me/972584030482?text=%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A7%D7%91%D7%9C%20%D7%9E%D7%99%D7%93%D7%A2%20%D7%A2%D7%9C%20%D7%94%D7%90%D7%A4%D7%9C%D7%99%D7%A7%D7%A6%D7%99%D7%94%20%D7%9C%D7%9E%D7%A2%D7%9C%D7%99%D7%AA%20%D7%A9%D7%91%D7%AA">ליצירת קשר לחצו כאן</a></p>`
+            },
+            en: {
+                dir: 'ltr', langBtn: "עברית",
+                dirUp: "Going Up", dirDown: "Going Down", dirHold: "Stopped",
+                loading: "Waiting for data...",
+                keepScreen: "Keep Screen On", keepScreenActive: "Screen is active",
+                popup: "To ensure that the screen remains on throughout Shabbat, it is recommended to connect the device to a charger.", popupError: "Action failed",
+                myFloorLabel: "My Floor:", selectFloor: "Select a floor", selectedFloorPrefix: "My Floor: ",
+                modalTitle: "Select a floor", confirmButton: "Confirm",
+                etaResultPrefix: "ETA: ", etaResultSuffix: " minutes",
+                etaNow: "Elevator is here", etaNonStopping: "Does not stop here",
+                initialPromptTitle: "Welcome!", initialPromptText: "To ensure the screen stays active throughout Shabbat, please connect your device to a charger and press the 'Keep Screen On' button", initialPromptButton: "I Understand",
+                displaySelectedFloor: (floor) => `Selected floor: ${floor}`,
+                displayNoFloorSelected: "Select a floor in the settings to calculate ETA",
+                footer: `<p>Powered by ECONTROL</p><p><a class="contact-link" href="https://wa.me/972584030482?text=I'd%20like%20to%20get%20information%20about%20the%20Shabbat%20Elevator%20App">Contact us</a></p>`
+            }
+        };
+
+        let elevatorStates = {};
+        const STALE_TIMEOUT = 30000;
+        const INTERPOLATION_DELAY = 500;
+        let currentLanguage = 'he';
+        let latestElevatorsData = null;
+        let settings = null;
+        let elevatorConfigs = null;
+        let userFloorForEta = null;
+        let tempSelectedFloor = null;
+        let isScreenLocked = false;
+        let wakeLockInstance = null;
+
+        const floorModal = document.getElementById('floorModal');
+        const initialPromptModal = document.getElementById('initialPromptModal');
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        function shouldShowElevator(elevatorId, currentFloor) {
+            if (!currentFloor) return true;
+            
+            const config = elevatorConfigs[elevatorId];
+            if (!config) return true;
+
+            if (config.VISIBLE_FLOORS && config.VISIBLE_FLOORS.length > 0) {
+                if (config.VISIBLE_FLOORS.includes('*')) return true;
+                return config.VISIBLE_FLOORS.map(String).includes(String(currentFloor));
+            }
+            
+            if (config.STOPPING_FLOORS) {
+                return config.STOPPING_FLOORS.map(String).includes(String(currentFloor));
+            }
+            
+            return true;
+        }
+
+        function onDataLoaded() {
+            if (latestElevatorsData === null || settings === null || elevatorConfigs === null) return;
+            const elevatorIds = Object.keys(latestElevatorsData);
+            
+            createElevatorPanels(elevatorIds);
+            
+            elevatorIds.forEach(id => {
+                processElevatorUpdate(id, latestElevatorsData[id]);
+            });
+            populateFloorModal();
+            applyLanguage();
+        }
+
+        database.ref('elevators').on('value', (snapshot) => { 
+            latestElevatorsData = snapshot.val() || {}; 
+            if (settings && elevatorConfigs) {
+                Object.keys(latestElevatorsData).forEach(id => {
+                    processElevatorUpdate(id, latestElevatorsData[id]);
+                });
+            }
+        });
+        database.ref('settings').on('value', (snapshot) => { settings = snapshot.val() || {}; onDataLoaded(); });
+        database.ref('elevator_configs').on('value', (snapshot) => { elevatorConfigs = snapshot.val() || {}; onDataLoaded(); });
+        
+        async function processElevatorUpdate(id, newData) {
+            const currentState = elevatorStates[id] || {};
+            const lastFloorNum = getNumericFloor(currentState.floor);
+            const currentFloorNum = getNumericFloor(newData.floor);
+
+            if (currentFloorNum === null) return;
+
+            // --- UPDATED: Get Per-Elevator Limits with Global Fallback ---
+            const config = elevatorConfigs[id] || {};
+            const topFloorNum = getNumericFloor(config.TOP_FLOOR ?? settings.TOP_FLOOR);
+            const bottomFloorNum = getNumericFloor(config.BOTTOM_FLOOR ?? settings.BOTTOM_FLOOR);
+            // ----------------------------------------
+
+            if (currentState.timeoutId) {
+                clearTimeout(currentState.timeoutId);
+            }
+            
+            let newDirection = currentState.direction || 'stopped';
+
+            if (currentFloorNum === topFloorNum || currentFloorNum === bottomFloorNum) {
+                newDirection = 'stopped';
+            } 
+            else if (lastFloorNum !== null && currentFloorNum !== lastFloorNum) {
+                newDirection = (currentFloorNum > lastFloorNum) ? 'up' : 'down';
+            }
+
+            const newState = {
+                floor: newData.floor,
+                direction: newDirection,
+                timestamp: Date.now(),
+                timeoutId: setTimeout(() => {
+                    const timedOutState = elevatorStates[id];
+                    if (timedOutState && (Date.now() - timedOutState.timestamp >= STALE_TIMEOUT)) {
+                       timedOutState.direction = 'stopped';
+                       updateElevatorDisplay(id, timedOutState);
+                    }
+                }, STALE_TIMEOUT)
+            };
+            
+            elevatorStates[id] = newState;
+
+            if (lastFloorNum !== null && Math.abs(currentFloorNum - lastFloorNum) > 1) {
+                await interpolateAndDisplay(id, lastFloorNum, currentFloorNum, newState);
+            } else {
+                updateElevatorDisplay(id, newState);
+            }
+            
+            if (typeof calculateAndShowETAFor === 'function') {
+                calculateAndShowETAFor(id, newState);
+            }
+        }
+        
+        async function interpolateAndDisplay(elevatorId, startNum, endNum, finalState) {
+            const step = (endNum > startNum) ? 1 : -1;
+            const direction = (step > 0) ? 'up' : 'down';
+            const allFloorsMap = new Map();
+            Object.values(elevatorConfigs).forEach(config => {
+                if(config && config.STOPPING_FLOORS) {
+                    config.STOPPING_FLOORS.forEach(floor => allFloorsMap.set(getNumericFloor(floor), floor));
+                }
+            });
+            for (let floor = startNum + step; floor !== endNum; floor += step) {
+                const displayFloor = allFloorsMap.get(floor) || floor.toString();
+                const intermediateState = { floor: displayFloor, direction: direction };
+                updateElevatorDisplay(elevatorId, intermediateState);
+                await new Promise(resolve => setTimeout(resolve, INTERPOLATION_DELAY));
+            }
+            updateElevatorDisplay(elevatorId, finalState);
+        }
+
+        function createElevatorPanels(elevatorIds) {
+            const container = document.querySelector('.dashboard-container');
+            const relevantElevatorIds = elevatorIds.filter(id => shouldShowElevator(id, userFloorForEta));
+            relevantElevatorIds.sort();
+
+            const existingPanelIds = Array.from(container.querySelectorAll('.elevator-panel')).map(p => p.id.split('-')[1]);
+            const isSame = relevantElevatorIds.length === existingPanelIds.length && 
+                           relevantElevatorIds.every((val, index) => val === existingPanelIds.sort()[index]);
+                           
+            if (isSame) return;
+
+            container.innerHTML = '';
+            relevantElevatorIds.forEach(id => {
+                const panel = document.createElement('div');
+                panel.className = 'elevator-panel';
+                panel.id = `panel-${id}`;
+                panel.innerHTML = `<div class="floor-label elevator-id"></div><div class="floor-indicator" id="floorNumber-${id}">--</div><div class="direction-status"><i id="directionIcon-${id}" class="fas fa-minus direction-icon direction-neutral"></i><span id="directionText-${id}"></span></div><div class="eta-result" id="etaResult-${id}"></div>`;
+                container.appendChild(panel);
+            });
+            
+            relevantElevatorIds.forEach(id => {
+                if (latestElevatorsData && latestElevatorsData[id]) {
+                    updateElevatorDisplay(id, elevatorStates[id]);
+                }
+            });
+            
+            applyLanguage();
+        }
+
+        function getNumericFloor(floorText) {
+            if (floorText === null || floorText === undefined) return null;
+            const text = String(floorText).toUpperCase();
+            if (text === 'K') return 0;
+            if (text === 'L') return -1;
+            const num = parseInt(text, 10);
+            return isNaN(num) ? null : num;
+        }
+
+        // --- NEW HELPER FUNCTION ---
+        function countStopsInList(startFloor, endFloor, list) {
+             if (!list || list.length === 0) return 0;
+             const sortedStops = list.map(getNumericFloor).sort((a, b) => a - b);
+             if (endFloor > startFloor) { // Up
+                 return sortedStops.filter(f => f > startFloor && f <= endFloor).length;
+             } else { // Down
+                 return sortedStops.filter(f => f < startFloor && f >= endFloor).length;
+             }
+        }
+        
+        function calculateAndShowETAFor(elevatorId, elevatorState) {
+            const etaResultElement = document.getElementById(`etaResult-${elevatorId}`);
+            if (userFloorForEta === null) {
+                if(etaResultElement) etaResultElement.textContent = "";
+                return;
+            }
+
+            const elevatorConfig = elevatorConfigs[elevatorId];
+            if (!elevatorState || !elevatorConfig || !settings) { 
+                if(etaResultElement) etaResultElement.textContent = "..."; 
+                return; 
+            }
+
+            // --- נרמול רשימות עצירה (תאימות לאחור) ---
+            let stopsUp = elevatorConfig.STOPPING_FLOORS_UP;
+            let stopsDown = elevatorConfig.STOPPING_FLOORS_DOWN;
+
+            // אם אין שדות חדשים, ננסה להמיר הגדרות ישנות
+            if (!stopsUp && !stopsDown && elevatorConfig.STOPPING_FLOORS) {
+                 const mode = elevatorConfig.SHABBAT_MODE || 'full';
+                 const oldStops = elevatorConfig.STOPPING_FLOORS;
+                 if (mode === 'full') { stopsUp = oldStops; stopsDown = oldStops; }
+                 else if (mode === 'express_up') { stopsUp = []; stopsDown = oldStops; }
+                 else if (mode === 'stops_up') { stopsUp = oldStops; stopsDown = []; }
+            }
+            
+            stopsUp = stopsUp || [];
+            stopsDown = stopsDown || [];
+
+            // בדיקת רלוונטיות עצירה
+            const canStopUp = stopsUp.length === 0 || stopsUp.map(String).includes(String(userFloorForEta));
+            const canStopDown = stopsDown.length === 0 || stopsDown.map(String).includes(String(userFloorForEta));
+
+            if (!canStopUp && !canStopDown) {
+                 if(etaResultElement) etaResultElement.textContent = languageTexts[currentLanguage].etaNonStopping;
+                 return;
+            }
+
+            const userFloorNum = getNumericFloor(userFloorForEta);
+            const elevatorFloorNum = getNumericFloor(elevatorState.floor);
+            
+            if (userFloorNum === null) {
+                if(etaResultElement) etaResultElement.textContent = ""; 
+                return;
+            }
+
+            if (userFloorNum === elevatorFloorNum) {
+                if(etaResultElement) etaResultElement.textContent = languageTexts[currentLanguage].etaNow;
+                return;
+            }
+            
+            // --- פרמטרים ---
+            const topFloorNum = getNumericFloor(elevatorConfig.TOP_FLOOR ?? settings.TOP_FLOOR);
+            const bottomFloorNum = getNumericFloor(elevatorConfig.BOTTOM_FLOOR ?? settings.BOTTOM_FLOOR);
+            
+            // --- UPDATED HYBRID TIMING PARAMETERS ---
+            const timePerFloor = parseFloat(elevatorConfig.TIME_PER_FLOOR ?? settings.TIME_PER_FLOOR ?? 0); // זמן עצירה
+            let timePassFloor = parseFloat(elevatorConfig.TIME_PASS_FLOOR || 0); // זמן חלוף
+
+            // תמיכה לאחור במקרה שזמן חלוף טרם הוגדר ב-SET
+            if (timePassFloor === 0) {
+                 const expressTimeUp = parseFloat(elevatorConfig.EXPRESS_TIME_UP ?? settings.EXPRESS_TIME_UP ?? 0);
+                 const totalTravelDistance = Math.abs(topFloorNum - bottomFloorNum) || 1;
+                 if(expressTimeUp > 0) timePassFloor = expressTimeUp / totalTravelDistance;
+            }
+            
+            const zeroWaitActive = elevatorConfig.ZERO_FLOOR_WAIT_ACTIVE || false;
+            const zeroWaitSeconds = parseFloat(elevatorConfig.ZERO_FLOOR_WAIT_SECONDS || 0);
+            const zeroFloorWait = zeroWaitActive ? zeroWaitSeconds : 0;
+            const zeroFloorNum = 0;
+
+            let effectiveDirection = elevatorState.direction;
+            if (effectiveDirection === 'stopped' || effectiveDirection === 'עצרה') {
+                if (elevatorFloorNum === bottomFloorNum) effectiveDirection = 'up';
+                else if (elevatorFloorNum === topFloorNum) effectiveDirection = 'down';
+                else effectiveDirection = 'up';
+            }
+
+            // פונקציית עזר לחישוב מקטע (מעודכנת לזמן רציף פר קומה - Hybrid)
+            const calcSegmentTime = (start, end, dir) => {
+                const list = (dir === 'up') ? stopsUp : stopsDown;
+                const isExpress = (!list || list.length === 0);
+                
+                let time = 0;
+                let steps = Math.abs(end - start);
+                
+                if (steps === 0) return 0;
+
+                const stopsCount = countStopsInList(start, end, list);
+                const passCount = steps - stopsCount; 
+                
+                // הנוסחה ההיברידית
+                time = (stopsCount * timePerFloor) + (passCount * timePassFloor);
+                
+                if (zeroFloorWait > 0 && start !== zeroFloorNum) {
+                     if ((start < zeroFloorNum && end >= zeroFloorNum) || (start > zeroFloorNum && end <= zeroFloorNum)) {
+                         time += zeroFloorWait;
+                     }
+                }
+                return time;
+            };
+
+            let totalSeconds = 0;
+
+            if (effectiveDirection === 'up' || effectiveDirection === 'בעלייה') {
+                if (userFloorNum > elevatorFloorNum) {
+                    if (canStopUp) {
+                         totalSeconds = calcSegmentTime(elevatorFloorNum, userFloorNum, 'up');
+                    } else {
+                         totalSeconds = calcSegmentTime(elevatorFloorNum, topFloorNum, 'up');
+                         totalSeconds += calcSegmentTime(topFloorNum, userFloorNum, 'down');
+                    }
+                } else {
+                    totalSeconds = calcSegmentTime(elevatorFloorNum, topFloorNum, 'up');
+                    totalSeconds += calcSegmentTime(topFloorNum, userFloorNum, 'down');
+                }
+            } else { // down
+                 if (userFloorNum < elevatorFloorNum) {
+                     if (canStopDown) {
+                        totalSeconds = calcSegmentTime(elevatorFloorNum, userFloorNum, 'down');
+                     } else {
+                        totalSeconds = calcSegmentTime(elevatorFloorNum, bottomFloorNum, 'down');
+                        totalSeconds += calcSegmentTime(bottomFloorNum, userFloorNum, 'up');
+                     }
+                } else {
+                    totalSeconds = calcSegmentTime(elevatorFloorNum, bottomFloorNum, 'down');
+                    totalSeconds += calcSegmentTime(bottomFloorNum, userFloorNum, 'up');
+                }
+            }
+
+             if (elevatorFloorNum === zeroFloorNum && zeroFloorWait > 0) {
+                totalSeconds += zeroFloorWait;
+            }
+
+            const elapsedSinceUpdate = (Date.now() - (elevatorState.timestamp || Date.now())) / 1000;
+            let finalSeconds = totalSeconds - elapsedSinceUpdate;
+            if (finalSeconds < 0) finalSeconds = 0;
+
+            const minutes = Math.floor(finalSeconds / 60);
+            const seconds = Math.round(finalSeconds % 60);
+            const formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            const etaPrefix = languageTexts[currentLanguage].etaResultPrefix;
+            const etaSuffix = languageTexts[currentLanguage].etaResultSuffix;
+            if(etaResultElement) etaResultElement.textContent = `${etaPrefix}${formattedTime}${etaSuffix}`;
+        }
+        
+        function openFloorModal() { 
+            tempSelectedFloor = userFloorForEta;
+            updateFloorButtonsSelection();
+            floorModal.style.display = "flex";
+            floorModal.classList.add('modal-on-top');
+        }
+        function closeFloorModal() { 
+            floorModal.style.display = "none";
+            floorModal.classList.remove('modal-on-top');
+        }
+        
+        window.onclick = (event) => { 
+            if (event.target == floorModal) closeFloorModal();
+        }
+
+        function updateFloorButtonsSelection() {
+            const buttons = document.querySelectorAll('#floorButtonsContainer .floor-button');
+            buttons.forEach(btn => {
+                btn.classList.toggle('selected', btn.textContent === tempSelectedFloor);
+            });
+        }
+
+        function populateFloorModal() {
+            const container = document.getElementById('floorButtonsContainer');
+            if (!container || !elevatorConfigs || Object.keys(elevatorConfigs).length === 0) return;
+            const allFloors = new Set();
+            Object.values(elevatorConfigs).forEach(config => {
+                // Collect floors from new structure and old structure
+                if (config.STOPPING_FLOORS_UP) config.STOPPING_FLOORS_UP.forEach(f => allFloors.add(f));
+                if (config.STOPPING_FLOORS_DOWN) config.STOPPING_FLOORS_DOWN.forEach(f => allFloors.add(f));
+                if (config.STOPPING_FLOORS) config.STOPPING_FLOORS.forEach(floor => allFloors.add(floor));
+            });
+            const sortedFloors = Array.from(allFloors).map(f => ({ display: f, numeric: getNumericFloor(f) })).sort((a, b) => b.numeric - a.numeric);
+            container.innerHTML = '';
+            sortedFloors.forEach(floor => {
+                const button = document.createElement('button');
+                button.className = 'floor-button';
+                button.textContent = floor.display;
+                button.onclick = () => {
+                    tempSelectedFloor = floor.display;
+                    updateFloorButtonsSelection();
+                };
+                container.appendChild(button);
+            });
+            document.getElementById('confirmFloorBtn').onclick = () => {
+                selectFloor(tempSelectedFloor);
+            };
+        }
+        
+        function selectFloor(floor) {
+            userFloorForEta = floor;
+            
+            if (latestElevatorsData) {
+                const allIds = Object.keys(latestElevatorsData);
+                createElevatorPanels(allIds);
+                
+                allIds.forEach(id => {
+                     if(elevatorStates[id]) calculateAndShowETAFor(id, elevatorStates[id]);
+                });
+            }
+            
+            applyLanguage();
+            closeFloorModal();
+            updateSelectedFloorDisplay();
+        }
+
+        function updateSelectedFloorDisplay() {
+            const displayElem = document.getElementById('selectedFloorDisplay');
+            const lang = languageTexts[currentLanguage];
+            if (userFloorForEta !== null) {
+                displayElem.textContent = lang.displaySelectedFloor(userFloorForEta);
+            } else {
+                displayElem.textContent = lang.displayNoFloorSelected;
+            }
+        }
+
+        function applyLanguage() {
+            const lang = languageTexts[currentLanguage];
+            document.body.dir = lang.dir;
+            document.documentElement.lang = currentLanguage;
+            
+            const langButtonSpan = document.getElementById('languageButton')?.querySelector('span');
+            if(langButtonSpan) langButtonSpan.textContent = lang.langBtn;
+
+            document.getElementById('modalTitle').textContent = lang.modalTitle;
+            document.getElementById('confirmFloorBtn').textContent = lang.confirmButton;
+            document.getElementById('footerInfo').querySelector('#footerContent').innerHTML = lang.footer;
+            
+            document.getElementById('promptTitle').textContent = lang.initialPromptTitle;
+            document.getElementById('promptText').textContent = lang.initialPromptText;
+            document.getElementById('promptCloseBtn').textContent = lang.initialPromptButton;
+            
+            if (elevatorStates) {
+                 const container = document.querySelector('.dashboard-container');
+                 const existingPanelIds = Array.from(container.querySelectorAll('.elevator-panel')).map(p => p.id.split('-')[1]);
+                 existingPanelIds.forEach(id => updateElevatorDisplay(id, elevatorStates[id]));
+            }
+
+            if (userFloorForEta !== null && elevatorStates) {
+                Object.keys(elevatorStates).forEach(id => calculateAndShowETAFor(id, elevatorStates[id]));
+            }
+            updateScreenButtonText();
+            updateSelectedFloorDisplay();
+        }
+        
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'he' ? 'en' : 'he';
+            applyLanguage();
+            showInitialPrompt();
+        }
+
+        function updateElevatorDisplay(elevatorId, stateData) {
+            const panel = document.getElementById(`panel-${elevatorId}`);
+            if (!panel) return;
+            const floorElement = document.getElementById(`floorNumber-${elevatorId}`);
+            const iconElement = document.getElementById(`directionIcon-${elevatorId}`);
+            const textElement = document.getElementById(`directionText-${elevatorId}`);
+            const elevatorIdLabel = panel.querySelector('.elevator-id');
+            const lang = languageTexts[currentLanguage];
+            elevatorIdLabel.textContent = lang.dir === 'rtl' ? `מעלית ${elevatorId}` : `Elevator ${elevatorId}`;
+            if (!stateData) {
+                floorElement.textContent = '--';
+                iconElement.className = 'fas fa-minus direction-icon direction-neutral';
+                textElement.textContent = lang.loading;
+                return;
+            }
+            floorElement.textContent = stateData.floor ?? '--';
+            iconElement.className = 'fas direction-icon';
+            const dir = stateData.direction;
+            if (dir === 'up') {
+                iconElement.classList.add('fa-arrow-up', 'direction-up');
+                textElement.textContent = lang.dirUp;
+            } else if (dir === 'down') {
+                iconElement.classList.add('fa-arrow-down', 'direction-down');
+                textElement.textContent = lang.dirDown;
+            } else {
+                iconElement.classList.add('fa-minus', 'direction-neutral');
+                textElement.textContent = lang.dirHold;
+            }
+        }
+
+        function initializeFooter() {
+            const footer = document.getElementById('footerInfo');
+            if (!footer) return;
+            const contentWrapper = document.createElement('div');
+            contentWrapper.id = 'footerContent';
+            footer.appendChild(contentWrapper);
+        }
+        
+        function updateScreenButtonText() {
+            const button = document.getElementById('screenLockButton');
+            if (!button) return;
+            const lang = languageTexts[currentLanguage];
+            if (isScreenLocked) {
+                button.innerHTML = `<i class="fa-solid fa-check-circle"></i> ${lang.keepScreenActive}`;
+                button.classList.add('active');
+                button.disabled = true;
+            } else {
+                button.innerHTML = `<i class="fas fa-power-off"></i> ${lang.keepScreen}`;
+                button.classList.remove('active');
+                button.disabled = false;
+            }
+        }
+        
+        async function requestScreenLock() {
+            if (!('wakeLock' in navigator)) {
+                showNotification(languageTexts[currentLanguage].popupError);
+                return;
+            }
+            try {
+                wakeLockInstance = await navigator.wakeLock.request('screen');
+                isScreenLocked = true;
+                updateScreenButtonText();
+                showNotification(languageTexts[currentLanguage].popup);
+                wakeLockInstance.addEventListener('release', () => {
+                    isScreenLocked = false;
+                    wakeLockInstance = null;
+                    updateScreenButtonText();
+                });
+            } catch (error) {
+                isScreenLocked = false;
+                updateScreenButtonText();
+                showNotification(languageTexts[currentLanguage].popupError);
+            }
+        }
+        
+        function showInitialPrompt() {
+            initialPromptModal.style.display = 'flex';
+            document.getElementById('promptCloseBtn').onclick = () => {
+                initialPromptModal.style.display = 'none';
+            };
+        }
+
+        function showNotification(message) {
+            const popup = document.getElementById('notificationPopup');
+            popup.textContent = message;
+            popup.classList.add('show');
+            setTimeout(() => { popup.classList.remove('show'); }, 12000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFooter();
+            applyLanguage();
+            showInitialPrompt();
+        });
+
+    </script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
+</script>
+</body>
+</html>

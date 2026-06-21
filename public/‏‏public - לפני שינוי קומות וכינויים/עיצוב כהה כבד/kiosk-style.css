@@ -1,0 +1,359 @@
+/* --- Cassia Hotels Brand Fonts --- */
+@font-face {
+    font-family: 'Fedra Sans';
+    src: url('fonts/FedraSansH+L-Book.otf') format('opentype');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'Fedra Sans';
+    src: url('fonts/FedraSansH+L-Medium.otf') format('opentype');
+    font-weight: 500;
+}
+@font-face {
+    font-family: 'Fedra Sans';
+    src: url('fonts/FedraSansH+L-Demi.otf') format('opentype');
+    font-weight: 700;
+}
+@font-face {
+    font-family: 'Cassia';
+    src: url('fonts/CassiaRegular.otf') format('opentype');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'Cassia';
+    src: url('fonts/CassiaBook102422.otf') format('opentype');
+    font-weight: 300;
+}
+
+/* --- Root Variables for Theme (Heavy Glass + Cassia) --- */
+:root {
+    /* רקע עמוק */
+    --bg-gradient: radial-gradient(circle at 50% 0%, #30261f, #000000); 
+    
+    /* Glass Effect */
+    --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+    --glass-border: 1px solid rgba(162, 102, 47, 0.25);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+    --glass-inner-shadow: inset 0 0 20px rgba(162, 102, 47, 0.05);
+
+    /* --- CASSIA COLORS --- */
+    --gold-primary: #A2662F; /* Bronze */
+    --gold-muted: #D1CBBC;   /* Stone/Pearl */
+    
+    --text-main: #FFFFFF;    
+    --text-secondary: #D1CBBC; 
+    
+    /* --- Active State Colors --- */
+    --active-gold-bg: linear-gradient(135deg, rgba(255, 199, 9, 0.95), rgba(254, 224, 0, 0.9)); /* Cassia Yellow */
+    --active-text-dark: #395437; /* Cassia Green */
+}
+
+/* --- General Layout --- */
+body { 
+    margin: 0; 
+    padding: 10px; 
+    font-family: 'Fedra Sans', 'Heebo', sans-serif; 
+    background: var(--bg-gradient); 
+    color: var(--text-main); 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: space-between; 
+    height: 100vh; 
+    text-align: center; 
+    box-sizing: border-box; 
+    overflow: hidden; 
+}
+
+/* Typography Overrides */
+.floor-indicator, .clock-time, .elevator-id, .eta-result, .status-time, .number {
+    font-family: 'Cassia', 'Heebo', serif;
+}
+
+/* --- Top Logo Styles --- */
+.top-logo {
+    display: block;
+    max-height: 80px; 
+    width: auto;
+    margin: 5px auto 10px auto;
+    filter: drop-shadow(0 0 15px rgba(162, 102, 47, 0.3));
+    flex-shrink: 0;
+}
+
+/* Bottom Logo Styles */
+.bottom-logo {
+    position: fixed;
+    bottom: 10px; 
+    left: 20px;   
+    max-height: 40px;
+    opacity: 0.6; 
+    z-index: 200; 
+    pointer-events: none;
+    filter: brightness(120%);
+}
+
+#displayContainer { 
+    display: flex; 
+    width: 100%; 
+    flex-direction: column; 
+    align-items: center; 
+    position: relative; 
+    flex: 1; 
+    justify-content: flex-start; 
+    overflow-y: auto;
+    scrollbar-width: none; 
+}
+#displayContainer::-webkit-scrollbar { display: none; }
+
+/* --- Shabbat Indicator --- */
+#main-shabbat-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    color: var(--gold-primary);
+    font-size: 2.2em; 
+    font-weight: 700;
+    margin-top: 5px; 
+    margin-bottom: 15px; 
+    text-shadow: 0 0 30px rgba(162, 102, 47, 0.4); 
+    flex-shrink: 0; 
+}
+
+.shabbat-candle-svg {
+    width: 28px; 
+    height: auto;
+    filter: drop-shadow(0 0 15px rgba(162, 102, 47, 0.6));
+}
+
+/* --- Dashboard Grid --- */
+.dashboard-container { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 15px; 
+    width: 100%; 
+    max-width: 1200px; 
+    flex-shrink: 0; 
+    transition: all 0.5s ease;
+}
+
+/* --- Elevator Panel (Glass Style) --- */
+.elevator-panel { 
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: var(--glass-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px; 
+    box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+    padding: 20px;  
+    width: 300px; 
+    position: relative; 
+    box-sizing: border-box; 
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+    min-height: 280px;
+}
+
+.panel-side-floor { display: flex; justify-content: center; align-items: center; flex: 1; }
+.panel-side-info { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+
+/* --- SINGLE ELEVATOR VIEW (Desktop Default) --- */
+@media (min-width: 600px) {
+    .elevator-panel:only-child {
+        width: 90%; max-width: 900px;
+        flex-direction: row; justify-content: space-around; align-items: center;
+        padding: 40px; gap: 20px;
+    }
+    .elevator-panel:only-child .panel-side-floor {
+        flex: 1; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 40px;
+    }
+    .elevator-panel:only-child .floor-indicator { font-size: 14em; line-height: 0.8; text-shadow: 0 0 50px rgba(162, 102, 47, 0.3); }
+    .elevator-panel:only-child .panel-side-info { flex: 1; align-items: center; gap: 20px; }
+    .elevator-panel:only-child .elevator-id { font-size: 2em; margin-bottom: 10px; }
+    .elevator-panel:only-child .direction-status { width: 120px; height: 120px; }
+    .elevator-panel:only-child .elevator-arrow-svg, .elevator-panel:only-child .stop-status-svg { width: 100px; height: 100px; }
+    .elevator-panel:only-child .eta-display { border-top: none; }
+    .elevator-panel:only-child .eta-result { font-size: 3em; }
+    .elevator-panel:only-child .floor-label { font-size: 1.2em; }
+    .elevator-panel:only-child.approaching .panel-side-floor { border-left-color: rgba(57, 84, 55, 0.2); }
+}
+
+/* --- Active State Animation (Pulse) --- */
+@keyframes pulse-gold {
+    0% { 
+        box-shadow: 0 0 20px rgba(255, 199, 9, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.4); 
+        transform: scale(1.02) translateY(-5px);
+    }
+    50% { 
+        box-shadow: 0 0 50px rgba(255, 199, 9, 1), inset 0 0 40px rgba(255, 255, 255, 0.6); 
+        transform: scale(1.03) translateY(-5px);
+        border-color: #fff;
+    }
+    100% { 
+        box-shadow: 0 0 20px rgba(255, 199, 9, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.4); 
+        transform: scale(1.02) translateY(-5px);
+    }
+}
+
+/* --- Active State (Approaching) --- */
+.elevator-panel.approaching {
+    background: var(--active-gold-bg);
+    border-color: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    animation: pulse-gold 2s infinite ease-in-out;
+}
+
+.elevator-id { font-size: 1.2em; font-weight: 400; color: var(--text-secondary); margin-bottom: 5px; transition: color 0.3s; }
+.elevator-panel.approaching .elevator-id { color: var(--active-text-dark); font-weight: 700; }
+
+.floor-indicator { 
+    font-size: 5.5em; font-weight: 400; color: var(--gold-primary);
+    text-shadow: 0 0 30px rgba(162, 102, 47, 0.4); line-height: 1; margin: 0; transition: color 0.3s;
+}
+.elevator-panel.approaching .floor-indicator { color: var(--active-text-dark); text-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: 700; }
+
+.direction-status { display: flex; align-items: center; justify-content: center; height: 60px; width: 60px; position: relative; margin-bottom: 5px; }
+.elevator-arrow-svg { width: 50px; height: 50px; fill: var(--gold-primary); filter: drop-shadow(0 0 10px rgba(162, 102, 47, 0.5)); transition: transform 0.3s ease, fill 0.3s; }
+.elevator-panel.approaching .elevator-arrow-svg { fill: var(--active-text-dark); filter: none; }
+.arrow-up { transform: rotate(0deg); }
+.arrow-down { transform: rotate(180deg); }
+
+.stop-status-svg { width: 55px; height: 55px; overflow: visible; }
+.stop-ring {
+    fill: none; stroke: var(--gold-primary); stroke-width: 4; stroke-linecap: round; transform-origin: center; transform: rotate(-90deg);
+    stroke-dasharray: 283; stroke-dashoffset: 283; filter: drop-shadow(0 0 8px rgba(162, 102, 47, 0.4));
+    animation: ringLoad 3s ease-in-out infinite alternate; transition: stroke 0.3s;
+}
+.stop-bars { fill: var(--gold-primary); filter: drop-shadow(0 0 5px rgba(162, 102, 47, 0.5)); transform-origin: center; animation: barsPulse 2s ease-in-out infinite; transition: fill 0.3s; }
+.elevator-panel.approaching .stop-ring { stroke: var(--active-text-dark); filter: none; }
+.elevator-panel.approaching .stop-bars { fill: var(--active-text-dark); filter: none; }
+
+@keyframes flowAnimation { 0% { transform: translateY(20%); opacity: 0; } 30% { opacity: 1; } 70% { opacity: 1; } 100% { transform: translateY(-40%); opacity: 0; } }
+.elevator-arrow-path { animation: flowAnimation 1.5s infinite linear; }
+@keyframes ringLoad { 0% { stroke-dashoffset: 283; } 20% { stroke-dashoffset: 283; } 100% { stroke-dashoffset: 0; } }
+@keyframes barsPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+.eta-display { border-top: 1px solid rgba(255, 255, 255, 0.1); width: 100%; padding-top: 10px; margin-top: 5px; text-align: center; transition: border-color 0.3s; }
+.elevator-panel.approaching .eta-display { border-top: 1px solid rgba(57, 84, 55, 0.3); }
+
+.floor-label { font-size: 0.9em; color: var(--text-secondary); margin-bottom: 2px; transition: color 0.3s; }
+.elevator-panel.approaching .floor-label { color: rgba(57, 84, 55, 0.8); font-weight: 600; }
+
+.eta-result { 
+    font-size: 1.4em; font-weight: 500; color: var(--gold-primary); text-shadow: 0 0 15px rgba(162, 102, 47, 0.3);
+    min-height: 1.5em; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.elevator-panel.approaching .eta-result { color: var(--active-text-dark); text-shadow: none; font-weight: 700; font-size: 2em; letter-spacing: 0.5px; }
+
+/* Mode Toggling */
+body.shabbat-mode-active #main-shabbat-indicator { display: flex; }
+body.shabbat-mode-active .dashboard-container { display: flex; }
+body:not(.shabbat-mode-active) .dashboard-container { display: none !important; }
+body:not(.shabbat-mode-active) #clockContainer { display: flex !important; }
+body.weekday-mode .eta-display { display: none !important; }
+body.weekday-mode .dashboard-container { display: flex !important; }
+
+/* --- Clock Container --- */
+#clockContainer { display: none; width: 100%; max-width: 600px; margin: 0 auto; flex-direction: column; justify-content: center; align-items: center; min-height: 0; flex: 1; }
+.clock-panel {
+    background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: var(--glass-border); border-radius: 35px; box-shadow: var(--glass-shadow); padding: 2em; width: 100%;
+    text-align: center; position: relative; box-sizing: border-box; border-top: 1px solid rgba(255,255,255,0.2);
+}
+.clock-time { font-size: 5.5em; font-weight: 300; color: #fff; margin: 0; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+.clock-date { font-size: 1.5em; font-weight: 400; color: var(--gold-primary); margin-top: 10px; letter-spacing: 1px;}
+.clock-hebrew-date { font-size: 1.2em; font-weight: 400; color: var(--text-secondary); margin-top: 5px; }
+
+/* --- Analog Clock --- */
+#analogClockWrapper { display: none; width: 100%; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
+.analog-clock-panel {
+    width: 280px; height: 280px; position: relative; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px);
+    border: 4px solid var(--gold-primary); border-radius: 50%; box-shadow: 0 0 50px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5); margin: 0 auto;
+}
+.analog-clock-panel .hand { width: 50%; height: 4px; background: var(--text-secondary); position: absolute; top: 50%; transform-origin: 100%; transform: rotate(90deg); border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.5); border: none; }
+.analog-clock-panel .hour-hand { width: 30%; left: 20%; height: 6px; background: #fff; }
+.analog-clock-panel .minute-hand { width: 40%; left: 10%; height: 4px; background: var(--gold-primary); }
+.analog-clock-panel .second-hand { width: 45%; left: 5%; height: 2px; background: #ef4444; }
+.analog-clock-panel .center-dot { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; background: var(--gold-primary); border: 3px solid #000; border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; }
+.analog-clock-panel .number { position: absolute; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: 400; color: var(--gold-muted); transform: translate(-50%, -50%); font-family: 'Cassia', serif; }
+/* Position numbers */
+.analog-clock-panel .number-12 { top: 8%; left: 50%; } .analog-clock-panel .number-1  { top: 13.4%; left: 71.7%; } .analog-clock-panel .number-2  { top: 28.3%; left: 86.6%; } .analog-clock-panel .number-3  { top: 50%; left: 92%; } .analog-clock-panel .number-4  { top: 71.7%; left: 86.6%; } .analog-clock-panel .number-5  { top: 86.6%; left: 71.7%; } .analog-clock-panel .number-6  { top: 92%; left: 50%; } .analog-clock-panel .number-7  { top: 86.6%; left: 28.3%; } .analog-clock-panel .number-8  { top: 71.7%; left: 13.4%; } .analog-clock-panel .number-9  { top: 50%; left: 8%; } .analog-clock-panel .number-10 { top: 28.3%; left: 13.4%; } .analog-clock-panel .number-11 { top: 13.4%; left: 28.3%; }
+.analog-clock-date-container { margin-top: 20px; text-align: center; }
+.analog-clock-date { font-size: 1.5em; color: var(--gold-primary); font-weight: 500;}
+.analog-clock-hebrew-date { font-size: 1.2em; color: var(--gold-muted); }
+
+/* --- Footer Controls --- */
+.footer-controls { position: fixed; bottom: 10px; left: 0; width: 100%; padding: 10px; display: flex; justify-content: center; align-items: center; z-index: 100; gap: 15px; box-sizing: border-box; pointer-events: none; }
+.control-btn { pointer-events: auto; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(162, 102, 47, 0.5); color: var(--gold-muted); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; transition: all 0.3s; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.control-btn:hover { background: rgba(162, 102, 47, 0.3); color: #fff; transform: translateY(-3px); border-color: var(--gold-primary);}
+body.shabbat-mode-active .footer-controls { justify-content: flex-start; padding-right: 20px; }
+
+/* --- Modal & Notifications --- */
+.modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); backdrop-filter: blur(12px); align-items: center; justify-content: center; }
+.modal.show { display: flex; }
+.modal-content { background: var(--glass-bg); padding: 30px; border: var(--glass-border); border-top: 1px solid rgba(255,255,255,0.2); border-radius: 24px; width: 90%; max-width: 450px; text-align: center; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.8), var(--glass-inner-shadow); }
+.modal-title { color: var(--gold-primary); margin-top: 0; }
+.modal-text { color: var(--text-main); margin-bottom: 20px; }
+.modal-close { position: absolute; top: 15px; left: 20px; color: var(--text-secondary); font-size: 32px; font-weight: bold; cursor: pointer; line-height: 1; }
+.qr-container { margin: 10px auto; padding: 15px; background: rgba(255,255,255,0.9); border-radius: 16px; display: inline-block; position: relative; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
+#whatsappQRContainer { width: 180px !important; height: 180px !important; }
+.qr-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: #fff; border-radius: 8px; padding: 4px; }
+.notification { visibility: hidden; opacity: 0; min-width: 200px; background: var(--gold-primary); color: #000; text-align: center; border-radius: 50px; padding: 12px 25px; position: fixed; z-index: 3001; left: 50%; top: 20px; font-size: 1em; transform: translateX(-50%) translateY(-20px); transition: all 0.4s; font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+.notification.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.bottom-status-bar { position: fixed; bottom: 5px; left: 0; right: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px); border-top: 1px solid rgba(162, 102, 47, 0.3); padding: 8px 15px; text-align: center; font-size: 1em; color: var(--gold-muted); z-index: 50; display: none; }
+body.shabbat-mode-active .bottom-status-bar { display: block; }
+
+/* --- SPECIFIC MEDIA QUERY FOR SHORT LANDSCAPE SCREENS --- */
+@media (orientation: landscape) and (max-height: 640px) {
+    body { padding: 0; overflow: hidden; }
+    .top-logo { max-height: 8vh; margin: 1vh auto; }
+    #displayContainer { height: 100vh; padding-bottom: 60px; justify-content: flex-start; padding-top: 0; box-sizing: border-box; }
+    #main-shabbat-indicator { font-size: 4vh; margin: 0 0 2vh 0; gap: 2vh; }
+    .shabbat-candle-svg { width: 5vh; }
+    .elevator-panel:only-child { width: 96vw; height: auto; max-height: 68vh; min-height: 0; padding: 2vmin; margin: 8vh auto 0 auto; justify-content: center; align-items: center; gap: 0; }
+    .elevator-panel:only-child .panel-side-info { flex: 0 0 45%; justify-content: center; gap: 1vh; }
+    .elevator-panel:only-child .elevator-id { font-size: 4.5vh; margin: 0; line-height: 1; }
+    .elevator-panel:only-child .direction-status { width: 14vh; height: 14vh; margin: 0; }
+    .elevator-panel:only-child .elevator-arrow-svg, .elevator-panel:only-child .stop-status-svg { width: 12vh; height: 12vh; }
+    .elevator-panel:only-child .eta-display { margin: 0; padding: 0; border: none; }
+    .elevator-panel:only-child .floor-label { font-size: 2.5vh; }
+    .elevator-panel:only-child .eta-result { font-size: 6vh; line-height: 1; margin-top: 0; }
+    .elevator-panel:only-child .panel-side-floor { flex: 0 0 55%; padding: 0; border-left: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center; }
+    .elevator-panel:only-child .floor-indicator { font-size: 32vh; line-height: 0.8; margin-top: 1.5vh; letter-spacing: -1vh; }
+    .dashboard-container:not(:has(.elevator-panel:only-child)) { display: flex; flex-wrap: nowrap; width: 100%; gap: 2vmin; justify-content: center; align-items: center; }
+    .elevator-panel:not(:only-child) { flex: 0 1 30vw; height: 60vh; min-height: 0; padding: 2vmin; }
+    .elevator-panel:not(:only-child) .floor-indicator { font-size: 20vmin; }
+    .footer-controls { bottom: 2vmin; }
+    .bottom-logo { max-height: 8vmin; bottom: 2vmin; left: 2vmin; }
+}
+
+/* Portrait Mobile */
+@media (max-width: 480px) and (orientation: portrait) {
+        #main-shabbat-indicator { font-size: 1.8em; margin-bottom: 20px; }
+        .dashboard-container { gap: 10px; }
+        .elevator-panel { width: 46%; min-height: 220px; padding: 15px 10px; border-radius: 18px; }
+        .floor-indicator { font-size: 4em; }
+        .direction-status { height: 40px; width: 40px; }
+        .elevator-arrow-svg { width: 35px; height: 35px; }
+        .stop-status-svg { width: 38px; height: 38px; }
+        .eta-result { font-size: 1em; }
+        .elevator-panel:only-child { flex-direction: column; width: 300px; gap: 0; height: auto; }
+        .elevator-panel:only-child .panel-side-floor { border-left: none; padding-left: 0; }
+        .elevator-panel:only-child .floor-indicator { font-size: 5.5em; }
+}
+
+#errorScreen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; color: #ef4444; padding: 20px; }
+
+/* === CRITICAL OVERRIDES === */
+.elevator-panel.approaching, .elevator-panel:only-child.approaching { background-color: var(--active-gold-bg) !important; border-color: #fff !important; color: var(--active-text-dark) !important; }
+.elevator-panel.approaching .floor-indicator, .elevator-panel:only-child.approaching .floor-indicator, .elevator-panel.approaching .elevator-id, .elevator-panel:only-child.approaching .elevator-id, .elevator-panel.approaching .eta-result, .elevator-panel:only-child.approaching .eta-result, .elevator-panel.approaching .floor-label { color: var(--active-text-dark) !important; }
+.elevator-panel.approaching .elevator-arrow-svg, .elevator-panel:only-child.approaching .elevator-arrow-svg { fill: var(--active-text-dark) !important; }
+.elevator-panel.approaching .stop-ring, .elevator-panel:only-child.approaching .stop-ring { stroke: var(--active-text-dark) !important; }
+.elevator-panel.approaching .stop-bars, .elevator-panel:only-child.approaching .stop-bars { fill: var(--active-text-dark) !important; }

@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעלית שבת - תצוגת קיוסק</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    
+    <!-- Firebase SDK (Compat v8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Configuration File Loading -->
+    <script src="/firebase-config.js"></script>
+    
+    <style>
+        /* --- Root Variables for Theme --- */
+        :root {
+            /* רקע עמוק */
+            --bg-gradient: radial-gradient(circle at 50% 0%, #2c3e50, #000000); 
+            
+            /* Glass Effect */
+            --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            --glass-border: 1px solid rgba(255, 255, 255, 0.18);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --glass-inner-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+
+            /* --- GOLD COLORS --- */
+            --gold-primary: #E6C25F; /* Rich Metallic Gold */
+            --gold-muted: #C2A153;   /* Muted Bronze/Gold */
+            
+            --text-main: #F8FAFC;    
+            --text-secondary: #CBD5E1; 
+            
+            /* --- Active State Colors --- */
+            --active-gold-bg: linear-gradient(135deg, rgba(230, 194, 95, 0.95), rgba(255, 223, 128, 0.9));
+            --active-text-dark: #0f172a; /* Deep dark blue for contrast on gold */
+        }
+
+        /* --- General Layout --- */
+        body { 
+            margin: 0; 
+            padding: 10px; 
+            font-family: 'Heebo', sans-serif; 
+            background: var(--bg-gradient); 
+            color: var(--text-main); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: space-between; 
+            height: 100vh; 
+            text-align: center; 
+            box-sizing: border-box; 
+            overflow: hidden; 
+        }
+        
+        /* --- Top Logo Styles --- */
+        .top-logo {
+            display: block;
+            max-height: 80px; /* Limit height */
+            width: auto;
+            margin: 5px auto 10px auto;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+            flex-shrink: 0;
+        }
+
+        /* --- UPDATED: Bottom Logo Styles --- */
+        .bottom-logo {
+            position: fixed;
+            bottom: 130px; /* הועלה למעלה כדי לפנות מקום לבאנר הגדול */
+            left: 50%;     /* מירכוז אופקי */
+            transform: translateX(-50%); /* מירכוז מדויק */
+            max-height: 120px; /* מוגדל */
+            opacity: 0.8; 
+            z-index: 200; 
+            pointer-events: none;
+            filter: brightness(150%);
+            transition: all 0.3s ease;
+        }
+
+        #displayContainer { 
+            display: flex; 
+            width: 100%; 
+            flex-direction: column; 
+            align-items: center; 
+            position: relative; 
+            flex: 1; 
+            justify-content: flex-start; 
+            overflow-y: auto;
+            scrollbar-width: none; 
+        }
+        #displayContainer::-webkit-scrollbar { display: none; }
+        
+        /* --- Shabbat Indicator (Animated Candles) --- */
+        #main-shabbat-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            color: var(--gold-primary);
+            font-size: 2.2em; 
+            font-weight: 700;
+            margin-top: 5px; 
+            margin-bottom: 15px; 
+            text-shadow: 0 0 30px rgba(230, 194, 95, 0.4); 
+            flex-shrink: 0; 
+        }
+        
+        .shabbat-candle-svg {
+            width: 28px; 
+            height: auto;
+            filter: drop-shadow(0 0 15px rgba(230, 194, 95, 0.6));
+        }
+
+        /* --- Dashboard Grid --- */
+        .dashboard-container { 
+            display: flex; /* Always flex now */
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 15px; 
+            width: 100%; 
+            max-width: 1200px; 
+            flex-shrink: 0; 
+            transition: all 0.5s ease;
+        }
+
+        /* --- NEW: Push panel down in Portrait Mode (Smart Logic) --- */
+        @media (orientation: portrait) {
+            .dashboard-container {
+                /* Reset container margin so we can control per panel */
+                margin-top: 0;
+                /* Add padding bottom so content can scroll above the fixed footer/logo */
+                padding-bottom: 280px; 
+            }
+
+            /* Only push down if it's a SINGLE elevator */
+            .elevator-panel:only-child {
+                margin-top: 15vh;
+            }
+
+            /* If multiple elevators, keep them higher to avoid collision */
+            .elevator-panel:not(:only-child) {
+                margin-top: 2vh;
+            }
+        }
+        
+        /* --- Elevator Panel (Glass Style) --- */
+        .elevator-panel { 
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: var(--glass-border);
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            border-left: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 28px; 
+            box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+            padding: 20px;  
+            width: 300px; 
+            position: relative; 
+            box-sizing: border-box; 
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+            min-height: 280px;
+        }
+
+        /* --- Internal Panel Layout (Default/Vertical) --- */
+        .panel-side-floor {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .panel-side-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* ---------------------------------------------------- */
+        /* --- SINGLE ELEVATOR VIEW (Desktop Default) --- */
+        /* ---------------------------------------------------- */
+        @media (min-width: 600px) {
+            .elevator-panel:only-child {
+                width: 90%;
+                max-width: 900px;
+                flex-direction: row; /* Horizontal Layout */
+                justify-content: space-around;
+                align-items: center;
+                padding: 40px;
+                gap: 20px;
+            }
+
+            .elevator-panel:only-child .panel-side-floor {
+                flex: 1;
+                border-left: 1px solid rgba(255,255,255,0.1); 
+                padding-left: 40px;
+            }
+            
+            .elevator-panel:only-child .floor-indicator {
+                font-size: 14em; 
+                line-height: 0.8;
+                text-shadow: 0 0 50px rgba(230, 194, 95, 0.3);
+            }
+
+            .elevator-panel:only-child .panel-side-info {
+                flex: 1;
+                align-items: center; 
+                gap: 20px;
+            }
+
+            .elevator-panel:only-child .elevator-id {
+                font-size: 2em;
+                margin-bottom: 10px;
+            }
+
+            .elevator-panel:only-child .direction-status {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .elevator-panel:only-child .elevator-arrow-svg,
+            .elevator-panel:only-child .stop-status-svg {
+                width: 100px;
+                height: 100px;
+            }
+
+            .elevator-panel:only-child .eta-display {
+                border-top: none; 
+            }
+
+            .elevator-panel:only-child .eta-result {
+                font-size: 3em; 
+            }
+            
+            .elevator-panel:only-child .floor-label {
+                font-size: 1.2em;
+            }
+            
+            .elevator-panel:only-child.approaching .panel-side-floor {
+                border-left-color: rgba(15, 23, 42, 0.2);
+            }
+        }
+
+        /* --- Active State Animation (Pulse) --- */
+        @keyframes pulse-gold {
+            0% { 
+                box-shadow: 0 0 20px rgba(230, 194, 95, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.4); 
+                transform: scale(1.02) translateY(-5px);
+            }
+            50% { 
+                box-shadow: 0 0 50px rgba(230, 194, 95, 1), inset 0 0 40px rgba(255, 255, 255, 0.6); 
+                transform: scale(1.03) translateY(-5px);
+                border-color: #fff;
+            }
+            100% { 
+                box-shadow: 0 0 20px rgba(230, 194, 95, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.4); 
+                transform: scale(1.02) translateY(-5px);
+            }
+        }
+
+        /* --- NEW: Active State (Approaching) --- */
+        .elevator-panel.approaching {
+            background: var(--active-gold-bg);
+            border-color: rgba(255, 255, 255, 0.8);
+            z-index: 10;
+            animation: pulse-gold 2s infinite ease-in-out; /* Continuous Pulse */
+        }
+
+        .elevator-id { 
+            font-size: 1.2em; 
+            font-weight: 400; 
+            color: var(--text-secondary); 
+            margin-bottom: 5px;
+            transition: color 0.3s;
+        }
+        
+        /* Color Inversion when Active */
+        .elevator-panel.approaching .elevator-id {
+            color: rgba(15, 23, 42, 0.7);
+            font-weight: 600;
+        }
+
+        .floor-indicator { 
+            font-size: 5.5em; 
+            font-weight: 800; 
+            color: var(--gold-primary);
+            text-shadow: 0 0 30px rgba(230, 194, 95, 0.4); 
+            line-height: 1;
+            letter-spacing: -3px;
+            margin: 0;
+            transition: color 0.3s;
+        }
+
+        /* Color Inversion for Floor Number */
+        .elevator-panel.approaching .floor-indicator {
+            color: var(--active-text-dark);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .direction-status { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 60px; 
+            width: 60px;
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+        /* --- ARROW & STOP ICONS --- */
+        .elevator-arrow-svg {
+            width: 50px;
+            height: 50px;
+            fill: var(--gold-primary);
+            filter: drop-shadow(0 0 10px rgba(230, 194, 95, 0.5));
+            transition: transform 0.3s ease, fill 0.3s;
+        }
+        
+        /* Color Inversion for Arrow */
+        .elevator-panel.approaching .elevator-arrow-svg {
+            fill: var(--active-text-dark);
+            filter: none;
+        }
+
+        .arrow-up { transform: rotate(0deg); }
+        .arrow-down { transform: rotate(180deg); }
+
+        .stop-status-svg {
+            width: 55px;
+            height: 55px;
+            overflow: visible;
+        }
+        .stop-ring {
+            fill: none;
+            stroke: var(--gold-primary);
+            stroke-width: 3;
+            stroke-linecap: round;
+            transform-origin: center;
+            transform: rotate(-90deg);
+            stroke-dasharray: 283; 
+            stroke-dashoffset: 283;
+            filter: drop-shadow(0 0 8px rgba(230, 194, 95, 0.4));
+            animation: ringLoad 3s ease-in-out infinite alternate;
+            transition: stroke 0.3s;
+        }
+        .stop-bars {
+            fill: var(--gold-primary);
+            filter: drop-shadow(0 0 5px rgba(230, 194, 95, 0.5));
+            transform-origin: center;
+            animation: barsPulse 2s ease-in-out infinite;
+            transition: fill 0.3s;
+        }
+        
+        /* Color Inversion for Stop Icon */
+        .elevator-panel.approaching .stop-ring { stroke: var(--active-text-dark); filter: none; }
+        .elevator-panel.approaching .stop-bars { fill: var(--active-text-dark); filter: none; }
+
+
+        /* --- ANIMATIONS --- */
+        @keyframes flowAnimation {
+            0% { transform: translateY(20%); opacity: 0; }
+            30% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { transform: translateY(-40%); opacity: 0; }
+        }
+        .elevator-arrow-path { animation: flowAnimation 1.5s infinite linear; }
+        @keyframes ringLoad { 0% { stroke-dashoffset: 283; } 20% { stroke-dashoffset: 283; } 100% { stroke-dashoffset: 0; } }
+        @keyframes barsPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+        /* --- ETA Section --- */
+        .eta-display {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            padding-top: 10px;
+            margin-top: 5px;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+        
+        .elevator-panel.approaching .eta-display {
+            border-top: 1px solid rgba(15, 23, 42, 0.2);
+        }
+
+        .floor-label { font-size: 0.9em; color: var(--text-secondary); margin-bottom: 2px; transition: color 0.3s; }
+        .elevator-panel.approaching .floor-label { color: rgba(15, 23, 42, 0.7); font-weight: 600; }
+
+        .eta-result { 
+            font-size: 1.4em; 
+            font-weight: 600; 
+            color: var(--gold-primary);
+            text-shadow: 0 0 15px rgba(230, 194, 95, 0.3);
+            min-height: 1.5em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        /* Active ETA Style - BIG EMPHASIS */
+        .elevator-panel.approaching .eta-result {
+            color: var(--active-text-dark);
+            text-shadow: none;
+            font-weight: 800;
+            font-size: 2em; /* Significant increase size */
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Mode Specific Styles --- */
+        body.shabbat-mode-active #main-shabbat-indicator { display: flex; }
+        
+        /* WEEKDAY MODE (New logic: Hide info, keep floor/arrows) */
+        body.weekday-mode .eta-display { display: none !important; }
+        /* body.weekday-mode .elevator-id { display: none !important; } -- REMOVED: Elevator Name Visible Always */
+        
+        /* Ensure Dashboard is visible ALWAYS */
+        .dashboard-container { display: flex !important; }
+
+        /* Hide Clock ALWAYS */
+        #clockContainer { display: none !important; }
+
+
+        /* --- Footer Controls --- */
+        .footer-controls {
+            position: fixed; 
+            bottom: 10px; 
+            left: 0; 
+            width: 100%; 
+            padding: 10px;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 100; 
+            gap: 15px; 
+            box-sizing: border-box;
+            pointer-events: none; 
+        }
+        
+        .control-btn {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            color: var(--gold-muted);
+            border-radius: 50%; 
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em; 
+            cursor: pointer; 
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .control-btn:hover { background: rgba(255, 255, 255, 0.25); color: #fff; transform: translateY(-3px); }
+
+        body.shabbat-mode-active .footer-controls { 
+            justify-content: flex-start;
+            padding-right: 20px;
+        }
+
+        /* --- Modal & Notifications --- */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { 
+            background: #1e293b; 
+            padding: 30px; 
+            border: 1px solid var(--gold-muted); 
+            border-radius: 28px; 
+            width: 90%; 
+            max-width: 450px; 
+            text-align: center; 
+            position: relative; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .modal-title { color: var(--gold-primary); margin-top: 0; }
+        .modal-text { color: var(--text-main); margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 15px; left: 20px; color: var(--text-secondary); font-size: 32px; font-weight: bold; cursor: pointer; line-height: 1; }
+        .qr-container { margin: 10px auto; padding: 15px; background: #fff; border-radius: 16px; display: inline-block; position: relative; }
+        #whatsappQRContainer { width: 180px !important; height: 180px !important; }
+        .qr-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: #fff; border-radius: 8px; padding: 4px; }
+
+        .notification { visibility: hidden; opacity: 0; min-width: 200px; background: var(--gold-primary); color: #0f172a; text-align: center; border-radius: 50px; padding: 12px 25px; position: fixed; z-index: 3001; left: 50%; top: 20px; font-size: 1em; transform: translateX(-50%) translateY(-20px); transition: all 0.4s; font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .notification.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* --- UPDATED: Bottom Status Bar --- */
+        .bottom-status-bar {
+            position: fixed; bottom: 5px; left: 0; right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 1px solid rgba(236, 208, 143, 0.3);
+            
+            /* HUGE SIZE UPDATE */
+            padding: 15px 20px;
+            font-size: 2.2em; /* x2.5 Bigger */
+            
+            text-align: center; color: var(--gold-muted);
+            z-index: 50; 
+            display: block !important; /* Always Visible */
+        }
+        
+        /* ----------------------------------------------------------- */
+        /* ---  SPECIFIC MEDIA QUERY FOR SHORT LANDSCAPE SCREENS  --- */
+        /* Targets 800x480 and 1024x600 (height <= 640px)           */
+        /* Uses 'vmin' units to guarantee fit based on height         */
+        /* ----------------------------------------------------------- */
+        @media (orientation: landscape) and (max-height: 640px) {
+            body { 
+                padding: 0;
+                overflow: hidden;
+            }
+            
+            /* Compact Header - SMALLER */
+            .top-logo {
+                max-height: 8vh; /* Reduced from 10vmin */
+                margin: 1vh auto;
+            }
+
+            #displayContainer {
+                height: 100vh;
+                padding-bottom: 90px; /* Increased for bigger footer */
+                justify-content: flex-start; 
+                padding-top: 0;
+                box-sizing: border-box;
+            }
+
+            /* Reduced Shabbat Header */
+            #main-shabbat-indicator {
+                font-size: 4vh; 
+                margin: 0 0 2vh 0; /* ADDED MARGIN BOTTOM */
+                gap: 2vh;
+            }
+            .shabbat-candle-svg { width: 5vh; }
+
+            /* --- SINGLE VIEW OPTIMIZATION (Height Restricted) --- */
+            .elevator-panel:only-child {
+                width: 96vw; 
+                /* Logic: Full height minus Header (~15vh) and Footer (~60px) */
+                height: auto;
+                max-height: 65vh; /* Hard limit to prevent overlap */
+                min-height: 0;
+                padding: 2vmin; /* ADDED PADDING (Breathing Room) */
+                margin: 8vh auto 0 auto; /* Added margin top to push it down */
+                justify-content: center; /* Center content vertically */
+                align-items: center;     /* Center content horizontally */
+                gap: 0;
+            }
+            
+            /* Left Side (Info) */
+            .elevator-panel:only-child .panel-side-info {
+                flex: 0 0 45%; 
+                justify-content: center;
+                gap: 1vh;
+            }
+            
+            .elevator-panel:only-child .elevator-id {
+                font-size: 4.5vh; /* Reduced slightly */
+                margin: 0;
+                line-height: 1;
+            }
+            
+            .elevator-panel:only-child .direction-status {
+                width: 14vh; /* Reduced slightly */
+                height: 14vh;
+                margin: 0;
+            }
+            .elevator-panel:only-child .elevator-arrow-svg,
+            .elevator-panel:only-child .stop-status-svg {
+                width: 12vh;
+                height: 12vh;
+            }
+            
+            .elevator-panel:only-child .eta-display {
+                margin: 0; padding: 0; border: none;
+            }
+            .elevator-panel:only-child .floor-label { font-size: 2.5vh; } /* Reduced slightly */
+            .elevator-panel:only-child .eta-result { 
+                font-size: 6vh; /* Reduced slightly */
+                line-height: 1; 
+                margin-top: 0;
+            }
+
+            /* Right Side (Floor) */
+            .elevator-panel:only-child .panel-side-floor {
+                flex: 0 0 55%; 
+                padding: 0;
+                border-left: 2px solid rgba(255,255,255,0.1);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .elevator-panel:only-child .floor-indicator {
+                font-size: 32vh; /* Reduced from 38vh */
+                line-height: 0.8;
+                margin-top: 1.5vh;
+                letter-spacing: -1vh;
+            }
+
+            /* --- MULTIPLE ELEVATORS LAYOUT --- */
+            .dashboard-container:not(:has(.elevator-panel:only-child)) {
+                display: flex;
+                flex-wrap: nowrap;
+                width: 100%;
+                gap: 2vmin; 
+                justify-content: center;
+                align-items: center;
+            }
+
+            .elevator-panel:not(:only-child) {
+                flex: 0 1 30vw; 
+                height: 60vh;
+                min-height: 0;
+                padding: 2vmin;
+            }
+            
+            .elevator-panel:not(:only-child) .floor-indicator { 
+                font-size: 20vmin; 
+            }
+            
+            /* Footer Fix */
+            .footer-controls { 
+                bottom: 2vmin; 
+            }
+            
+            /* Adjust logo for landscape short */
+            .bottom-logo { max-height: 80px; bottom: 85px; left: 50%; transform: translateX(-50%); }
+            
+            /* Adjust bottom status bar font for landscape */
+            .bottom-status-bar { font-size: 1.5em; padding: 8px; }
+        }
+        
+        /* Portrait Mobile */
+        @media (max-width: 480px) and (orientation: portrait) {
+             #main-shabbat-indicator { font-size: 1.8em; margin-bottom: 20px; }
+             .dashboard-container { gap: 10px; }
+             .elevator-panel { width: 46%; min-height: 220px; padding: 15px 10px; }
+             .floor-indicator { font-size: 4em; }
+             .direction-status { height: 40px; width: 40px; }
+             .elevator-arrow-svg { width: 35px; height: 35px; }
+             .stop-status-svg { width: 38px; height: 38px; }
+             .eta-result { font-size: 1em; }
+             
+             .elevator-panel:only-child {
+                 flex-direction: column;
+                 width: 300px;
+                 gap: 0;
+                 height: auto;
+             }
+             .elevator-panel:only-child .panel-side-floor {
+                 border-left: none;
+                 padding-left: 0;
+             }
+             .elevator-panel:only-child .floor-indicator {
+                 font-size: 5.5em; /* Reset size */
+             }
+             
+             /* Adjust logo/footer for portrait */
+             .bottom-status-bar { font-size: 1.5em; }
+             .bottom-logo { bottom: 80px; max-height: 80px; }
+        }
+
+        /* Error Screen for missing floor */
+        #errorScreen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            color: #ef4444;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    
+    <!-- Error Screen (Shown if no floor in URL) -->
+    <div id="errorScreen">
+        <i class="fas fa-exclamation-triangle" style="font-size: 4em; margin-bottom: 20px;"></i>
+        <h2>שגיאת קונפיגורציה</h2>
+        <p>לא הוגדרה קומה עבור מסך זה.</p>
+        <p style="direction: ltr; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+            Add <b>?floor=X</b> to the URL.<br>Example: <i>kiosk.html?floor=5</i>
+        </p>
+    </div>
+
+    <!-- ADDED: Top Logo (Dynamic Src) -->
+    <img id="mainLogo" class="top-logo" src="" alt="Main Logo">
+
+    <div id="displayContainer">
+        
+        <div id="main-shabbat-indicator">
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="flameGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#C0C0C0" /><stop offset="50%" style="stop-color:#FFFFFF" /><stop offset="100%" style="stop-color:#B0B0B0" />
+                    </linearGradient>
+                </defs>
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="44" y="120" width="12" height="65" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M38 150 C 35 145, 65 145, 62 150 L 38 150 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M35 120 C 40 110, 60 110, 65 120 L 35 120 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="42" y="50" width="16" height="70" fill="#f0f0f0" stroke="#ccc" stroke-width="0"/>
+                <path d="M49 50 L 51 42" stroke="#333" stroke-width="2"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347" filter="url(#flameGlow)">
+                    <animate attributeName="ry" values="12;14;12" dur="1.2s" repeatCount="indefinite" />
+                    <animate attributeName="rx" values="7;6;7" dur="1s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="50" cy="33" rx="3" ry="6" fill="#FFEEA0" />
+            </svg>
+            
+            <span>שבת שלום</span>
+            
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="44" y="120" width="12" height="65" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M38 150 C 35 145, 65 145, 62 150 L 38 150 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M35 120 C 40 110, 60 110, 65 120 L 35 120 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="42" y="50" width="16" height="70" fill="#f0f0f0" stroke="#ccc" stroke-width="0"/>
+                <path d="M49 50 L 51 42" stroke="#333" stroke-width="2"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347" filter="url(#flameGlow)">
+                    <animate attributeName="ry" values="12;14;12" dur="1.2s" repeatCount="indefinite" />
+                    <animate attributeName="rx" values="7;6;7" dur="1s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="50" cy="33" rx="3" ry="6" fill="#FFEEA0" />
+            </svg>
+        </div>
+        
+        <!-- REMOVED CLOCK CONTAINER -->
+        <div id="clockContainer"></div>
+        
+        <div class="dashboard-container"></div>
+        
+    </div>
+    
+    <!-- Dynamic Logo from Config -->
+    <img id="poweredByLogo" src="" alt="Powered By Logo" class="bottom-logo">
+    
+    <div class="notification" id="notificationPopup"></div>
+    
+    <div class="bottom-status-bar" id="bottomStatusBar">
+        <span class="status-time" id="statusTime" style="font-weight:bold; color: var(--gold-primary);">00:00:00</span> | 
+        <span id="statusDate"></span> | 
+        <span id="statusHebrewDate" style="margin-right: 8px;"></span>
+    </div>
+
+    <script>
+        // --- 1. Dynamic Floor Detection (URL Param: ?floor=5) ---
+        function getFloorFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('floor')) {
+                return urlParams.get('floor');
+            }
+            const path = window.location.pathname;
+            const segments = path.replace(/^\/|\/$/g, '').split('/');
+            for (let i = segments.length - 1; i >= 0; i--) {
+                const segment = segments[i];
+                if (!isNaN(segment) && segment.trim() !== '') {
+                    return segment;
+                }
+                const match = segment.match(/kiosk(\d+)/i);
+                if (match) return match[1];
+            }
+            return null;
+        }
+
+        const urlFloor = getFloorFromUrl();
+        if (urlFloor === null || urlFloor === "") {
+            document.getElementById('displayContainer').style.display = 'none';
+            document.getElementById('errorScreen').style.display = 'flex';
+            document.querySelector('.bottom-logo').style.display = 'none';
+            throw new Error("No floor defined in URL");
+        }
+
+        let THIS_SCREEN_FLOOR = urlFloor;
+        document.title = `מעלית שבת - קומה ${THIS_SCREEN_FLOOR}`;
+
+        // --- Global Variables ---
+        const TEST_SHABBAT_MODE = false; 
+        const STALE_TIMEOUT = 30000;
+        const INTERPOLATION_DELAY = 500;
+        
+        let WHATSAPP_LINK = "https://wa.me/972525705289"; 
+
+        let elevatorStates = {}, latestElevatorsData = null, settings = null, elevatorConfigs = null;
+        let isShabbatOrHoliday = false, isInitialized = false;
+        let manualShabbatOverride = false; 
+        let clockInitialized = false;
+        let serverTimeOffset = null;
+        let currentJerusalemTime = new Date();
+        let currentHebrewDateCache = "טוען...";
+
+        // --- 2. Initialize Firebase from Config ---
+        if (typeof firebaseConfig === 'undefined') {
+            alert("שגיאה: קובץ קונפיגורציה חסר (firebase-config.js).");
+            throw new Error("Missing firebase-config.js");
+        }
+        
+        const auth = window.auth || firebase.auth();
+        const database = window.database || firebase.database();
+
+        function applyBranding() {
+            if (!window.appConfig) return;
+            const cfg = window.appConfig;
+            const mainLogo = document.getElementById('mainLogo');
+            if (mainLogo && cfg.branding.logoUrl) {
+                mainLogo.src = cfg.branding.logoUrl;
+            } else if (mainLogo) {
+                mainLogo.style.display = 'none'; 
+            }
+            const poweredBy = document.getElementById('poweredByLogo');
+            if (poweredBy && cfg.branding.poweredByUrl) poweredBy.src = cfg.branding.poweredByUrl;
+            if (cfg.texts.whatsappLink) WHATSAPP_LINK = cfg.texts.whatsappLink;
+        }
+
+        applyBranding();
+
+        const ui = {
+            displayContainer: document.getElementById('displayContainer'),
+            notificationPopup: document.getElementById('notificationPopup'),
+            bottomStatusBar: document.getElementById('bottomStatusBar'),
+        };
+        
+        function showNotification(message, isError = false) {
+            ui.notificationPopup.textContent = message;
+            ui.notificationPopup.style.backgroundColor = isError ? '#ef4444' : '#E6C25F';
+            ui.notificationPopup.style.color = isError ? '#fff' : '#0f172a';
+            ui.notificationPopup.classList.add('show');
+            setTimeout(() => ui.notificationPopup.classList.remove('show'), 4000);
+        }
+        
+        ui.displayContainer.style.display = 'flex';
+        
+        // --- Auth Logic ---
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                initializeAppLogic();
+            } else {
+                auth.signInAnonymously().catch((error) => {
+                    console.error("Anonymous auth failed:", error);
+                    showNotification("שגיאת התחברות לשרת", true);
+                });
+            }
+        });
+        
+        function updateJerusalemTime() {
+            if (serverTimeOffset === null) return null;
+            const now = new Date(Date.now() + serverTimeOffset);
+            const options = { timeZone: 'Asia/Jerusalem', hour12: false, year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', weekday: 'long' };
+            const formatter = new Intl.DateTimeFormat('en-US', options);
+            const parts = formatter.formatToParts(now);
+            const findPart = (type) => parts.find(p => p.type === type)?.value || '00';
+            const year = parseInt(findPart('year'));
+            const month = parseInt(findPart('month')) - 1; 
+            const day = parseInt(findPart('day'));
+            const hour = parseInt(findPart('hour')) % 24;
+            const minute = parseInt(findPart('minute'));
+            const second = parseInt(findPart('second'));
+            currentJerusalemTime = new Date(Date.UTC(year, month, day, hour, minute, second));
+            const dayNameHe = new Intl.DateTimeFormat('he-IL', { timeZone: 'Asia/Jerusalem', weekday: 'long' }).format(now);
+            return {
+                dateObj: currentJerusalemTime, dayName: dayNameHe,
+                day: String(day).padStart(2, '0'), month: String(month + 1).padStart(2, '0'), year: String(year),
+                hour: String(hour).padStart(2, '0'), minute: String(minute).padStart(2, '0'), second: String(second).padStart(2, '0'),
+                rawHour: hour
+            };
+        }
+
+        async function syncServerTime() {
+            try {
+                const offsetRef = database.ref('.info/serverTimeOffset');
+                const snapshot = await offsetRef.once('value');
+                serverTimeOffset = snapshot.val() || 0;
+            } catch (error) { serverTimeOffset = 0; }
+        }
+
+        async function initializeClock() {
+            if (clockInitialized) return;
+            await syncServerTime();
+            clockInitialized = true;
+            const timeData = updateJerusalemTime();
+            if (timeData) { await fetchHebrewDate(timeData.dateObj); updateClockDisplay(); }
+            setInterval(updateClockDisplay, 1000);
+            setInterval(syncServerTime, 3600000);
+        }
+        
+        function updateClockDisplay() {
+            const timeData = updateJerusalemTime();
+            if (!timeData) return;
+            const timeString = `${timeData.hour}:${timeData.minute}:${timeData.second}`;
+            const dateString = `${timeData.dayName}, ${timeData.day}/${timeData.month}/${timeData.year}`;
+            
+            // Only update bottom bar as main clocks are gone
+            const statusTime = document.getElementById('statusTime');
+            const statusDate = document.getElementById('statusDate');
+            if (statusTime && statusDate) { statusTime.textContent = timeString; statusDate.textContent = dateString; }
+            
+            if (timeData.second === '00' || document.getElementById('statusHebrewDate').textContent === "") fetchHebrewDate(timeData.dateObj);
+            else {
+                const statusHebrewDateEl = document.getElementById('statusHebrewDate');
+                if (statusHebrewDateEl) statusHebrewDateEl.textContent = currentHebrewDateCache;
+            }
+        }
+
+        async function fetchHebrewDate(date) {
+            try {
+                const year = date.getUTCFullYear();
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const url = `https://www.hebcal.com/converter?cfg=json&gy=${year}&gm=${month}&gd=${day}&g2h=1`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.hebrew) {
+                    currentHebrewDateCache = data.hebrew.replace(/[\u0591-\u05C7]/g, '');
+                    const statusHebrewDateEl = document.getElementById('statusHebrewDate');
+                    if (statusHebrewDateEl) statusHebrewDateEl.textContent = currentHebrewDateCache;
+                }
+            } catch (error) {}
+        }
+        
+        function shouldShowElevator(elevatorId) {
+            const floorToCheck = THIS_SCREEN_FLOOR;
+            if (!floorToCheck) return true;
+            const config = elevatorConfigs[elevatorId];
+            if (!config) return true;
+            if (config.VISIBLE_FLOORS && config.VISIBLE_FLOORS.length > 0) {
+                if (config.VISIBLE_FLOORS.includes('*')) return true;
+                return config.VISIBLE_FLOORS.map(String).includes(String(floorToCheck));
+            }
+            if (config.STOPPING_FLOORS) return config.STOPPING_FLOORS.map(String).includes(String(floorToCheck));
+            return true;
+        }
+
+        async function initializeAppLogic() {
+            if (isInitialized) { renderFullDisplay(); return; }
+            isInitialized = true;
+            await initializeClock();
+            try {
+                const [settingsSnapshot, configsSnapshot, elevatorsSnapshot] = await Promise.all([
+                    database.ref('settings').once('value'),
+                    database.ref('elevator_configs').once('value'),
+                    database.ref('elevators').once('value')
+                ]);
+                settings = settingsSnapshot.val() || {};
+                elevatorConfigs = configsSnapshot.val() || {};
+                latestElevatorsData = elevatorsSnapshot.val() || {};
+                await checkShabbatStatus();
+                renderFullDisplay(); // Always render
+
+                database.ref('settings').on('value', (snapshot) => { settings = snapshot.val() || {}; renderFullDisplay(); });
+                database.ref('elevator_configs').on('value', (snapshot) => { elevatorConfigs = configsSnapshot.val() || {}; renderFullDisplay(); });
+                database.ref('elevators').on('value', (snapshot) => { latestElevatorsData = snapshot.val() || {}; renderFullDisplay(); });
+
+                setInterval(checkShabbatStatus, 300000);
+                setInterval(() => {
+                    if (latestElevatorsData) {
+                        const elevatorIds = Object.keys(latestElevatorsData);
+                        const visibleElevators = elevatorIds.filter(id => shouldShowElevator(id));
+                        visibleElevators.forEach(id => {
+                            if (elevatorStates[id]) calculateAndShowETAFor(id, elevatorStates[id]);
+                        });
+                    }
+                }, 1000); 
+
+            } catch (error) { console.error("Error init app", error); }
+        }
+
+        function renderFullDisplay() { 
+            if (!THIS_SCREEN_FLOOR || !settings || !elevatorConfigs) return; // Removed isShabbat check so it renders always
+            const elevatorIds = latestElevatorsData ? Object.keys(latestElevatorsData) : [];
+            const visibleElevators = elevatorIds.filter(id => shouldShowElevator(id));
+            if (visibleElevators.length === 0 && document.querySelector('.dashboard-container').innerHTML === '') return;
+            if (latestElevatorsData) {
+                createElevatorPanels(visibleElevators);
+                visibleElevators.forEach(id => {
+                    if (latestElevatorsData[id]) processElevatorUpdate(id, latestElevatorsData[id]);
+                });
+            }
+        }
+        
+        async function checkShabbatStatus() {
+            let wasShabbat = isShabbatOrHoliday;
+            if (settings && settings.GEO_NAME_ID) {
+                try {
+                    const now = new Date(Date.now() + (serverTimeOffset || 0));
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const url = `https://www.hebcal.com/shabbat?cfg=json&geonameid=${settings.GEO_NAME_ID}&m=0&tzid=Asia/Jerusalem&gy=${year}&gm=${month}&gd=${day}`;
+                    
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const data = await response.json();
+                    let isCurrentlyShabbat = false;
+                    
+                    if (data.items) {
+                        data.items.forEach(item => {
+                            const itemDate = new Date(item.date);
+                            
+                            // 1. Candles: Start 20 mins BEFORE
+                            if (item.category === 'candles') {
+                                const shabbatStart = new Date(itemDate.getTime() - (20 * 60 * 1000));
+                                const havdalahItem = data.items.find(i => i.category === 'havdalah' && new Date(i.date) > shabbatStart);
+                                if (havdalahItem) {
+                                    // 2. Havdalah: End 40 mins AFTER
+                                    const havdalahTime = new Date(havdalahItem.date);
+                                    const shabbatEnd = new Date(havdalahTime.getTime() + (40 * 60 * 1000));
+                                    if (now >= shabbatStart && now <= shabbatEnd) {
+                                        isCurrentlyShabbat = true;
+                                    }
+                                }
+                            }
+                            if (item.category === 'holiday' && item.yomtov) {
+                                 const itemLocalDate = new Date(itemDate.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+                                 const nowLocalDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+                                 if(nowLocalDate.toDateString() === itemLocalDate.toDateString()) isCurrentlyShabbat = true;
+                            }
+                        });
+                    }
+                    isShabbatOrHoliday = isCurrentlyShabbat || TEST_SHABBAT_MODE || manualShabbatOverride;
+                } catch (error) { 
+                    if (manualShabbatOverride) isShabbatOrHoliday = true;
+                    else if (TEST_SHABBAT_MODE) isShabbatOrHoliday = true;
+                    else isShabbatOrHoliday = wasShabbat;
+                }
+            } else { isShabbatOrHoliday = TEST_SHABBAT_MODE || manualShabbatOverride; }
+            
+            // Always update display mode
+            updateDisplayMode();
+        }
+        
+        function updateDisplayMode() {
+            // Toggle classes on body to control CSS visibility
+            document.body.classList.toggle('shabbat-mode-active', isShabbatOrHoliday);
+            document.body.classList.toggle('weekday-mode', !isShabbatOrHoliday);
+            
+            // Dashboard always flex, Clock always none (handled in CSS)
+            if (isShabbatOrHoliday) renderFullDisplay();
+        }
+        
+        async function processElevatorUpdate(id, newData) {
+            const currentState = elevatorStates[id] || {};
+            const lastFloorNum = getNumericFloor(currentState.floor);
+            const currentFloorNum = getNumericFloor(newData.floor);
+            if (currentFloorNum === null) return;
+            const config = elevatorConfigs[id] || {};
+            const topFloorNum = getNumericFloor(config.TOP_FLOOR ?? settings.TOP_FLOOR);
+            const bottomFloorNum = getNumericFloor(config.BOTTOM_FLOOR ?? settings.BOTTOM_FLOOR);
+            if (currentState.timeoutId) clearTimeout(currentState.timeoutId);
+            
+            let newDirection = currentState.direction || 'stopped';
+            if (currentFloorNum === topFloorNum || currentFloorNum === bottomFloorNum) newDirection = 'stopped';
+            else if (lastFloorNum !== null && currentFloorNum !== lastFloorNum) newDirection = (currentFloorNum > lastFloorNum) ? 'up' : 'down';
+
+            const newState = {
+                floor: newData.floor,
+                direction: newDirection,
+                timestamp: Date.now(),
+                timeoutId: setTimeout(() => {
+                    const timedOutState = elevatorStates[id];
+                    if (timedOutState && (Date.now() - timedOutState.timestamp >= STALE_TIMEOUT)) {
+                       timedOutState.direction = 'stopped';
+                       updateElevatorDisplay(id, timedOutState);
+                    }
+                }, STALE_TIMEOUT)
+            };
+            elevatorStates[id] = newState;
+            if (lastFloorNum !== null && Math.abs(currentFloorNum - lastFloorNum) > 1) {
+                await interpolateAndDisplay(id, lastFloorNum, currentFloorNum, newState);
+            } else {
+                updateElevatorDisplay(id, newState);
+            }
+            if (typeof calculateAndShowETAFor === 'function') calculateAndShowETAFor(id, newState);
+        }
+
+        async function interpolateAndDisplay(elevatorId, startNum, endNum, finalState) {
+            const step = (endNum > startNum) ? 1 : -1;
+            const direction = (step > 0) ? 'up' : 'down';
+            const allFloorsMap = new Map();
+            if (elevatorConfigs) {
+                Object.values(elevatorConfigs).forEach(config => {
+                    if(config && config.STOPPING_FLOORS) config.STOPPING_FLOORS.forEach(floor => allFloorsMap.set(getNumericFloor(floor), floor));
+                });
+            }
+            for (let floor = startNum + step; floor !== endNum; floor += step) {
+                const displayFloor = allFloorsMap.get(floor) || floor.toString();
+                const intermediateState = { floor: displayFloor, direction: direction };
+                updateElevatorDisplay(elevatorId, intermediateState);
+                await new Promise(resolve => setTimeout(resolve, INTERPOLATION_DELAY));
+            }
+            updateElevatorDisplay(elevatorId, finalState);
+        }
+
+        function createElevatorPanels(elevatorIds) {
+            const container = document.querySelector('.dashboard-container');
+            const currentPanels = new Set(Array.from(container.children).map(child => child.id));
+            const newPanelIds = new Set(elevatorIds.map(id => `panel-${id}`));
+            if (new Set([...currentPanels, ...newPanelIds]).size === currentPanels.size && currentPanels.size === newPanelIds.size) return;
+            
+            container.innerHTML = '';
+            elevatorIds.sort().forEach(id => {
+                const panel = document.createElement('div');
+                panel.className = 'elevator-panel';
+                panel.id = `panel-${id}`;
+                let elevatorName = `מעלית ${id}`;
+                if (window.appConfig && window.appConfig.elevatorNames && window.appConfig.elevatorNames[id]) {
+                    elevatorName = window.appConfig.elevatorNames[id].he || elevatorName;
+                }
+
+                panel.innerHTML = `
+                    <div class="panel-side-floor">
+                        <div class="floor-indicator" id="floorNumber-${id}">--</div>
+                    </div>
+                    
+                    <div class="panel-side-info">
+                        <div class="floor-label elevator-id">${elevatorName}</div>
+                        
+                        <div class="direction-status">
+                            <svg id="arrowIcon-${id}" class="elevator-arrow-svg" viewBox="0 0 24 24" style="display:none;">
+                                <path class="elevator-arrow-path" d="M12 4 L22 20 L2 20 Z" />
+                            </svg>
+                            <svg id="stopIcon-${id}" class="stop-status-svg" viewBox="0 0 100 100" style="display:none;">
+                                <circle class="stop-ring" cx="50" cy="50" r="45" />
+                                <g class="stop-bars"> 
+                                    <rect x="38" y="30" width="8" height="40" rx="2" />
+                                    <rect x="54" y="30" width="8" height="40" rx="2" />
+                                </g>
+                            </svg>
+                        </div>
+
+                        <div class="eta-display">
+                            <div class="floor-label" id="etaLabel-${id}">המעלית תגיע לקומה ${THIS_SCREEN_FLOOR} בעוד</div>
+                            <div class="eta-result" id="etaResult-${id}">...</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(panel);
+            });
+        }
+
+        function getNumericFloor(floorText) {
+            if (floorText === null || floorText === undefined) return null;
+            const text = String(floorText).toUpperCase();
+            if (text === 'L') return -1;
+            const num = parseInt(text, 10);
+            return isNaN(num) ? null : num;
+        }
+
+        function countStopsInList(startFloor, endFloor, list) {
+             if (!list || list.length === 0) return 0;
+             const sortedStops = list.map(getNumericFloor).sort((a, b) => a - b);
+             if (endFloor > startFloor) { return sortedStops.filter(f => f > startFloor && f <= endFloor).length; } 
+             else { return sortedStops.filter(f => f < startFloor && f >= endFloor).length; }
+        }
+        
+        function calculateAndShowETAFor(elevatorId, elevatorState) {
+            const etaResultElement = document.getElementById(`etaResult-${elevatorId}`);
+            if (!etaResultElement) return;
+            
+            const etaLabel = document.getElementById(`etaLabel-${elevatorId}`);
+
+            const panel = document.getElementById(`panel-${elevatorId}`);
+            const resetPanelStyle = () => {
+                if (panel && panel.classList.contains('approaching')) {
+                    panel.classList.remove('approaching');
+                }
+            };
+            
+            // --- UPDATED LOGIC: Disable ETA & Flashing on Weekdays ---
+            if (!isShabbatOrHoliday) { 
+                etaResultElement.textContent = ""; 
+                resetPanelStyle(); // Ensure no flashing on weekdays
+                return; 
+            }
+            
+            const elevatorConfig = elevatorConfigs[elevatorId];
+            if (!elevatorState || !elevatorConfig || !settings) { 
+                etaResultElement.textContent = "..."; 
+                resetPanelStyle();
+                return; 
+            }
+            
+            if(etaLabel) etaLabel.style.visibility = 'visible';
+
+            const breakActive = elevatorConfig.SHABBAT_BREAK_ACTIVE || false;
+            if (breakActive) {
+                const now = new Date(Date.now() + (serverTimeOffset || 0));
+                let inBreak = false;
+
+                if (Array.isArray(elevatorConfig.SHABBAT_BREAKS) && elevatorConfig.SHABBAT_BREAKS.length > 0) {
+                    for (const brk of elevatorConfig.SHABBAT_BREAKS) {
+                        if (!brk.start || !brk.end) continue;
+                        const [startH, startM] = brk.start.split(':').map(Number);
+                        const [endH, endM] = brk.end.split(':').map(Number);
+                        const startTime = new Date(now); startTime.setHours(startH, startM, 0);
+                        const endTime = new Date(now); endTime.setHours(endH, endM, 0);
+                        if (now >= startTime && now <= endTime) {
+                            inBreak = true;
+                            break; 
+                        }
+                    }
+                }
+                else if (elevatorConfig.SHABBAT_BREAK_START && elevatorConfig.SHABBAT_BREAK_END) {
+                    const [startH, startM] = elevatorConfig.SHABBAT_BREAK_START.split(':').map(Number);
+                    const [endH, endM] = elevatorConfig.SHABBAT_BREAK_END.split(':').map(Number);
+                    const startTime = new Date(now); startTime.setHours(startH, startM, 0);
+                    const endTime = new Date(now); endTime.setHours(endH, endM, 0);
+                    if (now >= startTime && now <= endTime) {
+                        inBreak = true;
+                    }
+                }
+
+                if (inBreak) {
+                    etaResultElement.textContent = "מצב שבת בהפסקה";
+                    if(etaLabel) etaLabel.style.visibility = 'hidden'; 
+                    resetPanelStyle();
+                    return;
+                }
+            }
+
+            const userFloorNum = getNumericFloor(THIS_SCREEN_FLOOR);
+            const topFloorNum = getNumericFloor(elevatorConfig.TOP_FLOOR ?? settings.TOP_FLOOR);
+            const bottomFloorNum = getNumericFloor(elevatorConfig.BOTTOM_FLOOR ?? settings.BOTTOM_FLOOR);
+
+            if (userFloorNum === null) { etaResultElement.textContent = "שגיאה"; return; }
+            
+            let stopsUp = elevatorConfig.STOPPING_FLOORS_UP || [];
+            let stopsDown = elevatorConfig.STOPPING_FLOORS_DOWN || [];
+            
+            const canStopUp = stopsUp.length === 0 || stopsUp.map(String).includes(String(THIS_SCREEN_FLOOR));
+            const canStopDown = stopsDown.length === 0 || stopsDown.map(String).includes(String(THIS_SCREEN_FLOOR));
+            
+            if (!canStopUp && !canStopDown) { 
+                etaResultElement.textContent = "לא עוצרת בקומה זו"; 
+                if(etaLabel) etaLabel.style.visibility = 'hidden'; 
+                return; 
+            }
+
+            const elevatorFloorNum = getNumericFloor(elevatorState.floor);
+            
+            let isHereAndStopping = false;
+            if (userFloorNum === elevatorFloorNum) {
+                 if (elevatorState.direction === 'stopped' || elevatorState.direction === ' ') {
+                     isHereAndStopping = true;
+                 }
+                 else if (elevatorState.direction === 'up' && canStopUp) {
+                     isHereAndStopping = true;
+                 }
+                 else if (elevatorState.direction === 'down' && canStopDown) {
+                     isHereAndStopping = true;
+                 }
+            }
+
+            if (isHereAndStopping) { 
+                etaResultElement.textContent = "המעלית כאן"; 
+                if(etaLabel) etaLabel.style.visibility = 'hidden'; 
+
+                if (panel && !panel.classList.contains('approaching')) {
+                    panel.classList.add('approaching');
+                }
+                return; 
+            }
+            
+            let effectiveDirection = elevatorState.direction;
+            if (effectiveDirection === 'stopped' || effectiveDirection === ' ') {
+                if (elevatorFloorNum === bottomFloorNum) effectiveDirection = 'up';
+                else if (elevatorFloorNum === topFloorNum) effectiveDirection = 'down';
+                else effectiveDirection = 'up';
+            }
+            
+            const timePerFloor = parseFloat(elevatorConfig.TIME_PER_FLOOR ?? settings.TIME_PER_FLOOR ?? 0); 
+            let timePassFloor = parseFloat(elevatorConfig.TIME_PASS_FLOOR || 0);
+            if (timePassFloor === 0) {
+                 const expressTimeUp = parseFloat(elevatorConfig.EXPRESS_TIME_UP ?? settings.EXPRESS_TIME_UP ?? 0);
+                 const totalTravelDistance = Math.abs(topFloorNum - bottomFloorNum) || 1;
+                 if(expressTimeUp > 0) timePassFloor = expressTimeUp / totalTravelDistance;
+            }
+            
+            const zeroWaitActive = elevatorConfig.ZERO_FLOOR_WAIT_ACTIVE || false;
+            const zeroWaitSeconds = parseFloat(elevatorConfig.ZERO_FLOOR_WAIT_SECONDS || 0);
+            const zeroFloorWait = zeroWaitActive ? zeroWaitSeconds : 0;
+            const zeroFloorNum = 0;
+
+            const calcSegmentTime = (start, end, dir) => {
+                const list = (dir === 'up') ? stopsUp : stopsDown;
+                const stopsCount = countStopsInList(start, end, list);
+                const steps = Math.abs(end - start);
+                if (steps === 0) return 0;
+                const passCount = steps - stopsCount; 
+                let time = (stopsCount * timePerFloor) + (passCount * timePassFloor);
+                if (zeroFloorWait > 0 && start !== zeroFloorNum) {
+                     if ((start < zeroFloorNum && end >= zeroFloorNum) || (start > zeroFloorNum && end <= zeroFloorNum)) {
+                         time += zeroFloorWait;
+                     }
+                }
+                return time;
+            };
+
+            let totalSeconds = 0;
+            if (effectiveDirection === 'up' || effectiveDirection === ' ') {
+                if (userFloorNum > elevatorFloorNum) {
+                    if (canStopUp) { totalSeconds = calcSegmentTime(elevatorFloorNum, userFloorNum, 'up'); }
+                    else {
+                        totalSeconds = calcSegmentTime(elevatorFloorNum, topFloorNum, 'up');
+                        totalSeconds += calcSegmentTime(topFloorNum, userFloorNum, 'down');
+                    }
+                } else {
+                    totalSeconds = calcSegmentTime(elevatorFloorNum, topFloorNum, 'up');
+                    totalSeconds += calcSegmentTime(topFloorNum, userFloorNum, 'down');
+                }
+            } else { 
+                if (userFloorNum < elevatorFloorNum) {
+                    if (canStopDown) { totalSeconds = calcSegmentTime(elevatorFloorNum, userFloorNum, 'down'); }
+                    else {
+                        totalSeconds = calcSegmentTime(elevatorFloorNum, bottomFloorNum, 'down');
+                        totalSeconds += calcSegmentTime(bottomFloorNum, userFloorNum, 'up');
+                    }
+                } else {
+                    totalSeconds = calcSegmentTime(elevatorFloorNum, bottomFloorNum, 'down');
+                    totalSeconds += calcSegmentTime(bottomFloorNum, userFloorNum, 'up');
+                }
+            }
+
+            if (elevatorFloorNum === zeroFloorNum && zeroFloorWait > 0) totalSeconds += zeroFloorWait;
+            const elapsedSinceUpdate = (Date.now() - (elevatorState.timestamp || Date.now())) / 1000;
+            let finalSeconds = totalSeconds - elapsedSinceUpdate;
+            if (finalSeconds < 0) finalSeconds = 0;
+            
+            if (finalSeconds <= 60) {
+                if (panel && !panel.classList.contains('approaching')) {
+                    panel.classList.add('approaching');
+                }
+            } else {
+                if (panel && panel.classList.contains('approaching')) {
+                    panel.classList.remove('approaching');
+                }
+            }
+
+            const minutes = Math.floor(finalSeconds / 60);
+            const seconds = Math.round(finalSeconds % 60);
+            etaResultElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')} דק'`;
+        }
+
+        function updateElevatorDisplay(elevatorId, stateData) {
+            const panel = document.getElementById(`panel-${elevatorId}`);
+            if (!panel) return;
+            const floorElement = document.getElementById(`floorNumber-${elevatorId}`);
+            const arrowElement = document.getElementById(`arrowIcon-${elevatorId}`);
+            const stopElement = document.getElementById(`stopIcon-${elevatorId}`);
+
+            if (!stateData) {
+                if(floorElement) floorElement.textContent = '--';
+                if(arrowElement) arrowElement.style.display = 'none';
+                if(stopElement) stopElement.style.display = 'none';
+                return;
+            }
+            if(floorElement) floorElement.textContent = stateData.floor ?? '--';
+            
+            const dir = stateData.direction;
+            
+            if (dir === 'up' || dir === 'down') {
+                if(stopElement) stopElement.style.display = 'none';
+                if(arrowElement) {
+                    arrowElement.style.display = 'block';
+                    arrowElement.classList.remove('arrow-up', 'arrow-down');
+                    if (dir === 'up') arrowElement.classList.add('arrow-up');
+                    else arrowElement.classList.add('arrow-down');
+                }
+            } else {
+                if(arrowElement) arrowElement.style.display = 'none';
+                // Always show Stop Icon now (changed from previous logic)
+                if(stopElement) stopElement.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1829 @@
+/* ============================================================
+   Ramada Jerusalem Hotel — Kiosk Lobby Display (32")
+   Design: Dark header/footer, cream center, bold gold accents
+   ============================================================ */
+
+/* --- Brand Fonts (Preserved) --- */
+@font-face { font-family: 'Fedra Sans'; src: url('fonts/FedraSansH+L-Book.otf') format('opentype'); font-weight: 400; }
+@font-face { font-family: 'Fedra Sans'; src: url('fonts/FedraSansH+L-Medium.otf') format('opentype'); font-weight: 500; }
+@font-face { font-family: 'Fedra Sans'; src: url('fonts/FedraSansH+L-Demi.otf') format('opentype'); font-weight: 700; }
+@font-face { font-family: 'Cassia'; src: url('fonts/CassiaRegular.otf') format('opentype'); font-weight: 400; }
+@font-face { font-family: 'Cassia'; src: url('fonts/CassiaBook102422.otf') format('opentype'); font-weight: 300; }
+
+/* --- Root Variables — Ramada Jerusalem --- */
+:root {
+    --gold-primary: #c5a47e;
+    --gold-muted: #a08a6a;
+    --gold-light: #ddc9a8;
+    --gold-dark: #8c7354;
+
+    --text-main: #333333;
+    --text-secondary: #c5a47e;
+
+    --surface-dark: #1a1a2e;
+    --cream: #f5f0eb;
+    --cream-dark: #ede6dc;
+
+    --glass-bg: rgba(237, 230, 220, 0.92);
+    --glass-border: 1px solid rgba(197, 164, 126, 0.4);
+    --glass-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+    --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+    --active-gold-bg: linear-gradient(135deg, #c5a47e, #b8956b);
+    --active-text-dark: #ffffff;
+}
+
+/* --- General Layout --- */
+body { 
+    margin: 0; padding: 0; 
+    font-family: 'Assistant', 'Roboto Condensed', 'Fedra Sans', sans-serif; 
+    background: var(--cream);
+    color: var(--text-main); 
+    display: flex; flex-direction: column; 
+    align-items: center; justify-content: flex-start; 
+    height: 100vh; 
+    text-align: center; 
+    box-sizing: border-box; 
+    overflow: hidden; 
+}
+
+/* Assistant for all numbers */
+.floor-indicator, .clock-time, .elevator-id, .eta-result, .status-time, .number {
+    font-family: 'Assistant', 'Roboto Condensed', sans-serif;
+}
+
+/* --- Top Logo — on light header strip --- */
+.top-logo {
+    display: block;
+    max-height: 160px; 
+    width: auto;
+    margin: 0 auto;
+    padding: 20px 0 14px;
+    background: transparent;
+    mix-blend-mode: multiply;
+    filter: none;
+    flex-shrink: 0;
+}
+
+/* Light header behind logo with gold bottom border */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 200px;
+    background: #fff;
+    border-bottom: 3px solid var(--gold-primary);
+    z-index: -1;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* --- Bottom Logo --- */
+.bottom-logo {
+    position: fixed;
+    bottom: 10px; left: 20px;
+    max-height: 40px;
+    opacity: 0.5; z-index: 200; 
+    pointer-events: none;
+}
+
+/* --- Display Container --- */
+#displayContainer { 
+    display: flex; width: 100%; 
+    flex-direction: column; 
+    align-items: center; 
+    position: relative; flex: 1; 
+    justify-content: flex-start; 
+    overflow: hidden;
+    padding-top: 10px;
+}
+#displayContainer::-webkit-scrollbar { display: none; }
+
+/* --- Shabbat Indicator --- */
+#main-shabbat-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    color: var(--gold-primary);
+    font-size: 2.5em; 
+    font-weight: 700;
+    margin-top: 5px; margin-bottom: 15px; 
+    text-shadow: 0 2px 6px rgba(197, 164, 126, 0.2);
+    flex-shrink: 0; 
+}
+
+.shabbat-candle-svg {
+    width: 28px; height: auto;
+    filter: drop-shadow(0 2px 6px rgba(197, 164, 126, 0.4));
+}
+
+/* --- Dashboard Grid --- */
+.dashboard-container {
+    display: flex; flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 15px;
+    width: 100%; max-width: 1800px;
+    flex: 1;
+    min-height: 0;
+    /* Sync panel area with dynamic banner + bottom-bar heights so panels never
+       overflow into the fixed status bar or get pushed by long admin banners. */
+    max-height: calc(100vh - var(--banner-h, 0px) - var(--bottom-bar-h, 0px) - var(--shell-overhead, 200px));
+    transition: all 0.5s ease;
+    padding: 10px;
+}
+
+/* ============================================
+   ELEVATOR PANEL — Cream card on cream bg
+   ============================================ */
+.elevator-panel { 
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: 20px; 
+    box-shadow: var(--glass-shadow);
+    padding: 20px;  
+    width: 540px; 
+    position: relative; box-sizing: border-box; 
+    display: flex; flex-direction: column; 
+    align-items: center; justify-content: center;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+    min-height: 0;
+    flex: 1 1 540px;
+    max-width: 50%;
+    overflow: hidden;
+}
+
+/* Gold accent top line */
+.elevator-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    opacity: 0.5;
+}
+
+.panel-side-floor { display: flex; justify-content: center; align-items: center; flex: 1; }
+.panel-side-info { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+
+/* --- SINGLE ELEVATOR VIEW (Desktop) --- */
+@media (min-width: 600px) {
+    .elevator-panel:only-child {
+        width: 90%; max-width: 900px;
+        flex-direction: row; 
+        justify-content: space-around;
+        align-items: center;
+        padding: 40px; gap: 20px;
+        border-radius: 28px;
+        flex: 0 0 auto;
+    }
+    .elevator-panel:only-child .panel-side-floor {
+        flex: 1;
+        border-left: 1px solid rgba(197, 164, 126, 0.3); 
+        padding-left: 40px;
+    }
+    .elevator-panel:only-child .floor-indicator {
+        font-size: calc(14em * var(--fi-scale, 1)); line-height: 0.8;
+    }
+    .elevator-panel:only-child .panel-side-info { flex: 1; align-items: center; gap: 20px; }
+    .elevator-panel:only-child .elevator-id { margin-bottom: 10px; }
+    .elevator-panel:only-child .elev-name { font-size: min(9em, 22vmin); }
+    .elevator-panel:only-child .elev-label { font-size: 1.3rem; }
+    .elevator-panel:only-child .direction-status { width: 120px; height: 120px; }
+    .elevator-panel:only-child .elevator-arrow-svg, 
+    .elevator-panel:only-child .stop-status-svg { width: 100px; height: 100px; }
+    .elevator-panel:only-child .eta-display { border-top: none; }
+    .elevator-panel:only-child .eta-result { font-size: calc(3em * var(--er-scale, 1)); }
+    .elevator-panel:only-child .floor-label { font-size: 1.2em; }
+    .elevator-panel:only-child.approaching .panel-side-floor { border-left-color: rgba(255,255,255,0.3); }
+}
+
+/* ============================================
+   APPROACHING ANIMATION
+   ============================================ */
+@keyframes pulse-gold {
+    0%   { box-shadow: 0 0 15px rgba(197, 164, 126, 0.2); transform: scale(1.01); }
+    50%  { box-shadow: 0 0 40px rgba(197, 164, 126, 0.45); transform: scale(1.03); border-color: var(--gold-primary); }
+    100% { box-shadow: 0 0 15px rgba(197, 164, 126, 0.2); transform: scale(1.01); }
+}
+
+.elevator-panel.approaching {
+    background: var(--active-gold-bg);
+    border-color: var(--gold-primary);
+    z-index: 10;
+    animation: pulse-gold 2s infinite ease-in-out;
+}
+.elevator-panel.approaching::before { opacity: 0; }
+
+/* ============================================
+   UNIVERSAL TEXT-FIT GUARD
+   Mirrors the .eta-floor-name safety net (line-clamp + ellipsis + word-break)
+   so every text-bearing element inside an elevator panel stays inside its bounds
+   in any state (Shabbat / weekday / approaching / break / not-stopping).
+   ============================================ */
+.elevator-panel .elevator-id,
+.elevator-panel .shabbat-elev-label,
+.elevator-panel .eta-prefix,
+.elevator-panel .eta-result,
+.elevator-panel .floor-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    line-height: 1.15;
+}
+.elevator-panel .shabbat-elev-label { white-space: nowrap; }
+.elevator-panel .panel-side-floor { max-width: 100%; overflow: hidden; min-width: 0; }
+.elevator-panel .floor-indicator {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Direction follows content so an English alias like "Synagogue" doesn't get its
+       leading characters eaten by the RTL ellipsis. Allow wrap to a second line for
+       long aliases instead of forcing nowrap + truncation. */
+    unicode-bidi: plaintext;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* ============================================
+   ELEVATOR NAME — Two-line: small "מעלית" + big letter
+   ============================================ */
+.elevator-id {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    color: var(--surface-dark);
+    margin-bottom: 8px;
+    transition: color 0.3s;
+    line-height: 1;
+}
+
+/* Small "מעלית" label */
+.elev-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--gold-dark);
+    letter-spacing: 0.1em;
+    opacity: 0.85;
+}
+
+/* Big elevator letter — ⅔ of floor indicator */
+.elev-name {
+    /* Cap by viewport so very-long names (e.g. multi-word elevator labels) shrink
+       instead of overflowing the panel. */
+    font-size: min(6em, 14vmin);
+    font-weight: 700;
+    color: var(--gold-primary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 0.9;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Approaching overrides */
+.elevator-panel.approaching .elev-label { color: rgba(255,255,255,0.7); }
+.elevator-panel.approaching .elev-name { color: #fff; }
+
+/* --- Floor Number --- */
+.floor-indicator {
+    font-size: calc(9em * var(--fi-scale, 1)); font-weight: 400;
+    color: var(--text-main);
+    /* line-height ≥ 1.1 so descenders (g, ק) and Hebrew dots aren't clipped by overflow:hidden */
+    line-height: 1.15; margin: 0;
+    padding-bottom: 0.05em;
+    transition: color 0.3s;
+}
+.elevator-panel.approaching .floor-indicator { color: #fff; font-weight: 500; text-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+
+/* --- Direction --- */
+.direction-status { display: flex; align-items: center; justify-content: center; height: 60px; width: 60px; position: relative; margin-bottom: 5px; }
+
+.elevator-arrow-svg {
+    width: 50px; height: 50px;
+    fill: var(--gold-primary);
+    filter: drop-shadow(0 2px 4px rgba(197, 164, 126, 0.25));
+    transition: transform 0.3s ease, fill 0.3s;
+}
+.elevator-panel.approaching .elevator-arrow-svg { fill: #fff; filter: none; }
+
+.arrow-up { transform: rotate(0deg); }
+.arrow-down { transform: rotate(180deg); }
+
+.stop-status-svg { width: 55px; height: 55px; overflow: visible; }
+.stop-ring {
+    fill: none; stroke: var(--gold-primary);
+    stroke-width: 4; stroke-linecap: round;
+    transform-origin: center; transform: rotate(-90deg);
+    stroke-dasharray: 283; stroke-dashoffset: 283;
+    filter: drop-shadow(0 2px 4px rgba(197, 164, 126, 0.25));
+    animation: ringLoad 3s ease-in-out infinite alternate;
+    transition: stroke 0.3s;
+}
+.stop-bars {
+    fill: var(--gold-primary);
+    filter: drop-shadow(0 2px 4px rgba(197, 164, 126, 0.25));
+    transform-origin: center;
+    animation: barsPulse 2s ease-in-out infinite;
+    transition: fill 0.3s;
+}
+.elevator-panel.approaching .stop-ring { stroke: #fff; filter: none; }
+.elevator-panel.approaching .stop-bars { fill: #fff; filter: none; }
+
+@keyframes flowAnimation { 0% { transform: translateY(20%); opacity: 0; } 30% { opacity: 1; } 70% { opacity: 1; } 100% { transform: translateY(-40%); opacity: 0; } }
+.elevator-arrow-path { animation: flowAnimation 1.5s infinite linear; }
+@keyframes ringLoad { 0% { stroke-dashoffset: 283; } 20% { stroke-dashoffset: 283; } 100% { stroke-dashoffset: 0; } }
+@keyframes barsPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+/* --- ETA Section --- */
+.eta-display {
+    border-top: 1px solid rgba(197, 164, 126, 0.2);
+    width: 100%; padding-top: 10px; margin-top: 5px;
+    text-align: center; transition: border-color 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 0;
+}
+.elevator-panel.approaching .eta-display { border-top-color: rgba(255,255,255,0.3); }
+
+.eta-prefix {
+    font-size: 0.85em;
+    color: var(--gold-dark);
+    font-weight: 500;
+    opacity: 0.85;
+    transition: color 0.3s;
+}
+.elevator-panel.approaching .eta-prefix { color: rgba(255,255,255,0.75); }
+
+.eta-floor-name {
+    font-size: calc(1.4em * var(--fl-scale, 1));
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.1;
+    transition: color 0.3s;
+    /* Direction follows content (Hebrew/English/mixed) so ellipsis lands at the visual end */
+    unicode-bidi: plaintext;
+    text-align: center;
+    /* Allow real wrap to a 2nd line for long bilingual aliases */
+    white-space: normal;
+    overflow-wrap: anywhere;
+    /* Safety net for extreme lengths */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.elevator-panel.approaching .eta-floor-name { color: #fff; }
+
+/* Legacy .floor-label kept for back-compat, but no longer used in eta-display */
+.floor-label { font-size: 0.9em; color: var(--gold-dark); margin-bottom: 2px; transition: color 0.3s; font-weight: 500; }
+.elevator-panel.approaching .floor-label { color: rgba(255,255,255,0.8); font-weight: 600; }
+
+.eta-result {
+    font-size: calc(1.5em * var(--er-scale, 1)); font-weight: 600;
+    color: var(--text-main);
+    min-height: 1.5em;
+    transition: all 0.3s ease;
+    /* line-clamp safety: long Hebrew states ("מצב שבת בהפסקה" / "לא עוצרת בקומה זו")
+       gracefully wrap to 2 lines and ellipsis if even that overflows. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-align: center;
+    flex-shrink: 0; /* never shrink — time is sacred */
+}
+.elevator-panel.approaching .eta-result { color: #fff; font-weight: 700; font-size: calc(clamp(1.2em, 5vh, 2em) * var(--er-scale, 1)); text-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+
+/* --- Mode Toggling --- */
+/* "שבת שלום" header hidden to free vertical space for panels (banners + ETA fit better) */
+body.shabbat-mode-active #main-shabbat-indicator { display: none; }
+body.shabbat-mode-active .dashboard-container { display: flex; }
+body:not(.shabbat-mode-active) .dashboard-container { display: none !important; }
+body:not(.shabbat-mode-active) #clockContainer { display: flex !important; }
+body.weekday-mode .eta-display { display: none !important; }
+body.weekday-mode .dashboard-container { display: flex !important; }
+
+/* ============================================
+   CLOCK CONTAINER (Weekday Mode)
+   ============================================ */
+#clockContainer {
+    display: none; width: 100%; max-width: 600px; 
+    margin: 0 auto;
+    flex-direction: column; justify-content: center; 
+    align-items: center; min-height: 0; flex: 1;
+}
+
+.clock-panel {
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: 28px;
+    box-shadow: var(--glass-shadow);
+    padding: 2em; width: 100%;
+    text-align: center; position: relative; box-sizing: border-box;
+}
+
+.clock-time { 
+    font-size: 5.5em; font-weight: 300; 
+    color: var(--text-main); margin: 0; line-height: 1; 
+    font-variant-numeric: tabular-nums;
+}
+.clock-date { font-size: 1.5em; font-weight: 500; color: var(--gold-primary); margin-top: 10px; letter-spacing: 1px; }
+.clock-hebrew-date { font-size: 1.2em; font-weight: 400; color: var(--gold-dark); margin-top: 5px; }
+
+/* --- Analog Clock --- */
+#analogClockWrapper { display: none; width: 100%; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 20px; }
+.analog-clock-panel {
+    width: 280px; height: 280px; position: relative; 
+    background: rgba(255, 255, 255, 0.6); 
+    border: 4px solid var(--gold-primary); border-radius: 50%; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    margin: 0 auto 20px auto;
+}
+.analog-clock-panel .hand { width: 50%; height: 4px; background: var(--gold-dark); position: absolute; top: 50%; transform-origin: 100%; transform: rotate(90deg); border-radius: 4px; border: none; }
+.analog-clock-panel .hour-hand { width: 30%; left: 20%; height: 6px; background: var(--text-main); }
+.analog-clock-panel .minute-hand { width: 40%; left: 10%; height: 4px; background: var(--gold-primary); }
+.analog-clock-panel .second-hand { display: none !important; }
+.analog-clock-panel .center-dot { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; background: var(--text-main); border: 3px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; }
+.analog-clock-panel .number { position: absolute; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: 500; color: var(--text-main); transform: translate(-50%, -50%); font-family: 'Assistant', 'Roboto Condensed', sans-serif; }
+.analog-clock-panel .number-12 { top: 8%; left: 50%; } .analog-clock-panel .number-1 { top: 13.4%; left: 71.7%; } .analog-clock-panel .number-2 { top: 28.3%; left: 86.6%; } .analog-clock-panel .number-3 { top: 50%; left: 92%; } .analog-clock-panel .number-4 { top: 71.7%; left: 86.6%; } .analog-clock-panel .number-5 { top: 86.6%; left: 71.7%; } .analog-clock-panel .number-6 { top: 92%; left: 50%; } .analog-clock-panel .number-7 { top: 86.6%; left: 28.3%; } .analog-clock-panel .number-8 { top: 71.7%; left: 13.4%; } .analog-clock-panel .number-9 { top: 50%; left: 8%; } .analog-clock-panel .number-10 { top: 28.3%; left: 13.4%; } .analog-clock-panel .number-11 { top: 13.4%; left: 28.3%; }
+.analog-clock-date-container { text-align: center; }
+.analog-clock-date { font-size: 1.5em; color: var(--gold-primary); font-weight: 500; }
+.analog-clock-hebrew-date { font-size: 1.2em; color: var(--text-main); }
+
+/* ============================================
+   FOOTER CONTROLS
+   ============================================ */
+.footer-controls {
+    position: fixed; bottom: 10px; left: 0; width: 100%; 
+    padding: 10px; display: flex; justify-content: center; align-items: center; 
+    z-index: 100; gap: 15px; box-sizing: border-box; pointer-events: none; 
+}
+.control-btn {
+    pointer-events: auto;
+    background: rgba(255,255,255,0.85); 
+    border: 1px solid rgba(197, 164, 126, 0.4);
+    color: var(--gold-primary);
+    border-radius: 50%; width: 50px; height: 50px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2em; cursor: pointer; transition: all 0.3s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.control-btn:hover { background: var(--gold-primary); color: #fff; }
+body.shabbat-mode-active .footer-controls { justify-content: flex-start; padding-right: 20px; }
+
+/* --- Modal & Notifications --- */
+.modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(26, 26, 46, 0.6); backdrop-filter: blur(15px); align-items: center; justify-content: center; }
+.modal.show { display: flex; }
+.modal-content { 
+    background: linear-gradient(135deg, #fff, #f5f0eb);
+    padding: 30px; 
+    border: 1px solid rgba(197, 164, 126, 0.3);
+    border-radius: 24px; width: 90%; max-width: 450px; 
+    text-align: center; position: relative; 
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.modal-title { color: var(--gold-primary); margin-top: 0; }
+.modal-text { color: var(--text-main); margin-bottom: 20px; }
+.modal-close { position: absolute; top: 15px; left: 20px; color: var(--gold-dark); font-size: 32px; font-weight: bold; cursor: pointer; line-height: 1; transition: color 0.2s; }
+.modal-close:hover { color: var(--gold-primary); }
+.qr-container { margin: 10px auto; padding: 15px; background: #fff; border-radius: 16px; display: inline-block; position: relative; border: 1px solid rgba(197,164,126,0.15); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+#whatsappQRContainer { width: 180px !important; height: 180px !important; }
+.qr-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: #fff; border-radius: 8px; padding: 4px; }
+
+.notification { visibility: hidden; opacity: 0; min-width: 200px; background: var(--gold-primary); color: #fff; text-align: center; border-radius: 50px; padding: 12px 25px; position: fixed; z-index: 3001; left: 50%; top: 20px; font-size: 1em; transform: translateX(-50%) translateY(-20px); transition: all 0.4s; font-weight: 600; box-shadow: 0 8px 25px rgba(197,164,126,0.3); }
+.notification.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ============================================
+   BOTTOM STATUS BAR — Dark like Ramada footer
+   ============================================ */
+.bottom-status-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface-dark);
+    border-top: 2px solid rgba(197, 164, 126, 0.3);
+    padding: 8px 15px;
+    text-align: center; font-size: 1em; 
+    color: rgba(255,255,255,0.7);
+    z-index: 50; display: none;
+}
+.bottom-status-bar .status-time { color: var(--gold-primary) !important; font-weight: 600; }
+.bottom-status-bar #statusDate { color: var(--gold-light) !important; }
+.bottom-status-bar #statusHebrewDate { color: rgba(255,255,255,0.6) !important; }
+body.shabbat-mode-active .bottom-status-bar { display: flex; }
+
+/* Error Screen */
+#errorScreen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; color: var(--gold-primary); padding: 20px; }
+
+/* ============================================
+   CRITICAL OVERRIDES — Approaching State
+   ============================================ */
+.elevator-panel.approaching, .elevator-panel:only-child.approaching { 
+    background: var(--active-gold-bg) !important; 
+    border-color: var(--gold-primary) !important; 
+}
+.elevator-panel.approaching .floor-indicator, 
+.elevator-panel:only-child.approaching .floor-indicator, 
+.elevator-panel.approaching .elevator-id, 
+.elevator-panel:only-child.approaching .elevator-id, 
+.elevator-panel.approaching .elev-name, 
+.elevator-panel:only-child.approaching .elev-name, 
+.elevator-panel.approaching .eta-result, 
+.elevator-panel:only-child.approaching .eta-result, 
+.elevator-panel.approaching .floor-label { 
+    color: #fff !important; 
+}
+.elevator-panel.approaching .elev-label, 
+.elevator-panel:only-child.approaching .elev-label { 
+    color: rgba(255,255,255,0.7) !important; 
+}
+.elevator-panel.approaching .elevator-arrow-svg, 
+.elevator-panel:only-child.approaching .elevator-arrow-svg { fill: #fff !important; }
+.elevator-panel.approaching .stop-ring, 
+.elevator-panel:only-child.approaching .stop-ring { stroke: #fff !important; }
+.elevator-panel.approaching .stop-bars, 
+.elevator-panel:only-child.approaching .stop-bars { fill: #fff !important; }
+
+/* ============================================================
+   32" LOBBY DISPLAY — Landscape (typical 1920×1080)
+   ============================================================ */
+@media (min-width: 1200px) and (orientation: landscape) {
+    body { --shell-overhead: 220px; }
+    body::before { height: 220px; }
+    .top-logo { max-height: 180px; padding: 22px 0 14px; }
+
+    #main-shabbat-indicator { font-size: 3em; gap: 25px; margin-bottom: 20px; }
+    .shabbat-candle-svg { width: 35px; }
+
+    .dashboard-container {
+        gap: 20px; padding: 15px 30px;
+        align-content: center;
+    }
+    
+    .elevator-panel { 
+        padding: 25px; border-radius: 24px;
+        flex: 1 1 calc(50% - 10px);
+        max-width: calc(50% - 10px);
+    }
+    .elevator-panel::before { height: 4px; }
+
+    /* שם מעלית — שני שליש מגודל הקומה */
+    .elev-name { font-size: min(6.5em, 15vmin); }
+    .elev-label { font-size: 1.1rem; }
+    .floor-indicator { font-size: calc(10em * var(--fi-scale, 1)); }
+    .direction-status { height: 70px; width: 70px; }
+    .elevator-arrow-svg { width: 60px; height: 60px; }
+    .stop-status-svg { width: 65px; height: 65px; }
+    .floor-label { font-size: 1.1em; }
+    .eta-result { font-size: calc(1.8em * var(--er-scale, 1)); }
+    .elevator-panel.approaching .eta-result { font-size: calc(clamp(1.5em, 7vh, 2.5em) * var(--er-scale, 1)); }
+}
+
+/* ============================================================
+   LANDSCAPE SHORT SCREENS (Raspberry Pi / small displays)
+   ============================================================ */
+@media (orientation: landscape) and (max-height: 640px) {
+    body { padding: 0; --shell-overhead: 10vh; }
+    body::before { height: 10vh; }
+    .top-logo { max-height: 8vh; margin: 0 auto; padding: 1vh 0; }
+
+    /* Use the dynamic --bottom-bar-h instead of a hardcoded 50px so the panel area
+       expands when the status bar is hidden (e.g. weekday mode on public kiosks). */
+    #displayContainer { height: 100vh; padding-bottom: var(--bottom-bar-h, 50px); padding-top: 0; }
+    #main-shabbat-indicator { font-size: 4vh; margin: 0 0 1vh 0; gap: 2vh; }
+    .shabbat-candle-svg { width: 5vh; }
+
+    .dashboard-container { padding: 1vh; gap: 1.5vh; align-content: center; }
+
+    /* Single elevator — side-by-side layout */
+    .elevator-panel:only-child {
+        width: 96vw; height: auto;
+        /* Reserve room for top/bottom banners */
+        max-height: calc(72vh - var(--banner-h, 0px));
+        min-height: 0;
+        padding: 2vmin; margin: 0 auto;
+        flex-direction: row;
+        justify-content: center; align-items: center; gap: 0;
+    }
+    .elevator-panel:only-child .panel-side-info { flex: 0 0 45%; justify-content: center; gap: 1vh; }
+    .elevator-panel:only-child .elevator-id { margin: 0; line-height: 1; }
+    .elevator-panel:only-child .elev-name { font-size: 20vh; font-weight: 700; }
+    .elevator-panel:only-child .elev-label { font-size: 2vh; }
+    .elevator-panel:only-child .direction-status { width: 14vh; height: 14vh; margin: 0; }
+    .elevator-panel:only-child .elevator-arrow-svg, 
+    .elevator-panel:only-child .stop-status-svg { width: 12vh; height: 12vh; }
+    .elevator-panel:only-child .eta-display { margin: 0; padding: 0; border: none; }
+    .elevator-panel:only-child .floor-label { font-size: 2.5vh; } 
+    .elevator-panel:only-child .eta-result { font-size: calc(6vh * var(--er-scale, 1)); line-height: 1; margin-top: 0; }
+    .elevator-panel:only-child .panel-side-floor { 
+        flex: 0 0 55%; padding: 0; 
+        border-left: 1px solid rgba(197, 164, 126, 0.3); 
+        display: flex; justify-content: center; align-items: center; 
+    }
+    .elevator-panel:only-child .floor-indicator { font-size: calc(32vh * var(--fi-scale, 1)); line-height: 0.8; letter-spacing: -1vh; }
+    
+    /* Multiple elevators — row */
+    .dashboard-container:not(:has(.elevator-panel:only-child)) { 
+        display: flex; flex-wrap: nowrap; width: 100%; 
+        gap: 2vmin; justify-content: center; align-items: center; 
+    }
+    .elevator-panel:not(:only-child) {
+        flex: 0 1 30vw;
+        /* Subtract banner height so two-panel rows don't overflow into the bottom bar */
+        height: calc(60vh - var(--banner-h, 0px));
+        min-height: 0; padding: 2vmin;
+    }
+    .elevator-panel:not(:only-child) .elev-name { font-size: 13vmin; font-weight: 700; }
+    .elevator-panel:not(:only-child) .elev-label { font-size: 2vmin; }
+    .elevator-panel:not(:only-child) .floor-indicator { font-size: calc(20vmin * var(--fi-scale, 1)); }
+    
+    .footer-controls { bottom: 2vmin; }
+    .bottom-logo { max-height: 8vmin; bottom: 2vmin; left: 2vmin; }
+}
+
+/* ============================================================
+   PORTRAIT MOBILE
+   ============================================================ */
+@media (max-width: 480px) and (orientation: portrait) {
+    body { --shell-overhead: 200px; }
+    body::before { height: 120px; }
+    .top-logo { max-height: 80px; padding: 10px 0 8px; }
+
+    #main-shabbat-indicator { font-size: 1.8em; margin-bottom: 15px; }
+    .dashboard-container { gap: 10px; padding: 8px; }
+
+    .elevator-panel {
+        width: 46%; min-height: 220px; padding: 15px 10px;
+        flex: 1 1 46%;
+        max-width: 48%;
+        /* Cap so two rows always fit above the bottom status bar even with tall banners */
+        max-height: calc((100vh - var(--banner-h, 0px) - var(--bottom-bar-h, 0px) - 200px) / 2);
+    }
+    .elev-name { font-size: 2.6em; }
+    .elev-label { font-size: 0.7rem; }
+    .floor-indicator { font-size: calc(4em * var(--fi-scale, 1)); }
+    .direction-status { height: 40px; width: 40px; }
+    .elevator-arrow-svg { width: 35px; height: 35px; }
+    .stop-status-svg { width: 38px; height: 38px; }
+    .eta-result { font-size: calc(1em * var(--er-scale, 1)); }
+    
+    .elevator-panel:only-child { 
+        flex-direction: column; width: 300px; gap: 0; height: auto;
+        flex: 0 0 auto; max-width: 90%;
+    }
+    .elevator-panel:only-child .panel-side-floor { border-left: none; padding-left: 0; }
+    .elevator-panel:only-child .floor-indicator { font-size: calc(5.5em * var(--fi-scale, 1)); }
+    .elevator-panel:only-child .elev-name { font-size: 3.5em; }
+}
+
+/* ============================================================
+   PORTRAIT TABLET / 32" Portrait  (768 × 1366 when rotated)
+   390px overhead = header(180) + shabbat(55) + top(10) + gap(12) + bottom(130)
+   ============================================================ */
+@media (min-width: 481px) and (orientation: portrait) {
+    body { --shell-overhead: 355px; }
+    body::before { height: 180px; }
+    .top-logo { max-height: 140px; }
+
+    .dashboard-container {
+        gap: 12px;
+        padding: 10px 12px;
+        align-content: flex-start;
+    }
+    .elevator-panel {
+        flex: 0 0 calc(50% - 6px);
+        max-width: calc(50% - 6px);
+        /* Fixed height so 2 rows always fit — content clips instead of overflows.
+           --shell-overhead = header + indicator + gap + bottom buffer (default 355).
+           Subtract --banner-h (top admin banners) and --bottom-bar-h (live status bar)
+           so the bottom row never gets pushed behind a fixed bar. */
+        height: calc((100vh - var(--shell-overhead, 355px) - var(--banner-h, 0px) - var(--bottom-bar-h, 0px)) / 2);
+        min-height: 100px;
+        overflow: hidden;
+        padding: 14px;
+    }
+
+    /* Scale every text element to viewport height */
+    .floor-indicator  { font-size: calc(9vh * var(--fi-scale, 1)); }
+    .elev-name        { font-size: 6vh; }
+    .elev-label       { font-size: 1.2vh; }
+    .direction-status { height: 5vh; width: 5vh; }
+    .elevator-arrow-svg { width: 4vh;   height: 4vh;   }
+    .stop-status-svg    { width: 4.5vh; height: 4.5vh; }
+    .floor-label  { font-size: 1.3vh; }
+    .eta-prefix   { font-size: 1.4vh; }
+    .eta-floor-name { font-size: calc(2vh * var(--fl-scale, 1)); }
+    .eta-result   { font-size: calc(2vh * var(--er-scale, 1)); }
+    .elevator-panel.approaching .eta-result { font-size: calc(2.8vh * var(--er-scale, 1)); }
+    .eta-display  { gap: 2px; padding-top: 6px; margin-top: 3px; }
+}
+/* ── System banners ─────────────────────────────────────────────────────── */
+.system-banners {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 16px 0;
+    box-sizing: border-box;
+}
+.system-banner {
+    color: #fff;
+    font-size: 1.05em;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+    direction: rtl;
+    line-height: 1.35;
+}
+
+/* ── "מעלית שבת" label inside elevator panel ────────────────────────────── */
+.shabbat-elev-label {
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--gold-primary, #c5a47e);
+    background: rgba(197, 164, 126, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    margin-top: 3px;
+    display: inline-block;
+}
+.elevator-panel.approaching .shabbat-elev-label {
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.18);
+}
+
+/* ============================================
+   EMPTY STATE — shown when no elevator panels are visible
+   (suppressed on PUBLIC pages — they always render panels)
+   ============================================ */
+.empty-state {
+    display: none; /* JS toggles to flex */
+    flex: 1;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    direction: rtl;
+    color: var(--gold-primary);
+    font-size: clamp(1.4em, 4vh, 2.6em);
+    font-weight: 600;
+    padding: 24px;
+    box-sizing: border-box;
+    max-width: 100%;
+    word-break: break-word;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+}
+/* When dashboard would otherwise be hidden (weekday on non-public pages),
+   unhide it so the empty-state message can show through. */
+body.empty-state-mode .dashboard-container { display: flex !important; }
+body.empty-state-mode .bottom-status-bar { display: flex; }
+
+/* ============================================================
+   LAYOUT V2 — Container-aware, fluid, declarative layout
+   ============================================================
+   Opt-in via:  <body class="layout-v2 [layout-public|layout-public2|layout-kiosk|layout-display] ...">
+   Wrapped in @supports (container-type: size) so browsers that lack
+   container-queries fall back to the original v1 styles above without
+   breaking. (Chrome/Edge/Safari/Firefox 2023+ all support it.)
+
+   Replaces:
+     · body flex column + position:fixed header/footer  →  CSS Grid shell
+     · viewport @media (orientation/min-width) cliffs   →  @container queries
+     · JS-set --fi/er/fl-scale discrete tiers           →  clamp() with cqh/cqi
+     · QR margin-top: -65px (breaks bar measurement)    →  transform: translate
+     · panel flex + .elevator-stops width steal         →  CSS Grid 2-col panel
+     · per-page inline <style> divergence               →  one source of truth
+   ============================================================ */
+@supports (container-type: size) {
+
+  /* ─── Page Shell ──────────────────────────────────────────── */
+  body.layout-v2 {
+    display: grid;
+    /* 3 rows: header / main / footer (footer contains its own sub-rows
+       including the optional Shabbat legend). */
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-columns: 1fr;
+    height: 100dvh;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    align-items: stretch;
+    justify-items: stretch;
+  }
+
+  /* Kill v1's fixed-position header pseudo-element */
+  body.layout-v2::before {
+    position: static;
+    content: none;
+    display: none;
+  }
+
+  /* === Row 1 — Header (top logo on white band) === */
+  body.layout-v2 .top-logo {
+    grid-row: 1;
+    grid-column: 1;
+    width: 100%;
+    max-width: none;
+    max-height: clamp(60px, 14dvh, 180px);
+    height: auto;
+    margin: 0;
+    padding: clamp(0.4rem, 1.8dvh, 1.4rem) 0;
+    background: #fff;
+    border-bottom: 3px solid var(--gold-primary);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    object-fit: contain;
+    display: block;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    mix-blend-mode: normal;
+  }
+
+  /* === Row 2 — Main content area (display container) === */
+  body.layout-v2 #displayContainer {
+    grid-row: 2;
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    height: auto;
+    flex: unset;
+    overflow: hidden;
+    padding: 0;
+    justify-content: flex-start;
+    container-type: size;
+    container-name: main;        /* used by @container main (…) on .dashboard-container */
+  }
+
+  /* === Row 3 — Bottom status bar (contains optional legend sub-row) === */
+  body.layout-v2 .bottom-status-bar {
+    grid-row: 3;
+    grid-column: 1;
+    position: static;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 50;
+  }
+
+  /* === Shabbat-mode legend — sub-row INSIDE the bar.
+        Hidden by default; shown only when at least one panel has stops. === */
+  body.layout-v2 .shabbat-legend {
+    display: none;                       /* hidden by default */
+  }
+  /* Auto-show only on public2 when at least one panel has stops strip */
+  body.layout-v2.layout-public2:has(.elevator-stops) .shabbat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 1.5vw, 26px);
+    padding: clamp(5px, 0.8dvh, 10px) clamp(12px, 2vw, 32px);
+    background: rgba(255, 255, 255, 0.04);          /* subtle lift over the bar */
+    border-bottom: 1px solid rgba(197, 164, 126, 0.25);
+    color: rgba(255, 255, 255, 0.85);                /* readable on dark bar */
+    font-size: clamp(0.7rem, 1.2dvh, 0.95rem);
+    direction: rtl;
+    line-height: 1.3;
+  }
+  body.layout-v2 .shabbat-legend .legend-title {
+    font-weight: 700;
+    color: var(--gold-primary);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  body.layout-v2 .shabbat-legend .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: clamp(4px, 0.5vw, 8px);
+    white-space: nowrap;
+  }
+  body.layout-v2 .shabbat-legend .legend-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: clamp(20px, 2vw, 30px);
+    padding: 2px clamp(4px, 0.5vw, 7px);
+    background: rgba(197, 164, 126, 0.55);
+    color: #1a1a2e;
+    font-weight: 700;
+    font-size: 0.9em;
+    border-radius: 4px;
+    line-height: 1;
+    font-family: 'Roboto Condensed', sans-serif;
+  }
+  body.layout-v2 .shabbat-legend .legend-chip.is-here {
+    background: var(--gold-primary);
+    box-shadow: 0 0 0 1.5px #fff;
+  }
+  body.layout-v2 .shabbat-legend .legend-chip .arr {
+    font-size: 0.85em;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* === System banners (admin) — flow-relative === */
+  body.layout-v2 .system-banners {
+    flex: 0 0 auto;
+    padding: clamp(2px, 0.5dvh, 8px) clamp(8px, 2vw, 16px) 0;
+  }
+  body.layout-v2 .system-banner {
+    font-size: clamp(0.85rem, 1.5dvh, 1.1rem);
+    padding: clamp(5px, 1dvh, 12px) clamp(8px, 1.5vw, 16px);
+  }
+
+  /* === Shabbat indicator (Shabbat Shalom + candles) === */
+  body.layout-v2 #main-shabbat-indicator {
+    font-size: clamp(1.4rem, 4dvh, 3rem);
+    gap: clamp(10px, 2vw, 28px);
+    margin-top: clamp(4px, 1dvh, 12px);
+    margin-bottom: clamp(8px, 1.5dvh, 22px);
+    flex: 0 0 auto;
+  }
+  body.layout-v2 .shabbat-candle-svg {
+    width: clamp(18px, 3.5dvh, 38px);
+    height: auto;
+  }
+
+  /* === Dashboard container — Grid with smart column count ===
+     Default: auto-fit for 1/2/3/5+ panels (responsive to width).
+     Special-cased to 2×2 for exactly 4 panels (avoids 3+1 orphan layout).
+     `grid-auto-rows: minmax(0, 1fr)` divides height equally across rows. */
+  body.layout-v2 .dashboard-container {
+    container-type: size;
+    container-name: dash;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    justify-content: center !important;
+    align-items: stretch !important;       /* override v1 short-landscape :not(:has) */
+    align-content: stretch !important;     /* let 1fr rows actually stretch */
+    justify-items: stretch !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    height: auto;
+    max-height: none !important;          /* kill v1 calc() chain */
+    /* DENSITY-CHANGE 2026-05-31 — better 4K fill. To REVERT: change back to
+       `max-width: 1800px;`. Old value capped the dashboard at 1800px, leaving
+       ~1000px empty on each side of a 3840-wide screen (47% used). New value
+       uses up to 96vw (capped 3400px) → ~88% of a 4K screen, panels ~850px
+       wide with healthy aspect, and the cqmin typography scales up nicely.
+       The clamp() upper caps on fonts still prevent absurd sizes. */
+    max-width: min(96vw, 3400px);
+    margin: 0 auto;
+    padding: clamp(4px, 1dvh, 14px) clamp(6px, 1.5vw, 24px);
+    gap: clamp(6px, 1.5vw, 22px);
+    box-sizing: border-box;
+  }
+
+  /* === Smart column count by panel count ===
+     We can't easily say "exactly N panels" because the dashboard also has
+     .empty-state as a sibling. Instead we use ADJACENT-SIBLING patterns:
+     "has 4 adjacent elevator-panels" — i.e. at least 4. That's the Ramada
+     normal state. */
+
+  /* 4+ panels: default to 2 columns to avoid 3+1 orphan layout */
+  body.layout-v2 .dashboard-container:has(> .elevator-panel + .elevator-panel + .elevator-panel + .elevator-panel) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* 4+ panels on a wide dashboard → 4 in a single row.
+     DENSITY-CHANGE 2026-05-31 — threshold lowered 1400px → 1200px so a
+     1366-wide TV (TV 32" HD) also gets a single 1×4 row (matching 1920×1080),
+     instead of falling to 2×2. To REVERT: change `min-width: 1200px` back to
+     `min-width: 1400px`. */
+  @container main (min-width: 1200px) {
+    body.layout-v2 .dashboard-container:has(> .elevator-panel + .elevator-panel + .elevator-panel + .elevator-panel) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  /* 4+ panels on very narrow (<500) → 1 column stack */
+  @container main (max-width: 500px) {
+    body.layout-v2 .dashboard-container:has(> .elevator-panel + .elevator-panel + .elevator-panel + .elevator-panel) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* 5+ panels — auto-fit avoids orphan rows. Overrides the "4+ → 2/4 cols"
+     rules above (they target ":has(4+)" which 5+ also matches; source order
+     gives us the override). The browser packs panels into as many columns
+     as fit comfortably at 280px each. */
+  body.layout-v2 .dashboard-container:has(> .elevator-panel + .elevator-panel + .elevator-panel + .elevator-panel + .elevator-panel) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  }
+
+  /* 3 panels (matching exactly 3 via :has + :not) → 3 cols when wide, 1 when narrow */
+  body.layout-v2 .dashboard-container:has(> .elevator-panel + .elevator-panel + .elevator-panel):not(:has(> .elevator-panel + .elevator-panel + .elevator-panel + .elevator-panel)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  @container main (max-width: 900px) {
+    body.layout-v2 .dashboard-container:has(> .elevator-panel + .elevator-panel + .elevator-panel):not(:has(> .elevator-panel + .elevator-panel + .elevator-panel + .elevator-panel)) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* 2 panels (exactly) → 2 cols when wide, 1 when narrow */
+  body.layout-v2 .dashboard-container:has(> .elevator-panel + .elevator-panel):not(:has(> .elevator-panel + .elevator-panel + .elevator-panel)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @container main (max-width: 600px) {
+    body.layout-v2 .dashboard-container:has(> .elevator-panel + .elevator-panel):not(:has(> .elevator-panel + .elevator-panel + .elevator-panel)) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* === Elevator panel — CSS Grid with named areas, aspect-adaptive ===
+     The panel is its own container. Its internal grid morphs between:
+       • WIDE (aspect ≥ 1.4)  → floor LEFT, info RIGHT, stops on far side
+       • TALL/BALANCED (default) → floor on top, info below, stops as side column
+     This guarantees max use of space regardless of grid count or orientation. */
+  body.layout-v2 .elevator-panel {
+    container-type: size;
+    container-name: panel;
+
+    display: grid;
+    /* Default = TALL: floor on top, info below. Info gets slightly more space
+       because it holds 3-5 stacked items vs floor's single big number. */
+    grid-template-columns: minmax(0, 1fr);
+    /* floor flexes (1fr, focal); info + eta are AUTO so they always get their
+       content height and never get crushed — fixes ETA cramping on short
+       portrait panels. */
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "floor"
+      "info"
+      "eta";
+    gap: clamp(3px, 1.2cqmin, 14px);
+
+    width: auto;
+    max-width: none;
+    max-height: none;
+    height: auto;
+    min-height: 0;
+    min-width: 0;
+    flex: unset;
+
+    padding: clamp(8px, 2cqmin, 26px);
+    border-radius: clamp(10px, 2vmin, 24px);
+    box-sizing: border-box;
+    /* Use `clip` not `hidden`: same overflow, but doesn't create a scroll
+       container — and we only clip overflow at child level where needed.
+       This is what stops SVG icons from being aggressively chopped. */
+    overflow: clip;
+  }
+
+  /* === Grid area placement — clean assignments via grid-template-areas === */
+  body.layout-v2 .elevator-panel > .panel-side-floor {
+    grid-area: floor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    flex: unset;
+    margin: 0;
+    overflow: hidden;   /* contain long floor names — they line-clamp inside */
+  }
+  body.layout-v2 .elevator-panel > .panel-side-info {
+    grid-area: info;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(2px, 1cqmin, 12px);
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    flex: unset;
+    max-width: 100%;
+  }
+  /* ETA is its own grid cell now (moved out of .panel-side-info in the JS
+     template). In TALL it sits in its own row under the identity; in WIDE it
+     becomes a third column beside the identity. */
+  body.layout-v2 .elevator-panel > .eta-display {
+    grid-area: eta;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    max-width: 100%;
+    gap: clamp(1px, 0.5cqmin, 5px);
+    /* Tighter than V1 (10px/5px) — saves vertical space in short panels. */
+    padding-top: clamp(2px, 0.8cqmin, 8px);
+    margin-top: 0;
+    line-height: 1.05;
+  }
+  body.layout-v2 .elevator-panel > .elevator-stops {
+    grid-area: stops;
+  }
+
+  /* === Layout switching via data-orientation attribute ===
+     The panel CAN'T query its OWN size via @container (which only applies to
+     descendants). Instead, a tiny ResizeObserver in kiosk-logic.js writes
+     `data-orientation="wide"` or `"tall"` onto each .elevator-panel based on
+     its current width/height ratio. CSS reads that attribute. The default
+     above (no attribute) is TALL — covers the moment between panel creation
+     and the first observer tick. */
+
+  /* === WIDE layout — aspect ≥ 1.4 ===
+     Wide-and-short panels (e.g. 2×2 grid on 1920×1080 → panel ≈ 960×440).
+     Everything spreads HORIZONTALLY across the top row: floor (right, RTL) |
+     identity (middle) | ETA (left). This gives the ETA its own column so it
+     never gets crushed under the identity. */
+  body.layout-v2 .elevator-panel[data-orientation="wide"] {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "floor info eta";
+  }
+  /* WIDE with stops — same 3 zones on top, stops strip runs HORIZONTALLY
+     across the bottom (full width). */
+  body.layout-v2 .elevator-panel[data-orientation="wide"]:has(> .elevator-stops) {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "floor info eta"
+      "stops stops stops";
+  }
+  /* WIDE WITHOUT a visible ETA — collapse to 2 columns so the floor/info fill
+     the width instead of leaving an empty `eta` gap on the side. ETA is hidden
+     in two situations: weekday-mode (global), or public2 panel without stops.
+     (public.html in Shabbat keeps the 3-column rule above — its ETA shows.) */
+  body.layout-v2.weekday-mode .elevator-panel[data-orientation="wide"]:not(:has(> .elevator-stops)),
+  body.layout-v2.layout-public2 .elevator-panel[data-orientation="wide"]:not(:has(> .elevator-stops)) {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "floor info";
+  }
+  /* Subtle divider between the identity and ETA columns (WIDE only).
+     Replace the V1 top-border (a horizontal separator that makes no sense
+     when ETA is a side column) with a vertical divider on the start edge. */
+  body.layout-v2 .elevator-panel[data-orientation="wide"] > .eta-display {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+    border-inline-start: 1px solid rgba(197, 164, 126, 0.3);
+    padding-inline-start: clamp(6px, 1.5cqmin, 24px);
+    height: 100%;
+  }
+
+  /* === TALL layout — floor / info / eta stacked vertically ===
+     The default grid (above) already stacks them. With stops, add a side
+     strip that spans ALL THREE rows on the side. Match `tall` AND
+     missing-attribute (pre-observer initial render). */
+  body.layout-v2 .elevator-panel[data-orientation="tall"]:has(> .elevator-stops),
+  body.layout-v2 .elevator-panel:not([data-orientation]):has(> .elevator-stops) {
+    grid-template-columns: minmax(0, 1fr) clamp(40px, 14cqmin, 80px);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "floor stops"
+      "info  stops"
+      "eta   stops";
+  }
+
+  /* === Solo panel — cap width so it doesn't stretch edge-to-edge ===
+     The data-orientation handles the layout direction; we just pad it
+     more generously and center it. */
+  @container dash (min-width: 700px) {
+    body.layout-v2 .elevator-panel:only-child {
+      max-width: min(95%, 1200px);
+      justify-self: center;
+      padding: clamp(14px, 3cqmin, 44px);
+    }
+  }
+
+  /* (WIDE divider is the one between identity and ETA, defined above for all
+     WIDE panels — no separate solo rule needed.) */
+
+  /* === Fluid typography — `cqmin` based (1% of panel's smaller dimension) ===
+     STRATEGY: the clamp() targets a MEDIUM text length (5-7 chars like
+     "Lobby"). --fi-scale (set by JS based on text length) multiplies UP for
+     short text ("9", "L" → ~2×) and DOWN for long names ("Synagogue / בית
+     כנסת" → ~0.45×).
+     Why cqmin: it tracks whichever side is smaller, so font sizes degrade
+     gracefully at extreme aspect ratios (very wide or very tall panels)
+     instead of exploding past the cell. Upper cap (max in clamp) prevents
+     runaway scaling on 4K displays. */
+  body.layout-v2 .elevator-panel .floor-indicator {
+    /* DEFAULT = TALL baseline 20cqmin. In TALL, the floor CELL height is
+       smaller than the panel — only 1fr of 2.2fr grid rows. 20*2.2 = 44
+       cqmin is safe for cell aspect ratios down to ~0.5.
+       For WIDE (one row), [data-orientation="wide"] below increases this. */
+    font-size: calc(clamp(1.8rem, 20cqmin, 14rem) * var(--fi-scale, 1)) !important;
+    line-height: 1.02;
+    margin: 0;
+    /* Long floor names ("Synagogue / בית כנסת"): allow breaking inside words
+       as a LAST RESORT so they never escape the cell. */
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto;
+    text-wrap: balance;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    unicode-bidi: plaintext;
+    max-width: 100%;
+    max-height: 100%;
+  }
+  /* WIDE panels — floor cell takes full panel height (only 1 row in grid),
+     so the height constraint is the panel height itself. Bigger baseline
+     gives short floor numbers more visual presence in 2×2 layouts. */
+  body.layout-v2 .elevator-panel[data-orientation="wide"] .floor-indicator {
+    font-size: calc(clamp(2rem, 30cqmin, 16rem) * var(--fi-scale, 1)) !important;
+  }
+  /* elev-name = the elevator letter (A/B/C/D). Big but smaller than the
+     focal floor digit so the visual hierarchy is clear. */
+  body.layout-v2 .elevator-panel .elev-name {
+    font-size: clamp(1.4rem, 13cqmin, 8rem) !important;
+    line-height: 1.02;
+  }
+  body.layout-v2 .elevator-panel[data-orientation="wide"] .elev-name {
+    font-size: clamp(1.5rem, 18cqmin, 10rem) !important;
+  }
+  body.layout-v2 .elevator-panel .elev-label {
+    font-size: clamp(0.7rem, 4cqmin, 2rem) !important;
+  }
+  body.layout-v2 .elevator-panel .eta-prefix {
+    font-size: clamp(0.7rem, 4cqmin, 1.6rem) !important;
+  }
+  body.layout-v2 .elevator-panel .eta-floor-name {
+    font-size: calc(clamp(0.9rem, 8cqmin, 3rem) * var(--fl-scale, 1)) !important;
+  }
+  body.layout-v2 .elevator-panel .eta-result {
+    font-size: calc(clamp(0.9rem, 8cqmin, 3rem) * var(--er-scale, 1)) !important;
+  }
+  body.layout-v2 .elevator-panel.approaching .eta-result {
+    font-size: calc(clamp(1rem, 9cqmin, 3.4rem) * var(--er-scale, 1)) !important;
+  }
+  body.layout-v2 .elevator-panel .floor-label {
+    font-size: clamp(0.6rem, 3cqmin, 1.3rem) !important;
+  }
+  /* Direction icon — square wrapper so SVG never distorts. Inner SVGs fill
+     100% so they scale with the wrapper. `aspect-ratio:1` is what protects
+     them from being squished by flex. */
+  body.layout-v2 .elevator-panel .direction-status {
+    width: clamp(28px, 16cqmin, 110px);
+    height: clamp(28px, 16cqmin, 110px);
+    aspect-ratio: 1;
+    margin: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  body.layout-v2 .elevator-panel .elevator-arrow-svg,
+  body.layout-v2 .elevator-panel .stop-status-svg {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+  body.layout-v2 .elevator-panel .shabbat-elev-label {
+    /* Min 0.85rem (~13.6px) keeps the "מעלית שבת" pill readable even on
+       small portrait kiosks (768×1366 → ~10px font with old min). */
+    font-size: clamp(0.85rem, 3.6cqmin, 1.3rem);
+    padding: clamp(2px, 0.6cqmin, 5px) clamp(6px, 1.8cqmin, 14px);
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  /* (Solo-panel WIDE divider is defined alongside the WIDE layout rules
+     above, using [data-orientation="wide"] instead of @container.) */
+
+  /* === Bottom status bar — common base styles (background, color, etc.) === */
+  body.layout-v2 .bottom-status-bar {
+    direction: rtl;
+    background: var(--surface-dark);
+    border-top: 2px solid rgba(197, 164, 126, 0.3);
+    color: rgba(255, 255, 255, 0.7);
+    isolation: isolate;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    font-size: clamp(0.8rem, 1.6dvh, 1.4rem);
+  }
+
+  /* public.html — bar is 3-column grid directly (no .bar-row wrapper) */
+  body.layout-v2.layout-public .bottom-status-bar {
+    display: grid !important;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+    align-items: center;
+    gap: clamp(8px, 1.5vw, 28px);
+    padding: clamp(8px, 1.6dvh, 22px) clamp(12px, 2.5vw, 60px);
+  }
+
+  /* public2.html — bar is flex-column: [optional legend] / [3-col main row] */
+  body.layout-v2.layout-public2 .bottom-status-bar {
+    display: flex !important;
+    flex-direction: column;
+  }
+  body.layout-v2.layout-public2 .bottom-status-bar .bar-row {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+    align-items: center;
+    gap: clamp(8px, 1.5vw, 28px);
+    padding: clamp(8px, 1.6dvh, 22px) clamp(12px, 2.5vw, 60px);
+    direction: rtl;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* === QR side — compact, sits inside the bar (no aggressive overhang) === */
+  body.layout-v2 .bar-qr-side {
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 1vw, 20px);
+    direction: rtl;
+    min-width: 0;
+  }
+  body.layout-v2 .bar-qr-code {
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: clamp(5px, 0.5vw, 10px);
+    padding: clamp(2px, 0.3vw, 5px);
+    line-height: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(197, 164, 126, 0.3);
+    /* Small, subtle lift (not a giant overhang) */
+    translate: 0 calc(-1 * clamp(4px, 1.2dvh, 14px));
+    width: clamp(48px, 8dvh, 110px);
+    height: clamp(48px, 8dvh, 110px);
+    aspect-ratio: 1;
+    position: relative;
+    z-index: 55;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  body.layout-v2 .bar-qr-code canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: inherit;
+  }
+  body.layout-v2 .bar-qr-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  body.layout-v2 .bar-qr-title {
+    font-size: clamp(0.78rem, 1.6dvh, 1.4rem);
+    font-weight: 700;
+    color: var(--gold-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.layout-v2 .bar-qr-sub {
+    font-size: clamp(0.62rem, 1.15dvh, 1rem);
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* English supplementary line (public2 only) — smaller & lighter than the
+     Hebrew sub. dir:ltr for correct word order; text-align:right keeps it
+     aligned to the RTL block's start edge (right), under the Hebrew lines. */
+  body.layout-v2 .bar-qr-en {
+    font-size: clamp(0.52rem, 0.95dvh, 0.82rem);
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+    direction: ltr;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* === Center logo === */
+  body.layout-v2 .bar-logo-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 0;
+    margin: 0;
+  }
+  body.layout-v2 .bar-powered-logo {
+    max-height: clamp(20px, 5dvh, 55px);
+    max-width: 100%;
+    width: auto;
+    opacity: 0.85;
+    filter: brightness(1.2);
+  }
+
+  /* === Time side === */
+  body.layout-v2 .bar-time-side {
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 0.8vw, 15px);
+    direction: rtl;
+    min-width: 0;
+  }
+  body.layout-v2 .bar-time-side .status-time {
+    color: var(--gold-primary) !important;
+    font-weight: 700;
+    font-size: clamp(0.85rem, 1.8dvh, 1.6rem);
+    white-space: nowrap;
+  }
+  body.layout-v2 .bar-time-side #statusDate {
+    color: var(--gold-light) !important;
+    font-size: clamp(0.7rem, 1.2dvh, 1.1rem);
+    white-space: nowrap;
+  }
+  body.layout-v2 .bar-time-side #statusHebrewDate {
+    color: rgba(255, 255, 255, 0.65) !important;
+    font-size: clamp(0.7rem, 1.2dvh, 1.1rem);
+    white-space: nowrap;
+  }
+  body.layout-v2 .bar-separator {
+    color: rgba(255, 255, 255, 0.25);
+    font-weight: 300;
+    font-size: clamp(0.8rem, 1.3dvh, 1.1rem);
+  }
+
+  /* === Bottom bar — stack vertically on very narrow screens === */
+  @media (max-width: 500px) {
+    body.layout-v2.layout-public .bottom-status-bar,
+    body.layout-v2.layout-public2 .bottom-status-bar .bar-row {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 6px;
+      padding: 10px 14px;
+    }
+    body.layout-v2 .bar-logo-center { order: -1; }
+    body.layout-v2 .bar-qr-side { justify-content: center; }
+    body.layout-v2 .bar-time-side { justify-content: center; }
+    body.layout-v2 .bar-qr-code {
+      translate: 0 calc(-1 * clamp(10px, 3dvh, 30px));
+    }
+  }
+
+  /* === PORTRAIT bottom bar (public2) — single compact row ===
+     In portrait the 3-column grid runs out of horizontal room: the center
+     logo (1fr) collapses and the legend wraps to 2 tall rows. Fix: collapse
+     everything into ONE row of 4 zones (RTL right→left): QR+promo | logo |
+     legend(2×2) | time. Inside each zone, texts STACK vertically so each zone
+     stays narrow — leaving room for all four + the logo.
+     Scoped to >500px so it doesn't clash with the phone stack rule above. */
+  @media (orientation: portrait) and (min-width: 501px) {
+    /* 2-BAND layout: a COMPACT single-row legend band ON TOP of the main bar.
+       (Cramming the legend INTO the bar wrapped ugly at TV-32 portrait width.)
+       Keep the status-bar as a flex column: [legend band] / [main bar row]. */
+    body.layout-v2.layout-public2 .bottom-status-bar {
+      flex-direction: column;
+    }
+
+    /* Legend → ONE compact horizontal row above the bar. Small font + tight
+       gaps + nowrap so all 4 items + title fit on a single line at 768px wide,
+       and a thin height so it doesn't steal much space. */
+    body.layout-v2.layout-public2:has(.elevator-stops) .shabbat-legend {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(5px, 1.1vw, 14px);
+      padding: clamp(2px, 0.5dvh, 5px) clamp(6px, 1.5vw, 16px);
+      font-size: clamp(0.5rem, 0.92dvh, 0.78rem);
+      line-height: 1.15;
+      border-bottom: 1px solid rgba(197, 164, 126, 0.25);
+      overflow: hidden;
+      min-width: 0;
+    }
+    body.layout-v2.layout-public2 .shabbat-legend .legend-title,
+    body.layout-v2.layout-public2 .shabbat-legend .legend-item { white-space: nowrap; }
+    body.layout-v2.layout-public2 .shabbat-legend .legend-item { gap: 3px; }
+    body.layout-v2.layout-public2 .shabbat-legend .legend-chip { min-width: clamp(16px, 2.4vw, 26px); }
+
+    /* Main bar row stays the 3-col grid (qr | logo | time). Stack the time and
+       promo texts vertically so qr/time stay NARROW → the center logo keeps
+       its room and never collapses. */
+    body.layout-v2.layout-public2 .bottom-status-bar .bar-row {
+      padding: clamp(5px, 1dvh, 12px) clamp(10px, 2vw, 28px);
+      gap: clamp(8px, 2vw, 26px);
+    }
+    body.layout-v2.layout-public2 .bar-time-side {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      line-height: 1.2;
+      min-width: 0;
+    }
+    body.layout-v2.layout-public2 .bar-time-side .bar-separator { display: none; }
+    /* Let all 3 QR text lines wrap (not truncate) in the narrow portrait bar. */
+    body.layout-v2.layout-public2 .bar-qr-title,
+    body.layout-v2.layout-public2 .bar-qr-sub,
+    body.layout-v2.layout-public2 .bar-qr-en { white-space: normal; }
+    body.layout-v2.layout-public2 .bar-qr-code {
+      width: clamp(44px, 6dvh, 86px);
+      height: clamp(44px, 6dvh, 86px);
+      translate: 0 0;
+    }
+    body.layout-v2.layout-public2 .bar-powered-logo {
+      max-height: clamp(26px, 3.6dvh, 48px);
+    }
+  }
+
+  /* === Hide v1 floating bottom-logo (it's inside the bar now in public/public2) === */
+  body.layout-v2.layout-public .bottom-logo,
+  body.layout-v2.layout-public2 .bottom-logo { display: none !important; }
+
+  /* ─── Stops Strip (public2 only) ───────────────────────────────
+     The strip is positioned by the panel's grid-template-areas (see above)
+     and its ORIENTATION follows the panel:
+       • TALL panels  → VERTICAL column on the side (default below)
+       • WIDE panels  → HORIZONTAL row across the bottom (override below)
+     Internal structure (.stops-row > .chip) is shared; only flex-direction
+     flips. */
+  body.layout-v2 .elevator-stops {
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 2px;
+    box-sizing: border-box;
+    padding: clamp(3px, 1cqmin, 10px) clamp(2px, 0.8cqmin, 6px);
+    direction: rtl;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(197, 164, 126, 0.25);
+    border-radius: clamp(5px, 1.4cqmin, 12px);
+    overflow: hidden;
+    flex: unset;
+    flex-basis: unset;
+    order: unset;
+  }
+  /* WIDE — strip lies horizontally across the bottom row. Taller min-height
+     than the old side-column so chips stay legible as a horizontal band. */
+  body.layout-v2 .elevator-panel[data-orientation="wide"] > .elevator-stops {
+    flex-direction: row;
+    width: 100%;
+    height: auto;
+    min-height: clamp(36px, 16cqmin, 84px);
+    padding: clamp(2px, 0.8cqmin, 6px) clamp(3px, 1cqmin, 10px);
+  }
+  /* Panels with stops use a SMALLER baseline for floor-indicator/elev-name
+     because the strip eats some space. --fi-scale still multiplies up for
+     short names. */
+  body.layout-v2 .elevator-panel:has(> .elevator-stops) .floor-indicator {
+    /* With stops in TALL: floor cell is normal width but only 1fr of 2.2.
+       Use the TALL constraint. 16cqmin × 2.2 = 35cqmin → safe. */
+    font-size: calc(clamp(1.2rem, 16cqmin, 10rem) * var(--fi-scale, 1)) !important;
+    -webkit-line-clamp: 2 !important;
+  }
+  body.layout-v2 .elevator-panel[data-orientation="wide"]:has(> .elevator-stops) .floor-indicator {
+    /* With stops in WIDE the strip is now at the BOTTOM, so the floor column
+       keeps full width — same generous baseline as WIDE-without-stops. The
+       top row is slightly shorter (stops eat ~50px of height) but 30cqmin
+       still fits comfortably. */
+    font-size: calc(clamp(2rem, 28cqmin, 15rem) * var(--fi-scale, 1)) !important;
+  }
+  body.layout-v2 .elevator-panel:has(> .elevator-stops) .elev-name {
+    font-size: clamp(1.2rem, 11cqmin, 6rem) !important;
+  }
+  body.layout-v2 .elevator-panel[data-orientation="wide"]:has(> .elevator-stops) .elev-name {
+    font-size: clamp(1.5rem, 18cqmin, 10rem) !important;
+  }
+  body.layout-v2 .elevator-stops .stops-title { display: none; }
+  body.layout-v2 .elevator-stops .stops-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
+  /* WIDE — chips run left-to-right instead of top-to-bottom. */
+  body.layout-v2 .elevator-panel[data-orientation="wide"] .elevator-stops .stops-row {
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+  }
+  body.layout-v2 .elevator-panel[data-orientation="wide"] .elevator-stops .chip {
+    min-width: 0;       /* allow chips to shrink to share the row width */
+    /* Bigger font than the vertical strip — a horizontal band has more height
+       per chip to spend on legibility. */
+    font-size: clamp(0.72rem, 5.5cqmin, 1.4rem);
+  }
+  body.layout-v2 .elevator-stops .chip {
+    font-family: 'Roboto Condensed', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 clamp(2px, 0.8cqmin, 6px);
+    flex: 1 1 0;
+    min-height: 0;
+    background: rgba(197, 164, 126, 0.55);
+    color: #1a1a2e;
+    font-weight: 700;
+    font-size: clamp(0.55rem, 4cqmin, 1.2rem);
+    border-radius: clamp(2px, 0.8cqmin, 6px);
+    white-space: nowrap;
+    line-height: 1;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+  }
+  body.layout-v2 .elevator-stops .chip .arr {
+    font-size: 1em;
+    font-weight: 700;
+    line-height: 0.8;
+    margin-inline-start: 2px;
+  }
+  body.layout-v2 .elevator-stops .chip .arr.both {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.7em;
+    line-height: 1;
+    margin-inline-start: 3px;
+  }
+  body.layout-v2 .elevator-stops .chip .arr.both > span {
+    display: block;
+    line-height: 0.9;
+  }
+  body.layout-v2 .elevator-stops .chip.is-here {
+    background: var(--gold-primary);
+    box-shadow: 0 0 0 1.5px #fff, 0 1px 3px rgba(0, 0, 0, 0.25);
+    color: #1a1a2e;
+  }
+
+  /* Approaching state — strip inverts to white-glass on the gold panel */
+  body.layout-v2 .elevator-panel.approaching .elevator-stops {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+  body.layout-v2 .elevator-panel.approaching .chip {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a2e;
+  }
+  body.layout-v2 .elevator-panel.approaching .chip.is-here {
+    background: #fff;
+    box-shadow: 0 0 0 1.5px var(--gold-primary), 0 1px 4px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Solo panel with stops — wider strip & bigger chips. Uses
+     [data-orientation] (set by ResizeObserver) since @container can't
+     query the element's own size. */
+  body.layout-v2 .elevator-panel:only-child[data-orientation="wide"]:has(> .elevator-stops) {
+    /* Solo WIDE — 3 zones on top (floor | info | eta), stops horizontal
+       across the bottom (taller strip than multi-panel — more room). */
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "floor info eta"
+      "stops stops stops";
+  }
+  body.layout-v2 .elevator-panel:only-child[data-orientation="wide"] > .elevator-stops {
+    min-height: clamp(40px, 14cqmin, 90px);
+  }
+  body.layout-v2 .elevator-panel:only-child[data-orientation="tall"]:has(> .elevator-stops),
+  body.layout-v2 .elevator-panel:only-child:not([data-orientation]):has(> .elevator-stops) {
+    grid-template-columns: minmax(0, 1fr) clamp(60px, 16cqmin, 110px);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "floor stops"
+      "info  stops"
+      "eta   stops";
+  }
+  body.layout-v2 .elevator-panel:only-child:has(> .elevator-stops) .chip {
+    font-size: clamp(0.7rem, 5cqmin, 1.6rem);
+  }
+
+  /* ─── Page-specific variations ────────────────────────────── */
+
+  /* public2: ETA visible only on panels with stops strip (weekday-mode hides
+     the rest globally) */
+  body.layout-v2.layout-public2 .elevator-panel:not(:has(.elevator-stops)) .eta-display {
+    display: none !important;
+  }
+  body.layout-v2.layout-public2 .elevator-panel:has(.elevator-stops) .eta-display {
+    display: flex !important;
+  }
+
+  /* kiosk.html & display.html — simpler bar: inline text "time | date | hebrew",
+     no 3-section grid (those pages don't have .bar-qr-side / .bar-logo-center). */
+  body.layout-v2.layout-kiosk .bottom-status-bar,
+  body.layout-v2.layout-display .bottom-status-bar {
+    display: block !important;
+    text-align: center;
+    padding: clamp(6px, 1.2dvh, 14px) clamp(8px, 2vw, 24px);
+    font-size: clamp(0.85rem, 1.6dvh, 1.2rem);
+    line-height: 1.4;
+  }
+  body.layout-v2.layout-kiosk .bottom-status-bar > *,
+  body.layout-v2.layout-display .bottom-status-bar > * {
+    display: inline;
+    margin: 0 clamp(4px, 0.6vw, 10px);
+  }
+  body.layout-v2.layout-kiosk .bottom-status-bar .status-time,
+  body.layout-v2.layout-display .bottom-status-bar .status-time {
+    font-size: clamp(0.9rem, 1.8dvh, 1.4rem);
+  }
+
+  /* display.html — clock-only, no dashboard */
+  body.layout-v2.layout-display .dashboard-container { display: none !important; }
+  body.layout-v2.layout-display #main-shabbat-indicator { display: none !important; }
+  body.layout-v2.layout-display #clockContainer {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100% !important;
+    max-width: none !important;        /* override v1 max-width: 600px */
+    min-height: 0;
+    flex: 1 1 auto;
+    container-type: size;
+    container-name: clock;
+    margin: 0 !important;
+  }
+  body.layout-v2.layout-display .clock-time {
+    font-size: clamp(3rem, min(45cqh, 20cqi), 26rem);
+    font-weight: 300;
+    color: var(--gold-primary);
+    line-height: 0.9;
+    margin: 0 0 clamp(8px, 2cqh, 28px) 0;
+    font-variant-numeric: tabular-nums;
+  }
+  body.layout-v2.layout-display .clock-date {
+    font-size: clamp(1rem, 5cqi, 4.5rem);
+    color: var(--text-main);
+    font-weight: 400;
+    margin: 0 0 clamp(4px, 1.5cqh, 18px) 0;
+  }
+  body.layout-v2.layout-display .clock-hebrew-date {
+    font-size: clamp(0.85rem, 3.5cqi, 3.2rem);
+    color: var(--text-secondary);
+    font-weight: 400;
+    opacity: 0.9;
+    margin: 0;
+  }
+  body.layout-v2.layout-display #digitalClockPanel {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  body.layout-v2.layout-display #analogClockWrapper { display: none !important; }
+
+  /* Footer controls (kiosk only) — positioned within the bar row */
+  body.layout-v2.layout-kiosk .footer-controls {
+    position: static;
+    grid-row: 4;
+    grid-column: 1;
+    pointer-events: auto;
+    padding: clamp(4px, 0.8dvh, 10px);
+    gap: clamp(8px, 1.2vw, 15px);
+  }
+
+  /* Empty-state messaging — fit within main row */
+  body.layout-v2 .empty-state {
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.2rem, 4cqh, 2.8rem);
+    padding: clamp(12px, 3cqi, 32px);
+  }
+
+}  /* end @supports (container-type: size) */

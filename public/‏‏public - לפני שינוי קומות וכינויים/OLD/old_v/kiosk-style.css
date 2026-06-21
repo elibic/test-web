@@ -1,0 +1,727 @@
+/* --- Root Variables for Theme --- */
+:root {
+    /* רקע עמוק */
+    --bg-gradient: radial-gradient(circle at 50% 0%, #2c3e50, #000000); 
+    
+    /* Glass Effect */
+    --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    --glass-border: 1px solid rgba(255, 255, 255, 0.18);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    --glass-inner-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+
+    /* --- GOLD COLORS --- */
+    --gold-primary: #E6C25F; /* Rich Metallic Gold */
+    --gold-muted: #C2A153;   /* Muted Bronze/Gold */
+    
+    --text-main: #F8FAFC;    
+    --text-secondary: #CBD5E1; 
+    
+    /* --- Active State Colors --- */
+    --active-gold-bg: linear-gradient(135deg, rgba(230, 194, 95, 0.95), rgba(255, 223, 128, 0.9));
+    --active-text-dark: #0f172a; /* Deep dark blue for contrast on gold */
+}
+
+/* --- General Layout --- */
+body { 
+    margin: 0; 
+    padding: 10px; 
+    font-family: 'Heebo', sans-serif; 
+    background: var(--bg-gradient); 
+    color: var(--text-main); 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: space-between; 
+    height: 100vh; 
+    text-align: center; 
+    box-sizing: border-box; 
+    overflow: hidden; 
+}
+
+/* --- Top Logo Styles --- */
+.top-logo {
+    display: block;
+    max-height: 80px; /* Limit height */
+    width: auto;
+    margin: 5px auto 10px auto;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+    flex-shrink: 0;
+}
+
+/* Bottom Logo Styles */
+.bottom-logo {
+    position: fixed;
+    bottom: 10px; 
+    left: 20px;   
+    max-height: 40px;
+    opacity: 0.6; 
+    z-index: 200; 
+    pointer-events: none;
+    filter: brightness(150%);
+}
+
+#displayContainer { 
+    display: flex; 
+    width: 100%; 
+    flex-direction: column; 
+    align-items: center; 
+    position: relative; 
+    flex: 1; 
+    justify-content: flex-start; 
+    overflow-y: auto;
+    scrollbar-width: none; 
+}
+#displayContainer::-webkit-scrollbar { display: none; }
+
+/* --- Shabbat Indicator (Animated Candles) --- */
+#main-shabbat-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    color: var(--gold-primary);
+    font-size: 2.2em; 
+    font-weight: 700;
+    margin-top: 5px; 
+    margin-bottom: 15px; 
+    text-shadow: 0 0 30px rgba(230, 194, 95, 0.4); 
+    flex-shrink: 0; 
+}
+
+.shabbat-candle-svg {
+    width: 28px; 
+    height: auto;
+    filter: drop-shadow(0 0 15px rgba(230, 194, 95, 0.6));
+}
+
+/* --- Dashboard Grid --- */
+.dashboard-container { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 15px; 
+    width: 100%; 
+    max-width: 1200px; 
+    flex-shrink: 0; 
+    transition: all 0.5s ease;
+}
+
+/* --- Elevator Panel (Glass Style) --- */
+.elevator-panel { 
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: var(--glass-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    border-left: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 28px; 
+    box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+    padding: 20px;  
+    width: 300px; 
+    position: relative; 
+    box-sizing: border-box; 
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+    min-height: 280px;
+}
+
+/* --- Internal Panel Layout (Default/Vertical) --- */
+.panel-side-floor {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+}
+
+.panel-side-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* ---------------------------------------------------- */
+/* --- SINGLE ELEVATOR VIEW (Desktop Default) --- */
+/* ---------------------------------------------------- */
+@media (min-width: 600px) {
+    .elevator-panel:only-child {
+        width: 90%;
+        max-width: 900px;
+        flex-direction: row; /* Horizontal Layout */
+        justify-content: space-around;
+        align-items: center;
+        padding: 40px;
+        gap: 20px;
+    }
+
+    .elevator-panel:only-child .panel-side-floor {
+        flex: 1;
+        border-left: 1px solid rgba(255,255,255,0.1); 
+        padding-left: 40px;
+    }
+    
+    .elevator-panel:only-child .floor-indicator {
+        font-size: 14em; 
+        line-height: 0.8;
+        text-shadow: 0 0 50px rgba(230, 194, 95, 0.3);
+    }
+
+    .elevator-panel:only-child .panel-side-info {
+        flex: 1;
+        align-items: center; 
+        gap: 20px;
+    }
+
+    .elevator-panel:only-child .elevator-id {
+        font-size: 2em;
+        margin-bottom: 10px;
+    }
+
+    .elevator-panel:only-child .direction-status {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .elevator-panel:only-child .elevator-arrow-svg,
+    .elevator-panel:only-child .stop-status-svg {
+        width: 100px;
+        height: 100px;
+    }
+
+    .elevator-panel:only-child .eta-display {
+        border-top: none; 
+    }
+
+    .elevator-panel:only-child .eta-result {
+        font-size: 3em; 
+    }
+    
+    .elevator-panel:only-child .floor-label {
+        font-size: 1.2em;
+    }
+    
+    .elevator-panel:only-child.approaching .panel-side-floor {
+        border-left-color: rgba(15, 23, 42, 0.2);
+    }
+}
+
+/* --- Active State Animation (Pulse) --- */
+@keyframes pulse-gold {
+    0% { 
+        box-shadow: 0 0 20px rgba(230, 194, 95, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.4); 
+        transform: scale(1.02) translateY(-5px);
+    }
+    50% { 
+        box-shadow: 0 0 50px rgba(230, 194, 95, 1), inset 0 0 40px rgba(255, 255, 255, 0.6); 
+        transform: scale(1.03) translateY(-5px);
+        border-color: #fff;
+    }
+    100% { 
+        box-shadow: 0 0 20px rgba(230, 194, 95, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.4); 
+        transform: scale(1.02) translateY(-5px);
+    }
+}
+
+/* --- NEW: Active State (Approaching) --- */
+.elevator-panel.approaching {
+    background: var(--active-gold-bg);
+    border-color: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    animation: pulse-gold 2s infinite ease-in-out; /* Continuous Pulse */
+}
+
+.elevator-id { 
+    font-size: 1.2em; 
+    font-weight: 400; 
+    color: var(--text-secondary); 
+    margin-bottom: 5px;
+    transition: color 0.3s;
+}
+
+/* Color Inversion when Active */
+.elevator-panel.approaching .elevator-id {
+    color: rgba(15, 23, 42, 0.7);
+    font-weight: 600;
+}
+
+.floor-indicator { 
+    font-size: 5.5em; 
+    font-weight: 800; 
+    color: var(--gold-primary);
+    text-shadow: 0 0 30px rgba(230, 194, 95, 0.4); 
+    line-height: 1;
+    letter-spacing: -3px;
+    margin: 0;
+    transition: color 0.3s;
+}
+
+/* Color Inversion for Floor Number */
+.elevator-panel.approaching .floor-indicator {
+    color: var(--active-text-dark);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.direction-status { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    height: 60px; 
+    width: 60px;
+    position: relative;
+    margin-bottom: 5px;
+}
+
+/* --- ARROW & STOP ICONS --- */
+.elevator-arrow-svg {
+    width: 50px;
+    height: 50px;
+    fill: var(--gold-primary);
+    filter: drop-shadow(0 0 10px rgba(230, 194, 95, 0.5));
+    transition: transform 0.3s ease, fill 0.3s;
+}
+
+/* Color Inversion for Arrow */
+.elevator-panel.approaching .elevator-arrow-svg {
+    fill: var(--active-text-dark);
+    filter: none;
+}
+
+.arrow-up { transform: rotate(0deg); }
+.arrow-down { transform: rotate(180deg); }
+
+.stop-status-svg {
+    width: 55px;
+    height: 55px;
+    overflow: visible;
+}
+.stop-ring {
+    fill: none;
+    stroke: var(--gold-primary);
+    stroke-width: 3;
+    stroke-linecap: round;
+    transform-origin: center;
+    transform: rotate(-90deg);
+    stroke-dasharray: 283; 
+    stroke-dashoffset: 283;
+    filter: drop-shadow(0 0 8px rgba(230, 194, 95, 0.4));
+    animation: ringLoad 3s ease-in-out infinite alternate;
+    transition: stroke 0.3s;
+}
+.stop-bars {
+    fill: var(--gold-primary);
+    filter: drop-shadow(0 0 5px rgba(230, 194, 95, 0.5));
+    transform-origin: center;
+    animation: barsPulse 2s ease-in-out infinite;
+    transition: fill 0.3s;
+}
+
+/* Color Inversion for Stop Icon */
+.elevator-panel.approaching .stop-ring { stroke: var(--active-text-dark); filter: none; }
+.elevator-panel.approaching .stop-bars { fill: var(--active-text-dark); filter: none; }
+
+
+/* --- ANIMATIONS --- */
+@keyframes flowAnimation {
+    0% { transform: translateY(20%); opacity: 0; }
+    30% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: translateY(-40%); opacity: 0; }
+}
+.elevator-arrow-path { animation: flowAnimation 1.5s infinite linear; }
+@keyframes ringLoad { 0% { stroke-dashoffset: 283; } 20% { stroke-dashoffset: 283; } 100% { stroke-dashoffset: 0; } }
+@keyframes barsPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+/* --- ETA Section --- */
+.eta-display {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    padding-top: 10px;
+    margin-top: 5px;
+    text-align: center;
+    transition: border-color 0.3s;
+}
+
+.elevator-panel.approaching .eta-display {
+    border-top: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.floor-label { font-size: 0.9em; color: var(--text-secondary); margin-bottom: 2px; transition: color 0.3s; }
+.elevator-panel.approaching .floor-label { color: rgba(15, 23, 42, 0.7); font-weight: 600; }
+
+.eta-result { 
+    font-size: 1.4em; 
+    font-weight: 600; 
+    color: var(--gold-primary);
+    text-shadow: 0 0 15px rgba(230, 194, 95, 0.3);
+    min-height: 1.5em;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Active ETA Style - BIG EMPHASIS */
+.elevator-panel.approaching .eta-result {
+    color: var(--active-text-dark);
+    text-shadow: none;
+    font-weight: 800;
+    font-size: 2em; /* Significant increase size */
+    letter-spacing: 0.5px;
+}
+
+/* Mode Toggling */
+body.shabbat-mode-active #main-shabbat-indicator { display: flex; }
+body.shabbat-mode-active .dashboard-container { display: flex; }
+body:not(.shabbat-mode-active) .dashboard-container { display: none !important; }
+
+/* In standard mode, show clock unless overriden by public mode */
+body:not(.shabbat-mode-active) #clockContainer { display: flex !important; }
+
+/* WEEKDAY MODE (Used mainly in Public Kiosk) */
+body.weekday-mode .eta-display { display: none !important; }
+/* Ensure Dashboard is visible ALWAYS in Public Mode override */
+body.weekday-mode .dashboard-container { display: flex !important; }
+
+
+/* --- Clock Container --- */
+#clockContainer {
+    display: none; 
+    width: 100%; 
+    max-width: 600px; 
+    margin: 0 auto;
+    flex-direction: column;
+    justify-content: center; 
+    align-items: center;
+    min-height: 0; 
+    flex: 1;
+}
+
+.clock-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: var(--glass-border);
+    border-radius: 35px;
+    box-shadow: var(--glass-shadow);
+    padding: 2em;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-sizing: border-box;
+    border: 1px solid rgba(230, 194, 95, 0.3);
+}
+
+.clock-time { 
+    font-size: 5.5em; 
+    font-weight: 200; 
+    color: #fff; 
+    margin: 0; 
+    line-height: 1; 
+    font-variant-numeric: tabular-nums; 
+    letter-spacing: -2px;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.clock-date { font-size: 1.5em; font-weight: 400; color: var(--gold-primary); margin-top: 10px; letter-spacing: 1px;}
+.clock-hebrew-date { font-size: 1.2em; font-weight: 300; color: var(--text-secondary); margin-top: 5px; }
+
+/* --- Analog Clock --- */
+#analogClockWrapper {
+    display: none; 
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+.analog-clock-panel {
+    width: 280px; 
+    height: 280px;
+    position: relative;
+    background: rgba(30, 41, 59, 0.4); 
+    backdrop-filter: blur(15px);
+    border: 4px solid var(--gold-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 50px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.5);
+    margin: 0 auto;
+}
+.analog-clock-panel .hand {
+    width: 50%; height: 4px; background: var(--text-secondary); position: absolute; top: 50%;
+    transform-origin: 100%; transform: rotate(90deg); border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    border: none;
+}
+.analog-clock-panel .hour-hand { width: 30%; left: 20%; height: 6px; background: #fff; }
+.analog-clock-panel .minute-hand { width: 40%; left: 10%; height: 4px; background: var(--gold-primary); }
+.analog-clock-panel .second-hand { width: 45%; left: 5%; height: 2px; background: #ef4444; }
+.analog-clock-panel .center-dot {
+    position: absolute; top: 50%; left: 50%; width: 12px; height: 12px;
+    background: var(--gold-primary); border: 3px solid #1e293b; border-radius: 50%;
+    transform: translate(-50%, -50%); z-index: 10;
+}
+.analog-clock-panel .number {
+    position: absolute; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.2em; font-weight: 600; color: var(--gold-muted); transform: translate(-50%, -50%);
+    font-family: 'Heebo', sans-serif;
+}
+/* Position numbers */
+.analog-clock-panel .number-12 { top: 8%; left: 50%; }
+.analog-clock-panel .number-1  { top: 13.4%; left: 71.7%; }
+.analog-clock-panel .number-2  { top: 28.3%; left: 86.6%; }
+.analog-clock-panel .number-3  { top: 50%; left: 92%; }
+.analog-clock-panel .number-4  { top: 71.7%; left: 86.6%; }
+.analog-clock-panel .number-5  { top: 86.6%; left: 71.7%; }
+.analog-clock-panel .number-6  { top: 92%; left: 50%; }
+.analog-clock-panel .number-7  { top: 86.6%; left: 28.3%; }
+.analog-clock-panel .number-8  { top: 71.7%; left: 13.4%; }
+.analog-clock-panel .number-9  { top: 50%; left: 8%; }
+.analog-clock-panel .number-10 { top: 28.3%; left: 13.4%; }
+.analog-clock-panel .number-11 { top: 13.4%; left: 28.3%; }
+
+.analog-clock-date-container { 
+    margin-top: 20px; text-align: center;
+}
+.analog-clock-date { font-size: 1.5em; color: var(--gold-primary); }
+.analog-clock-hebrew-date { font-size: 1.2em; color: var(--gold-muted); }
+
+/* --- Footer Controls --- */
+.footer-controls {
+    position: fixed; 
+    bottom: 10px; 
+    left: 0; 
+    width: 100%; 
+    padding: 10px;
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 100; 
+    gap: 15px; 
+    box-sizing: border-box;
+    pointer-events: none; 
+}
+
+.control-btn {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.1); 
+    border: 1px solid rgba(255,255,255,0.3); 
+    color: var(--gold-muted);
+    border-radius: 50%; 
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em; 
+    cursor: pointer; 
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+.control-btn:hover { background: rgba(255, 255, 255, 0.25); color: #fff; transform: translateY(-3px); }
+
+body.shabbat-mode-active .footer-controls { 
+    justify-content: flex-start;
+    padding-right: 20px;
+}
+
+/* --- Modal & Notifications --- */
+.modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+.modal.show { display: flex; }
+.modal-content { 
+    background: #1e293b; 
+    padding: 30px; 
+    border: 1px solid var(--gold-muted); 
+    border-radius: 28px; 
+    width: 90%; 
+    max-width: 450px; 
+    text-align: center; 
+    position: relative; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+.modal-title { color: var(--gold-primary); margin-top: 0; }
+.modal-text { color: var(--text-main); margin-bottom: 20px; }
+.modal-close { position: absolute; top: 15px; left: 20px; color: var(--text-secondary); font-size: 32px; font-weight: bold; cursor: pointer; line-height: 1; }
+.qr-container { margin: 10px auto; padding: 15px; background: #fff; border-radius: 16px; display: inline-block; position: relative; }
+#whatsappQRContainer { width: 180px !important; height: 180px !important; }
+.qr-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: #fff; border-radius: 8px; padding: 4px; }
+
+.notification { visibility: hidden; opacity: 0; min-width: 200px; background: var(--gold-primary); color: #0f172a; text-align: center; border-radius: 50px; padding: 12px 25px; position: fixed; z-index: 3001; left: 50%; top: 20px; font-size: 1em; transform: translateX(-50%) translateY(-20px); transition: all 0.4s; font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+.notification.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.bottom-status-bar {
+    position: fixed; bottom: 5px; left: 0; right: 0;
+    background: rgba(15, 23, 42, 0.95);
+    border-top: 1px solid rgba(236, 208, 143, 0.3);
+    padding: 5px 15px;
+    text-align: center; font-size: 0.9em; color: var(--gold-muted);
+    z-index: 50; display: none;
+}
+body.shabbat-mode-active .bottom-status-bar { display: block; }
+
+/* ----------------------------------------------------------- */
+/* ---  SPECIFIC MEDIA QUERY FOR SHORT LANDSCAPE SCREENS  --- */
+/* Targets 800x480 and 1024x600 (height <= 640px)           */
+/* Uses 'vmin' units to guarantee fit based on height         */
+/* ----------------------------------------------------------- */
+@media (orientation: landscape) and (max-height: 640px) {
+    body { 
+        padding: 0;
+        overflow: hidden;
+    }
+    
+    /* Compact Header - SMALLER */
+    .top-logo {
+        max-height: 8vh; /* Reduced from 10vmin */
+        margin: 1vh auto;
+    }
+
+    #displayContainer {
+        height: 100vh;
+        padding-bottom: 60px; /* Ensure space for bottom bar */
+        justify-content: flex-start; 
+        padding-top: 0;
+        box-sizing: border-box;
+    }
+
+    /* Reduced Shabbat Header */
+    #main-shabbat-indicator {
+        font-size: 4vh; 
+        margin: 0 0 2vh 0; /* ADDED MARGIN BOTTOM */
+        gap: 2vh;
+    }
+    .shabbat-candle-svg { width: 5vh; }
+
+    /* --- SINGLE VIEW OPTIMIZATION (Height Restricted) --- */
+    .elevator-panel:only-child {
+        width: 96vw; 
+        /* Logic: Full height minus Header (~15vh) and Footer (~60px) */
+        height: auto;
+        max-height: 68vh; /* Hard limit to prevent overlap */
+        min-height: 0;
+        padding: 2vmin; /* ADDED PADDING (Breathing Room) */
+        margin: 8vh auto 0 auto; /* Added margin top to push it down */
+        justify-content: center; /* Center content vertically */
+        align-items: center;     /* Center content horizontally */
+        gap: 0;
+    }
+    
+    /* Left Side (Info) */
+    .elevator-panel:only-child .panel-side-info {
+        flex: 0 0 45%; 
+        justify-content: center;
+        gap: 1vh;
+    }
+    
+    .elevator-panel:only-child .elevator-id {
+        font-size: 4.5vh; /* Reduced slightly */
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .elevator-panel:only-child .direction-status {
+        width: 14vh; /* Reduced slightly */
+        height: 14vh;
+        margin: 0;
+    }
+    .elevator-panel:only-child .elevator-arrow-svg,
+    .elevator-panel:only-child .stop-status-svg {
+        width: 12vh;
+        height: 12vh;
+    }
+    
+    .elevator-panel:only-child .eta-display {
+        margin: 0; padding: 0; border: none;
+    }
+    .elevator-panel:only-child .floor-label { font-size: 2.5vh; } /* Reduced slightly */
+    .elevator-panel:only-child .eta-result { 
+        font-size: 6vh; /* Reduced slightly */
+        line-height: 1; 
+        margin-top: 0;
+    }
+
+    /* Right Side (Floor) */
+    .elevator-panel:only-child .panel-side-floor {
+        flex: 0 0 55%; 
+        padding: 0;
+        border-left: 2px solid rgba(255,255,255,0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .elevator-panel:only-child .floor-indicator {
+        font-size: 32vh; /* Reduced from 38vh */
+        line-height: 0.8;
+        margin-top: 1.5vh;
+        letter-spacing: -1vh;
+    }
+
+    /* --- MULTIPLE ELEVATORS LAYOUT --- */
+    .dashboard-container:not(:has(.elevator-panel:only-child)) {
+        display: flex;
+        flex-wrap: nowrap;
+        width: 100%;
+        gap: 2vmin; 
+        justify-content: center;
+        align-items: center;
+    }
+
+    .elevator-panel:not(:only-child) {
+        flex: 0 1 30vw; 
+        height: 60vh;
+        min-height: 0;
+        padding: 2vmin;
+    }
+    
+    .elevator-panel:not(:only-child) .floor-indicator { 
+        font-size: 20vmin; 
+    }
+    
+    /* Footer Fix */
+    .footer-controls { 
+        bottom: 2vmin; 
+    }
+    .bottom-logo { max-height: 8vmin; bottom: 2vmin; left: 2vmin; }
+}
+
+/* Portrait Mobile (No changes needed, kept for reference) */
+@media (max-width: 480px) and (orientation: portrait) {
+        #main-shabbat-indicator { font-size: 1.8em; margin-bottom: 20px; }
+        .dashboard-container { gap: 10px; }
+        .elevator-panel { width: 46%; min-height: 220px; padding: 15px 10px; }
+        .floor-indicator { font-size: 4em; }
+        .direction-status { height: 40px; width: 40px; }
+        .elevator-arrow-svg { width: 35px; height: 35px; }
+        .stop-status-svg { width: 38px; height: 38px; }
+        .eta-result { font-size: 1em; }
+        
+        .elevator-panel:only-child {
+            flex-direction: column;
+            width: 300px;
+            gap: 0;
+            height: auto;
+        }
+        .elevator-panel:only-child .panel-side-floor {
+            border-left: none;
+            padding-left: 0;
+        }
+        .elevator-panel:only-child .floor-indicator {
+            font-size: 5.5em; /* Reset size */
+        }
+}
+
+/* Error Screen for missing floor */
+#errorScreen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    color: #ef4444;
+    padding: 20px;
+}

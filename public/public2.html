@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <title>מעבר לתצוגה הראשית…</title>
+    <style>
+        html, body { margin: 0; height: 100%; background: #f5f0eb;
+            font-family: 'Assistant', system-ui, sans-serif; color: #8c7354;
+            display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+    <!-- public2 הועלתה להיות התצוגה הראשית ב-/public.
+         דף זה רק מפנה ל-/public ושומר על פרמטר הקומה (?floor=X). -->
+    <p>מעביר לתצוגה הראשית…</p>
+    <script>
+        // Preserve query string (e.g. ?floor=12) + hash when redirecting.
+        // Target /public.html (not /public) so it works BOTH locally (plain
+        // static server) AND on Firebase Hosting (cleanUrls 301s .html → /public,
+        // keeping the query string). One extra 301 hop in prod is negligible.
+        location.replace('/public.html' + location.search + location.hash);
+    </script>
+</body>
+</html>

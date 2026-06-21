@@ -1,0 +1,307 @@
+/* --- Cassia Hotels Brand Fonts --- */
+@font-face {
+    font-family: 'Fedra Sans';
+    src: url('fonts/FedraSansH+L-Book.otf') format('opentype');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'Fedra Sans';
+    src: url('fonts/FedraSansH+L-Medium.otf') format('opentype');
+    font-weight: 500;
+}
+@font-face {
+    font-family: 'Fedra Sans';
+    src: url('fonts/FedraSansH+L-Demi.otf') format('opentype');
+    font-weight: 700;
+}
+@font-face {
+    font-family: 'Cassia';
+    src: url('fonts/CassiaRegular.otf') format('opentype');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'Cassia';
+    src: url('fonts/CassiaBook102422.otf') format('opentype');
+    font-weight: 300;
+}
+
+/* --- Root Variables (Light Theme - Cassia Brand Colors) --- */
+:root {
+    /* Main Background: Stone/Pearl from Brand Book */
+    --bg-color: #D1CBBC; 
+    
+    /* Elevator Panel Background: Clean White */
+    --card-bg: #FFFFFF;
+    --card-border: 1px solid #A2662F; /* Bronze */
+    
+    /* Brand Colors */
+    --gold-primary: #A2662F; /* Bronze */
+    --gold-dim: #8a7c4f;     /* Dimmed Bronze */
+    
+    --text-main: #395437;    /* Dark Green */
+    --text-secondary: #000000; /* Deep Black */
+    
+    /* Active State (Approaching) */
+    --active-bg: #FFC709; /* Yellow */
+    --active-text: #395437; /* Dark Green */
+}
+
+/* --- General Layout --- */
+body { 
+    margin: 0; 
+    padding: 10px; 
+    font-family: 'Fedra Sans', 'Heebo', sans-serif; 
+    background-color: var(--bg-color); 
+    color: var(--text-main); 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: space-between; 
+    height: 100vh; 
+    text-align: center; 
+    box-sizing: border-box; 
+    overflow: hidden; 
+    transform: translateZ(0);
+}
+
+/* Typography Overrides */
+.floor-indicator, .clock-time, .elevator-id, .eta-result, .status-time, .number {
+    font-family: 'Cassia', 'Heebo', serif;
+}
+
+/* --- Top Logo Styles --- */
+.top-logo {
+    display: block;
+    max-height: 80px; 
+    width: auto;
+    margin: 5px auto 10px auto;
+    flex-shrink: 0;
+}
+
+/* Bottom Logo Styles */
+.bottom-logo {
+    position: fixed;
+    bottom: 10px; 
+    left: 20px;   
+    max-height: 40px;
+    opacity: 0.8; 
+    z-index: 200; 
+    pointer-events: none;
+}
+
+#displayContainer { 
+    display: flex; 
+    width: 100%; 
+    flex-direction: column; 
+    align-items: center; 
+    position: relative; 
+    flex: 1; 
+    justify-content: flex-start; 
+    overflow-y: auto;
+    scrollbar-width: none; 
+}
+#displayContainer::-webkit-scrollbar { display: none; }
+
+/* --- Shabbat Indicator --- */
+#main-shabbat-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    color: var(--gold-primary); /* Bronze text */
+    font-size: 2.2em; 
+    font-weight: 500;
+    margin-top: 5px; 
+    margin-bottom: 15px; 
+    flex-shrink: 0; 
+}
+
+.shabbat-candle-svg { width: 28px; height: auto; }
+
+/* --- Dashboard Grid --- */
+.dashboard-container { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 15px; 
+    width: 100%; 
+    max-width: 1200px; 
+    flex-shrink: 0; 
+}
+
+/* --- Elevator Panel (Light Theme) --- */
+.elevator-panel { 
+    background-color: var(--card-bg);
+    border: var(--card-border);
+    border-radius: 6px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Soft natural shadow */
+    padding: 20px;  
+    width: 300px; 
+    position: relative; 
+    box-sizing: border-box; 
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    min-height: 280px;
+}
+
+.panel-side-floor { display: flex; justify-content: center; align-items: center; flex: 1; }
+.panel-side-info { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+
+/* --- SINGLE ELEVATOR VIEW (Desktop Default) --- */
+@media (min-width: 600px) {
+    .elevator-panel:only-child {
+        width: 90%; max-width: 900px;
+        flex-direction: row; justify-content: space-around; align-items: center;
+        padding: 40px; gap: 20px;
+    }
+    .elevator-panel:only-child .panel-side-floor {
+        flex: 1; border-left: 1px solid var(--gold-primary); padding-left: 40px;
+    }
+    .elevator-panel:only-child .floor-indicator { font-size: 14em; line-height: 0.8; }
+    .elevator-panel:only-child .panel-side-info { flex: 1; align-items: center; gap: 20px; }
+    .elevator-panel:only-child .elevator-id { font-size: 2em; margin-bottom: 10px; }
+    .elevator-panel:only-child .direction-status { width: 120px; height: 120px; }
+    .elevator-panel:only-child .elevator-arrow-svg, .elevator-panel:only-child .stop-status-svg { width: 100px; height: 100px; }
+    .elevator-panel:only-child .eta-display { border-top: none; }
+    .elevator-panel:only-child .eta-result { font-size: 3em; }
+    .elevator-panel:only-child .floor-label { font-size: 1.2em; }
+}
+
+/* --- ACTIVE STATE (Approaching) --- */
+.elevator-panel.approaching {
+    background-color: var(--active-bg); /* Cassia Yellow */
+    border-color: var(--active-text); /* Cassia Green Border */
+    z-index: 10;
+    transform: scale(1.02);
+    box-shadow: 0 8px 30px rgba(255, 199, 9, 0.4);
+}
+
+.elevator-id { font-size: 1.2em; font-weight: 400; color: var(--gold-primary); margin-bottom: 5px; }
+.elevator-panel.approaching .elevator-id { color: var(--active-text); font-weight: 700; }
+
+.floor-indicator { font-size: 5.5em; font-weight: 400; color: var(--text-main); line-height: 1; margin: 0; }
+.elevator-panel.approaching .floor-indicator { color: var(--active-text); font-weight: 700; }
+
+.direction-status { display: flex; align-items: center; justify-content: center; height: 60px; width: 60px; position: relative; margin-bottom: 5px; }
+.elevator-arrow-svg { width: 50px; height: 50px; fill: var(--text-main); }
+.elevator-panel.approaching .elevator-arrow-svg { fill: var(--active-text); }
+.arrow-up { transform: rotate(0deg); }
+.arrow-down { transform: rotate(180deg); }
+
+.stop-status-svg { width: 55px; height: 55px; overflow: visible; }
+.stop-ring { fill: none; stroke: var(--text-main); stroke-width: 4; stroke-linecap: round; }
+.stop-bars { fill: var(--text-main); }
+.elevator-panel.approaching .stop-ring { stroke: var(--active-text); }
+.elevator-panel.approaching .stop-bars { fill: var(--active-text); }
+
+.eta-display { border-top: 1px solid rgba(162, 102, 47, 0.3); width: 100%; padding-top: 10px; margin-top: 5px; text-align: center; }
+.elevator-panel.approaching .eta-display { border-top: 1px solid rgba(57, 84, 55, 0.3); }
+
+.floor-label { font-size: 0.9em; color: var(--gold-primary); margin-bottom: 2px; }
+.elevator-panel.approaching .floor-label { color: var(--active-text); font-weight: 500; }
+
+.eta-result { font-size: 1.4em; font-weight: 400; color: var(--text-main); min-height: 1.5em; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.elevator-panel.approaching .eta-result { color: var(--active-text); font-size: 2em; font-weight: 700; }
+
+/* Mode Toggling */
+body.shabbat-mode-active #main-shabbat-indicator { display: flex; }
+body.shabbat-mode-active .dashboard-container { display: flex; }
+body:not(.shabbat-mode-active) .dashboard-container { display: none !important; }
+body:not(.shabbat-mode-active) #clockContainer { display: flex !important; }
+body.weekday-mode .eta-display { display: none !important; }
+body.weekday-mode .dashboard-container { display: flex !important; }
+
+/* --- Clock Container --- */
+#clockContainer { display: none; width: 100%; max-width: 600px; margin: 0 auto; flex-direction: column; justify-content: center; align-items: center; min-height: 0; flex: 1; }
+.clock-panel { background-color: var(--card-bg); border: var(--card-border); border-radius: 8px; padding: 2em; width: 100%; text-align: center; position: relative; box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.clock-time { font-size: 5.5em; font-weight: 300; color: var(--text-main); margin: 0; line-height: 1; font-variant-numeric: tabular-nums; }
+.clock-date { font-size: 1.5em; font-weight: 400; color: var(--gold-primary); margin-top: 10px; letter-spacing: 1px;}
+.clock-hebrew-date { font-size: 1.2em; font-weight: 400; color: var(--text-secondary); margin-top: 5px; }
+
+/* --- ANALOG CLOCK STYLES (Light Theme Adaptation) --- */
+#analogClockWrapper { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
+.analog-clock-panel { position: relative; width: 350px; height: 350px; border: 2px solid var(--gold-primary); border-radius: 50%; background: #FFFFFF; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.clock-face { width: 100%; height: 100%; position: relative; }
+.number { position: absolute; width: 40px; height: 40px; text-align: center; line-height: 40px; font-size: 2em; font-weight: 400; color: var(--text-main); left: 50%; top: 50%; margin-left: -20px; margin-top: -20px; }
+.number-12 { transform: translate(0, -140px); } .number-1  { transform: translate(70px, -121px); } .number-2  { transform: translate(121px, -70px); } .number-3  { transform: translate(140px, 0); } .number-4  { transform: translate(121px, 70px); } .number-5  { transform: translate(70px, 121px); } .number-6  { transform: translate(0, 140px); } .number-7  { transform: translate(-70px, 121px); } .number-8  { transform: translate(-121px, 70px); } .number-9  { transform: translate(-140px, 0); } .number-10 { transform: translate(-121px, -70px); } .number-11 { transform: translate(-70px, -121px); }
+.hand { position: absolute; bottom: 50%; left: 50%; transform-origin: 50% 100%; border-radius: 4px; z-index: 10; transition: transform 0.2s cubic-bezier(0.4, 2.08, 0.55, 0.44); }
+.hour-hand { width: 6px; height: 90px; background: var(--text-main); margin-left: -3px; z-index: 10; }
+.minute-hand { width: 4px; height: 130px; background: var(--gold-primary); margin-left: -2px; z-index: 11; }
+.second-hand { display: none !important; }
+.center-dot { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; background: var(--text-main); border-radius: 50%; transform: translate(-50%, -50%); z-index: 13; }
+.analog-clock-date-container { text-align: center; }
+.analog-clock-date { font-size: 1.5em; color: var(--gold-primary); font-weight: 500; }
+.analog-clock-hebrew-date { font-size: 1.2em; color: var(--text-main); margin-top: 5px; }
+
+/* --- Footer Controls --- */
+.footer-controls { position: fixed; bottom: 10px; left: 0; width: 100%; padding: 10px; display: flex; justify-content: center; align-items: center; z-index: 100; gap: 15px; box-sizing: border-box; pointer-events: none; }
+.control-btn { pointer-events: auto; background: #FFFFFF; border: 1px solid var(--gold-primary); color: var(--gold-primary); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+.control-btn:hover { background: var(--gold-primary); color: #FFFFFF; }
+body.shabbat-mode-active .footer-controls { justify-content: flex-start; padding-right: 20px; }
+
+/* --- Modal & Notifications --- */
+.modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
+.modal.show { display: flex; }
+.modal-content { background: #FFFFFF; padding: 30px; border: 1px solid var(--gold-primary); border-radius: 6px; width: 90%; max-width: 450px; text-align: center; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+.modal-title { color: var(--gold-primary); margin-top: 0; }
+.modal-text { color: var(--text-main); margin-bottom: 20px; }
+.modal-close { position: absolute; top: 15px; left: 20px; color: var(--text-main); font-size: 32px; cursor: pointer; line-height: 1; }
+.qr-container { margin: 10px auto; padding: 15px; background: #fff; border-radius: 4px; display: inline-block; position: relative; border: 1px solid var(--gold-primary); }
+#whatsappQRContainer { width: 180px !important; height: 180px !important; }
+.qr-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: #fff; border-radius: 4px; padding: 4px; }
+.notification { visibility: hidden; opacity: 0; min-width: 200px; background: var(--gold-primary); color: #FFFFFF; text-align: center; border-radius: 4px; padding: 12px 25px; position: fixed; z-index: 3001; left: 50%; top: 20px; font-size: 1em; transform: translateX(-50%) translateY(-20px); transition: all 0.2s; font-weight: 500; }
+.notification.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.bottom-status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #FFFFFF; border-top: 1px solid var(--gold-primary); padding: 10px 25px; text-align: center; font-size: 2.2em; color: var(--text-main); z-index: 50; display: none; }
+body.shabbat-mode-active .bottom-status-bar { display: block; }
+
+/* --- SPECIFIC MEDIA QUERY FOR SHORT LANDSCAPE SCREENS --- */
+@media (orientation: landscape) and (max-height: 640px) {
+    body { padding: 0; overflow: hidden; }
+    .top-logo { max-height: 8vh; margin: 1vh auto; }
+    #displayContainer { height: 100vh; padding-bottom: 60px; justify-content: flex-start; padding-top: 0; box-sizing: border-box; }
+    #main-shabbat-indicator { font-size: 4vh; margin: 0 0 2vh 0; gap: 2vh; }
+    .shabbat-candle-svg { width: 5vh; }
+    .elevator-panel:only-child { width: 96vw; height: auto; max-height: 68vh; min-height: 0; padding: 2vmin; margin: 8vh auto 0 auto; justify-content: center; align-items: center; gap: 0; }
+    .elevator-panel:only-child .panel-side-info { flex: 0 0 45%; justify-content: center; gap: 1vh; }
+    .elevator-panel:only-child .elevator-id { font-size: 4.5vh; margin: 0; line-height: 1; }
+    .elevator-panel:only-child .direction-status { width: 14vh; height: 14vh; margin: 0; }
+    .elevator-panel:only-child .elevator-arrow-svg, .elevator-panel:only-child .stop-status-svg { width: 12vh; height: 12vh; }
+    .elevator-panel:only-child .eta-display { margin: 0; padding: 0; border: none; }
+    .elevator-panel:only-child .floor-label { font-size: 2.5vh; } 
+    .elevator-panel:only-child .eta-result { font-size: 6vh; line-height: 1; margin-top: 0; }
+    .elevator-panel:only-child .panel-side-floor { flex: 0 0 55%; padding: 0; border-left: 1px solid var(--gold-primary); display: flex; justify-content: center; align-items: center; }
+    .elevator-panel:only-child .floor-indicator { font-size: 32vh; line-height: 0.8; margin-top: 1.5vh; letter-spacing: -1vh; }
+    .dashboard-container:not(:has(.elevator-panel:only-child)) { display: flex; flex-wrap: nowrap; width: 100%; gap: 2vmin; justify-content: center; align-items: center; }
+    .elevator-panel:not(:only-child) { flex: 0 1 30vw; height: 60vh; min-height: 0; padding: 2vmin; }
+    .elevator-panel:not(:only-child) .floor-indicator { font-size: 20vmin; }
+    .footer-controls { bottom: 2vmin; }
+    .bottom-logo { max-height: 8vmin; bottom: 2vmin; left: 2vmin; }
+}
+
+/* Portrait Mobile */
+@media (max-width: 480px) and (orientation: portrait) {
+        #main-shabbat-indicator { font-size: 1.8em; margin-bottom: 20px; }
+        .dashboard-container { gap: 10px; }
+        .elevator-panel { width: 46%; min-height: 220px; padding: 15px 10px; }
+        .floor-indicator { font-size: 4em; }
+        .direction-status { height: 40px; width: 40px; }
+        .elevator-arrow-svg { width: 35px; height: 35px; }
+        .stop-status-svg { width: 38px; height: 38px; }
+        .eta-result { font-size: 1em; }
+        .elevator-panel:only-child { flex-direction: column; width: 300px; gap: 0; height: auto; }
+        .elevator-panel:only-child .panel-side-floor { border-left: none; padding-left: 0; }
+        .elevator-panel:only-child .floor-indicator { font-size: 5.5em; }
+}
+
+#errorScreen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; color: var(--gold-primary); padding: 20px; }
+
+/* === CRITICAL OVERRIDES === */
+.elevator-panel.approaching, .elevator-panel:only-child.approaching { background-color: var(--active-bg) !important; border-color: var(--active-text) !important; color: var(--active-text) !important; }
+.elevator-panel.approaching .floor-indicator, .elevator-panel:only-child.approaching .floor-indicator, .elevator-panel.approaching .elevator-id, .elevator-panel:only-child.approaching .elevator-id, .elevator-panel.approaching .eta-result, .elevator-panel:only-child.approaching .eta-result, .elevator-panel.approaching .floor-label { color: var(--active-text) !important; }
+.elevator-panel.approaching .elevator-arrow-svg, .elevator-panel:only-child.approaching .elevator-arrow-svg { fill: var(--active-text) !important; }
+.elevator-panel.approaching .stop-ring, .elevator-panel:only-child.approaching .stop-ring { stroke: var(--active-text) !important; }
+.elevator-panel.approaching .stop-bars, .elevator-panel:only-child.approaching .stop-bars { fill: var(--active-text) !important; }

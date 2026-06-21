@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>מעלית שבת אצלך בסלון</title>
+    
+    <!-- Heebo Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- QR Code Lib -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+</head>
+<body>
+
+    <!-- LOADING SCREEN -->
+    <div id="loadingOverlay" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:10000; align-items:center; justify-content:center; flex-direction:column;">
+        <div class="loader"></div>
+        <span style="color:var(--gold-primary);" id="loadingText">טוען מערכת...</span>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="authContainer" style="display:none;">
+        <div class="auth-box">
+            <!-- Auth Language Button -->
+            <button class="auth-lang-btn" onclick="toggleLanguage()">
+                <i class="fas fa-globe"></i>
+            </button>
+
+            <h2 id="loginTitle" style="color:var(--gold-primary); margin-top:0; margin-bottom:20px;">כניסה למערכת</h2>
+            
+            <button id="googleSignInBtn" class="auth-btn google-btn">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9.18v3.48h4.74c-.2 1.13-.83 2.08-1.78 2.72v2.26h2.9c1.7-1.56 2.68-3.87 2.68-6.62z"></path><path fill="#34A853" d="M9.18 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-2.97.86-2.3 0-4.26-1.56-4.96-3.66H1.2v2.33C2.68 15.98 5.67 18 9.18 18z"></path><path fill="#FBBC05" d="M4.22 10.74c-.14-.42-.22-.88-.22-1.34s.08-.92.22-1.34V5.73H1.2C.43 7.1.01 8.7.01 10.4c0 1.7.42 3.3 1.19 4.67l3.02-2.33z"></path><path fill="#EA4335" d="M9.18 3.54c1.32 0 2.5.45 3.44 1.34l2.58-2.58C13.65.88 11.61 0 9.18 0 5.67 0 2.68 2.02 1.2 4.93l3.02 2.33c.7-2.1 2.66-3.66 4.96-3.66z"></path></svg>
+                <span id="googleBtnTxt">התחבר עם Google</span>
+            </button>
+            
+            <p style="color:var(--text-secondary); margin: 15px 0;">או</p>
+            
+            <form id="loginForm">
+                <input type="email" id="emailInput" class="auth-input" placeholder="אימייל" required>
+                <div class="input-wrapper">
+                    <input type="password" id="passInput" class="auth-input" placeholder="סיסמה" required>
+                    <i class="fas fa-eye password-toggle" id="togglePasswordVisibility"></i>
+                </div>
+                <button type="submit" class="auth-btn" id="loginBtnTxt">התחבר</button>
+            </form>
+            <a class="forgot-pass-link" id="forgotPasswordBtn">שכחתי סיסמה</a>
+            <p id="authError" style="color:#ef4444; margin-top:10px; display:none;"></p>
+        </div>
+    </div>
+
+    <!-- FORGOT PASSWORD MODAL -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: var(--gold-primary); margin-top:0;">איפוס סיסמה</h3>
+            <p style="color: #fff;">הכנס את האימייל שלך לקבלת קישור לאיפוס סיסמה:</p>
+            <input type="email" id="forgotEmailInput" class="auth-input" placeholder="אימייל">
+            <button id="sendResetBtn" class="primary-btn">שלח קישור</button>
+            <button id="cancelResetBtn" class="primary-btn" style="background:rgba(255,255,255,0.1); border:1px solid #aaa; color:#fff;">ביטול</button>
+        </div>
+    </div>
+
+    <!-- NEW: FLOOR SELECTION MODAL (First-time users) -->
+    <div id="floorSelectionModal" class="modal">
+        <div class="modal-content">
+            <h3 id="floorSelectionTitle" style="color:var(--gold-primary); margin-top:0;">בחירת קומה</h3>
+            <p id="floorSelectionDesc" style="color:var(--text-secondary); line-height:1.6;">
+                בחר את הקומה שלך כדי לראות את זמני ההגעה המשוערים
+            </p>
+            <div class="floor-select-wrapper">
+                <select id="floorSelectInitial" class="floor-select">
+                    <option value="">בחר קומה...</option>
+                </select>
+            </div>
+            <button id="confirmFloorBtn" class="primary-btn">אישור</button>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="displayContainer">
+        
+        <!-- Top Logo -->
+        <div class="top-logo-container">
+            <img src="https://firebasestorage.googleapis.com/v0/b/nitzaelev.firebasestorage.app/o/nitza_logo.png?alt=media&token=90e39d30-62cc-406d-902a-9c55c265c0ef" class="top-logo" alt="Logo">
+        </div>
+
+        <!-- Header -->
+        <div id="main-shabbat-indicator">
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200">
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="#ccc"/>
+                <rect x="44" y="120" width="12" height="65" fill="#ccc"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347"/>
+            </svg>
+            <span id="headerText">שבת שלום</span>
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200">
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="#ccc"/>
+                <rect x="44" y="120" width="12" height="65" fill="#ccc"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347"/>
+            </svg>
+        </div>
+
+        <!-- Elevators Grid -->
+        <div class="dashboard-container"></div>
+
+        <!-- Persistent Screen Status Message -->
+        <div id="persistentScreenMsg"></div>
+
+        <!-- Horizontal Controls at Bottom -->
+        <div class="side-controls-container">
+            <!-- Settings Button (Opens Settings Modal with Floor Selection & Logout) -->
+            <button class="control-btn-round" style="border-color:#ef4444; color:#ef4444;" onclick="openSettingsModal()">
+                <i class="fas fa-cog"></i>
+            </button>
+            
+            <!-- Contact -->
+            <button class="control-btn-round" onclick="openContactModal()">
+                <i class="fas fa-phone"></i>
+            </button>
+
+            <!-- Language Toggle -->
+            <button class="control-btn-round" id="langBtn" onclick="toggleLanguage()">
+                <i class="fas fa-globe"></i>
+            </button>
+
+            <!-- Screen Lock Button -->
+            <button class="screen-lock-btn" id="screenLockButton" onclick="requestScreenLock()">
+                <i class="fas fa-mobile-alt"></i> <span id="keepScreenOnTxt">השאר מסך דולק</span>
+            </button>
+        </div>
+
+        <!-- Bottom Left Logo -->
+        <img src="https://firebasestorage.googleapis.com/v0/b/wolfsonelev.firebasestorage.app/o/Powered%20by_LOGO.png?alt=media&token=0e6c3ae5-24d7-49a1-bcc4-ab4c244adae3" class="bottom-left-logo" alt="Powered By">
+
+    </div>
+
+    <!-- Bottom Status Bar -->
+    <div class="bottom-status-bar">
+        <div class="status-text">
+            <span id="statusTime" class="status-time">00:00:00</span>
+            <span style="color:#666;"> | </span>
+            <span id="statusDate">--/--/--</span>
+            <span style="color:#666;"> | </span>
+            <span id="statusHebrewDate" style="color:#C2A153;">טוען...</span>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Initial Welcome Modal -->
+    <div id="initialPromptModal" class="modal">
+        <div class="modal-content">
+            <h2 id="welcomeTitle" style="color:var(--gold-primary);">ברוכים הבאים!</h2>
+            <p id="welcomeText" style="line-height:1.6; font-size:1.1em;">
+                יש לחבר את המכשיר למטען וללחוץ על כפתור <b>'השאר מסך דולק'</b> בתחתית המסך, כדי להבטיח שהמסך יישאר פעיל לאורך השבת.
+            </p>
+            <button class="primary-btn" onclick="closeInitialPrompt()" id="understandBtn">הבנתי</button>
+        </div>
+    </div>
+
+    <!-- NEW: Settings Modal (Replaces old Logout Modal) -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h3 id="settingsTitle" style="color:var(--gold-primary); margin-top:0;">
+                <i class="fas fa-cog"></i> הגדרות
+            </h3>
+            
+            <!-- Current Floor Display Section -->
+            <div class="settings-section">
+                <label class="settings-label" id="currentFloorLabel">קומה נוכחית</label>
+                <div class="current-floor-display">
+                    <span class="floor-number" id="currentFloorNumber">--</span>
+                </div>
+            </div>
+            
+            <!-- Change Floor Section -->
+            <div class="settings-section">
+                <label class="settings-label" id="changeFloorLabel">שנה קומה</label>
+                <div class="floor-select-wrapper">
+                    <select id="settingsFloorSelect" class="settings-floor-select">
+                        <!-- Options populated dynamically -->
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Buttons Section -->
+            <div class="settings-buttons">
+                <button id="logoutBtn" class="primary-btn logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> התנתק
+                </button>
+                <button id="closeSettingsBtn" class="primary-btn cancel-btn">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeContactModal()">&times;</span>
+            <h3 style="color:var(--gold-primary);" id="contactTitle">צור קשר</h3>
+            <p id="contactPhone">טלפון: 052-5705289</p>
+            <a href="https://wa.me/972525705289" class="contact-link-action" id="clickHereTxt">לחץ כאן לשליחת הודעה</a>
+            <div class="qr-wrapper">
+                <canvas id="qrCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Popup -->
+    <div class="notification-popup" id="notificationPopup"></div>
+
+    <!-- Firebase Scripts (Version 8 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

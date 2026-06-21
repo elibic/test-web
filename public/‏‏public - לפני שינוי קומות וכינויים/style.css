@@ -1,0 +1,642 @@
+/* ============================================================
+   Ramada Jerusalem Hotel — Shabbat Elevator Display
+   Design: Dark header/footer + warm cream center (like the site)
+   ============================================================ */
+
+/* --- Brand Fonts (Preserved) --- */
+@font-face { font-family: 'Fedra Sans'; src: url('fonts/FedraSansH+L-Book.otf') format('opentype'); font-weight: 400; }
+@font-face { font-family: 'Fedra Sans'; src: url('fonts/FedraSansH+L-Medium.otf') format('opentype'); font-weight: 500; }
+@font-face { font-family: 'Fedra Sans'; src: url('fonts/FedraSansH+L-Demi.otf') format('opentype'); font-weight: 700; }
+@font-face { font-family: 'Cassia'; src: url('fonts/CassiaRegular.otf') format('opentype'); font-weight: 400; }
+@font-face { font-family: 'Cassia'; src: url('fonts/CassiaBook102422.otf') format('opentype'); font-weight: 300; }
+
+/* --- Root Variables --- */
+:root {
+    /* הרקע הראשי: כהה למעלה, קרם באמצע — כמו באתר רמדה */
+    --bg-gradient: linear-gradient(180deg, #1a1a2e 0%, #1a1a2e 8%, #f5f0eb 8%, #f5f0eb 90%, #1a1a2e 90%);
+
+    /* פאנלי מעליות */
+    --glass-bg: rgba(255, 255, 255, 0.92);
+    --glass-border: 1px solid rgba(197, 164, 126, 0.35);
+    --glass-shadow: 0 3px 15px rgba(0, 0, 0, 0.07);
+    --glass-inner-shadow: none;
+
+    /* זהב רמדה */
+    --gold-primary: #c5a47e;
+    --gold-muted: #a08a6a;
+    --gold-light: #ddc9a8;
+    --gold-dark: #8c7354;
+    --gold-glow: rgba(197, 164, 126, 0.2);
+
+    /* טקסט */
+    --text-main: #333333;
+    --text-secondary: #c5a47e;
+    --text-dim: rgba(51, 51, 51, 0.45);
+
+    /* משטחים */
+    --surface-dark: #1a1a2e;
+    --surface-overlay: rgba(245, 240, 235, 0.94);
+    --cream: #f5f0eb;
+
+    /* Active Screen — ירוק בוהק */
+    --neon-green: #22c55e;
+    --neon-green-glow: rgba(34, 197, 94, 0.25);
+
+    /* מעלית מתקרבת */
+    --active-gold-bg: linear-gradient(135deg, #c5a47e, #b8956b);
+    --active-text-dark: #ffffff;
+}
+
+/* --- Reset & Body --- */
+* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+body { 
+    margin: 0; padding: 0; 
+    font-family: 'Heebo', 'Fedra Sans', sans-serif; 
+    background: var(--cream);
+    color: var(--text-main); 
+    display: flex; flex-direction: column; 
+    align-items: center; 
+    width: 100%; height: 100vh; 
+    overflow: hidden; 
+    transition: box-shadow 0.5s ease;
+}
+
+body.screen-active-mode {
+    box-shadow: inset 0 0 40px 8px rgba(34, 197, 94, 0.06);
+}
+
+/* כל הפונטים = Heebo נקי */
+.floor-indicator, .clock-time, .elevator-id, .eta-result, .status-time, .step-num {
+    font-family: 'Heebo', sans-serif;
+}
+
+/* --- Main Layout --- */
+#displayContainer { 
+    display: none; 
+    width: 100%; height: 100%;
+    flex-direction: column; 
+    align-items: center; 
+    /* מקום ל: footer(30px) + כפתורים(42px+gaps) + הודעת מסך(20px) + מרווחים */
+    padding-bottom: 105px;
+    padding-top: 0;
+}
+
+/* ============================================
+   HEADER ZONE — רקע כהה כמו באתר רמדה
+   ============================================ */
+.top-logo-container {
+    width: 100%;
+    background: var(--surface-dark);
+    padding: 10px 0 6px;
+    text-align: center;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 2px solid var(--gold-primary);
+}
+.top-logo {
+    width: 150px; 
+    height: auto;
+    object-fit: contain;
+    filter: brightness(1.1) drop-shadow(0 2px 8px rgba(197, 164, 126, 0.3));
+}
+
+#main-shabbat-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--gold-primary);
+    font-size: 1.4em; 
+    font-weight: 700;
+    padding: 6px 0 4px;
+    flex-shrink: 0;
+    background: var(--surface-dark);
+    width: 100%;
+    text-shadow: 0 1px 4px rgba(197, 164, 126, 0.3);
+}
+
+.shabbat-candle-svg {
+    width: 18px; height: auto;
+    filter: drop-shadow(0 1px 4px rgba(197, 164, 126, 0.5));
+}
+
+/* ============================================
+   DASHBOARD — פאנלים ממלאים את כל השטח
+   ============================================ */
+.dashboard-container { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    align-content: stretch;
+    gap: 8px; 
+    width: 100%; 
+    max-width: 600px; 
+    padding: 8px;
+    overflow: hidden; 
+    flex: 1; 
+    min-height: 0;
+}
+
+/* --- Elevator Panel --- */
+.elevator-panel { 
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: 14px; 
+    box-shadow: var(--glass-shadow);
+    padding: 8px 6px;  
+    width: calc(50% - 4px);
+    max-width: none;
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    flex: 1 1 calc(50% - 4px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* קו זהב דקורטיבי עליון */
+.elevator-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 15%; right: 15%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    opacity: 0.5;
+}
+
+/* --- SINGLE ELEVATOR --- */
+.dashboard-container .elevator-panel:only-child {
+    width: 90%; max-width: 400px; 
+    margin: auto; padding: 30px;
+    border-radius: 24px;
+    flex: 0 0 auto;
+    min-height: 55vh;
+}
+.dashboard-container .elevator-panel:only-child .floor-indicator { font-size: 8em; }
+.dashboard-container .elevator-panel:only-child .elevator-arrow-svg,
+.dashboard-container .elevator-panel:only-child .stop-status-svg { width: 70px; height: 70px; }
+.dashboard-container .elevator-panel:only-child .eta-result { font-size: 2em; min-height: 1.5em; }
+.dashboard-container .elevator-panel:only-child .elevator-id { font-size: 1.6em; margin-bottom: 15px; }
+
+/* --- Approaching Animation --- */
+@keyframes pulse-gold {
+    0%   { box-shadow: 0 0 12px rgba(197, 164, 126, 0.2); transform: scale(1.01); }
+    50%  { box-shadow: 0 0 30px rgba(197, 164, 126, 0.4); transform: scale(1.025); border-color: var(--gold-primary); }
+    100% { box-shadow: 0 0 12px rgba(197, 164, 126, 0.2); transform: scale(1.01); }
+}
+
+.elevator-panel.approaching {
+    background: var(--active-gold-bg);
+    border-color: var(--gold-primary);
+    z-index: 10;
+    animation: pulse-gold 2s infinite ease-in-out;
+}
+.elevator-panel.approaching::before { opacity: 0; }
+
+/* --- שם מעלית — גדול ומודגש --- */
+.elevator-id { 
+    font-size: 1.05em; 
+    color: var(--gold-dark); 
+    margin-bottom: 2px; 
+    transition: color 0.3s; 
+    font-weight: 700; 
+    letter-spacing: 0.03em;
+}
+.elevator-panel.approaching .elevator-id { color: #fff; }
+
+/* --- מספר קומה --- */
+.floor-indicator { 
+    font-size: 4em; 
+    font-weight: 400; 
+    color: var(--text-main);
+    line-height: 1; 
+    margin: 2px 0;
+    transition: color 0.3s;
+}
+.elevator-panel.approaching .floor-indicator { color: #fff; font-weight: 500; text-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+/* --- Direction --- */
+.direction-status { height: 34px; width: 34px; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 2px; }
+.elevator-arrow-svg { width: 30px; height: 30px; fill: var(--gold-primary); filter: drop-shadow(0 1px 2px rgba(197, 164, 126, 0.2)); transition: fill 0.3s; }
+.elevator-panel.approaching .elevator-arrow-svg { fill: #fff; filter: none; }
+
+.arrow-up { transform: rotate(0deg); }
+.arrow-down { transform: rotate(180deg); }
+
+.stop-status-svg { width: 34px; height: 34px; overflow: visible; }
+.stop-ring {
+    fill: none; stroke: var(--gold-primary); stroke-width: 4; 
+    stroke-linecap: round; transform-origin: center; transform: rotate(-90deg);
+    stroke-dasharray: 283; stroke-dashoffset: 283;
+    filter: drop-shadow(0 1px 2px rgba(197, 164, 126, 0.2));
+    animation: ringLoad 3s ease-in-out infinite alternate;
+    transition: stroke 0.3s;
+}
+.stop-bars {
+    fill: var(--gold-primary);
+    filter: drop-shadow(0 1px 2px rgba(197, 164, 126, 0.2));
+    transform-origin: center;
+    animation: barsPulse 2s ease-in-out infinite;
+    transition: fill 0.3s;
+}
+.elevator-panel.approaching .stop-ring { stroke: #fff; filter: none; }
+.elevator-panel.approaching .stop-bars { fill: #fff; filter: none; }
+
+@keyframes ringLoad { 0% { stroke-dashoffset: 283; } 20% { stroke-dashoffset: 283; } 100% { stroke-dashoffset: 0; } }
+@keyframes barsPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+@keyframes flowAnimation { 0% { transform: translateY(20%); opacity: 0; } 30% { opacity: 1; } 70% { opacity: 1; } 100% { transform: translateY(-40%); opacity: 0; } }
+.elevator-arrow-path { animation: flowAnimation 1.5s infinite linear; }
+
+/* --- ETA Section --- */
+.eta-display {
+    border-top: 1px solid rgba(197, 164, 126, 0.2);
+    width: 100%; padding-top: 4px; margin-top: 4px; text-align: center;
+    transition: border-color 0.3s;
+}
+.elevator-panel.approaching .eta-display { border-top-color: rgba(255,255,255,0.35); }
+
+.floor-label { font-size: 0.75em; color: var(--text-dim); transition: color 0.3s; font-weight: 400; }
+.elevator-panel.approaching .floor-label { color: rgba(255,255,255,0.8); font-weight: 500; }
+
+.eta-result { 
+    font-size: 1.15em; font-weight: 600; 
+    color: var(--text-main); 
+    min-height: 1.2em;
+    transition: all 0.3s ease;
+}
+.elevator-panel.approaching .eta-result {
+    color: #fff; font-weight: 700; font-size: 1.35em;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+/* ============================================
+   CONTROLS BAR
+   ============================================ */
+.side-controls-container {
+    position: fixed;
+    bottom: 36px; right: 0; left: 0;
+    display: flex; flex-direction: row; 
+    justify-content: center; gap: 10px;
+    align-items: center;
+    z-index: 100;
+    padding: 4px 10px;
+    pointer-events: none; 
+}
+.side-controls-container > * { pointer-events: auto; }
+
+.control-btn-round {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(197, 164, 126, 0.4);
+    color: var(--gold-primary);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05em;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.2s;
+}
+.control-btn-round:hover { background: var(--gold-primary); color: #fff; border-color: var(--gold-primary); }
+
+.screen-lock-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--gold-primary);
+    border: 1px solid rgba(197, 164, 126, 0.4);
+    border-radius: 25px;
+    font-size: 0.85em;
+    padding: 0 14px; height: 40px; 
+    cursor: pointer; font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; font-family: inherit;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+/* ====== כפתור מסך דולק = ירוק בוהק ====== */
+.screen-lock-btn.active {
+    background: var(--neon-green);
+    border-color: var(--neon-green);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 18px rgba(34, 197, 94, 0.45), 0 4px 12px rgba(34, 197, 94, 0.25);
+    animation: greenPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes greenPulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(34, 197, 94, 0.35), 0 3px 10px rgba(34, 197, 94, 0.2); }
+    50%      { box-shadow: 0 0 22px rgba(34, 197, 94, 0.55), 0 4px 14px rgba(34, 197, 94, 0.35); }
+}
+
+/* --- Persistent Screen Message --- */
+#persistentScreenMsg {
+    position: fixed;
+    bottom: 82px; left: 0; right: 0;
+    text-align: center;
+    color: var(--gold-dark);
+    font-size: 0.9em; font-weight: 500;
+    opacity: 0; pointer-events: none; 
+    transition: opacity 0.3s ease, color 0.3s ease;
+    z-index: 95; padding: 0 10px;
+}
+#persistentScreenMsg.show-persistent { opacity: 1; }
+body.screen-active-mode #persistentScreenMsg { color: var(--neon-green); font-weight: 600; }
+
+/* ============================================
+   FOOTER STATUS BAR — כהה כמו באתר רמדה
+   ============================================ */
+.bottom-status-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface-dark);
+    padding: 7px 0;
+    text-align: center;
+    z-index: 200;
+    line-height: 1.2;
+    border-top: 1px solid rgba(197, 164, 126, 0.3);
+}
+.status-text { font-size: 0.85em; color: rgba(255,255,255,0.55); font-weight: 400; display: flex; justify-content: center; align-items: center; gap: 5px; }
+.status-time { font-weight: 600; color: var(--gold-primary); font-size: 1.1em; }
+
+/* --- Bottom Left Logo --- */
+.bottom-left-logo {
+    position: fixed; bottom: 42px; left: 12px;
+    height: 20px; opacity: 0.5; z-index: 90;
+    filter: brightness(1.2);
+}
+
+/* ============================================
+   MODALS — Light Glass
+   ============================================ */
+#authContainer, .modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(26, 26, 46, 0.6);
+    backdrop-filter: blur(15px);
+    z-index: 9999; display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+}
+.auth-box, .modal-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f5f0eb 100%);
+    border: 1px solid rgba(197, 164, 126, 0.35);
+    border-radius: 20px; padding: 30px; width: 90%; max-width: 420px;
+    text-align: center; position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.input-wrapper { position: relative; width: 100%; }
+.auth-input {
+    width: 100%; padding: 14px; margin-bottom: 18px;
+    border-radius: 12px; border: 1px solid rgba(197, 164, 126, 0.3);
+    background: rgba(255,255,255,0.9); color: var(--text-main);
+    box-sizing: border-box; font-family: inherit; font-size: 1.05em;
+    transition: all 0.3s;
+}
+.auth-input:focus { border-color: var(--gold-primary); outline: none; background: #fff; }
+.auth-input::placeholder { color: rgba(51, 51, 51, 0.3); }
+
+.floor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    gap: 10px; max-height: 300px; overflow-y: auto; width: 100%;
+    margin-bottom: 18px; padding: 5px;
+}
+.floor-grid::-webkit-scrollbar { width: 5px; }
+.floor-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.03); border-radius: 3px; }
+.floor-grid::-webkit-scrollbar-thumb { background: var(--gold-primary); border-radius: 3px; }
+
+.floor-option-btn {
+    background: rgba(255,255,255,0.7); border: 1px solid rgba(197, 164, 126, 0.25); 
+    color: var(--text-main);
+    padding: 12px; border-radius: 10px; cursor: pointer; font-size: 1.2em;
+    font-weight: 500; font-family: 'Heebo', sans-serif; 
+    transition: all 0.2s; text-align: center;
+}
+.floor-option-btn:hover { background: #fff; border-color: var(--gold-primary); }
+.floor-option-btn.selected { 
+    background: var(--gold-primary); color: #fff; 
+    border-color: var(--gold-primary); font-weight: 700; transform: scale(1.05); 
+    box-shadow: 0 4px 15px rgba(197, 164, 126, 0.3);
+}
+
+.password-toggle { position: absolute; left: 15px; top: 15px; color: var(--gold-primary); cursor: pointer; z-index: 10; }
+
+.auth-btn, .primary-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--gold-primary), #b8956b); 
+    color: #fff; font-weight: 700; border: none;
+    border-radius: 12px; cursor: pointer; font-size: 1.1em; margin-bottom: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(197, 164, 126, 0.25);
+}
+.auth-btn:hover, .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(197, 164, 126, 0.35); }
+
+.auth-lang-btn {
+    position: absolute; top: 20px; left: 20px;
+    background: rgba(255,255,255,0.8); border: 1px solid rgba(197, 164, 126, 0.3); color: var(--gold-primary);
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.3s;
+}
+html[dir='ltr'] .auth-lang-btn { left: auto; right: 20px; }
+
+.google-btn { 
+    background: #fff; color: var(--text-main); 
+    display: flex; align-items: center; justify-content: center; gap: 10px; 
+    border: 1px solid rgba(197,164,126,0.3); box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+}
+.google-btn:hover { background: #faf8f5; }
+
+.forgot-pass-link { display: block; margin-top: 10px; color: var(--gold-primary); text-decoration: underline; cursor: pointer; font-size: 0.95em; }
+.close-btn { position: absolute; top: 15px; left: 25px; color: var(--text-dim); font-size: 32px; cursor: pointer; line-height: 1; transition: color 0.2s; }
+.close-btn:hover { color: var(--gold-primary); }
+.contact-link-action { display: block; margin-top: 15px; margin-bottom: 15px; color: var(--gold-primary); text-decoration: underline; font-weight: 500; font-size: 1.1em; }
+.qr-wrapper { background: #fff; padding: 15px; border-radius: 12px; display: inline-block; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid rgba(197,164,126,0.15); }
+
+.notification-popup { 
+    visibility: hidden; opacity: 0; min-width: 250px; 
+    background: var(--gold-primary); color: #fff; 
+    text-align: center; border-radius: 30px; padding: 14px 30px; 
+    position: fixed; z-index: 10000; top: 25px; left: 50%; transform: translateX(-50%); 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-weight: 600; 
+    box-shadow: 0 8px 30px rgba(197,164,126,0.3);
+}
+.notification-popup.show { visibility: visible; opacity: 1; top: 45px; }
+
+.loader {
+    border: 4px solid rgba(197,164,126,0.15); border-top: 4px solid var(--gold-primary);
+    border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.install-app-btn {
+    background: transparent; border: 1px solid rgba(197,164,126,0.5); color: var(--gold-light);
+    border-radius: 20px; padding: 6px 16px; font-size: 0.9em; font-family: inherit; font-weight: 500;
+    cursor: pointer; margin-top: 6px; display: inline-flex; align-items: center; gap: 8px;
+    transition: all 0.2s;
+}
+.install-app-btn:hover { background: var(--gold-primary); color: #fff; border-color: var(--gold-primary); }
+
+.ios-instructions { 
+    background: rgba(245,240,235,0.6); border-radius: 12px; padding: 18px; margin-bottom: 18px; 
+    border: 1px solid rgba(197,164,126,0.2); 
+}
+.ios-step { display: flex; align-items: center; justify-content: flex-start; color: var(--text-main); margin-bottom: 14px; font-size: 1.05em; text-align: right; }
+.ios-step:last-child { margin-bottom: 0; }
+.step-num { font-weight: 600; color: var(--gold-primary); margin-left: 10px; }
+html[dir='ltr'] .ios-step { text-align: left; }
+html[dir='ltr'] .step-num { margin-left: 0; margin-right: 10px; }
+
+/* ============================================================
+   RESPONSIVE — 4 panels fill screen height, no scroll
+   ============================================================ */
+
+/* --- Small phones (≤380px) --- */
+@media (max-width: 380px) {
+    .screen-lock-btn span { display: none; } 
+    .side-controls-container { gap: 6px; }
+
+    .top-logo { width: 100px; }
+    .top-logo-container { padding: 6px 0 4px; }
+    #main-shabbat-indicator { font-size: 1em; gap: 5px; padding: 4px 0 2px; }
+    .shabbat-candle-svg { width: 12px; }
+
+    .dashboard-container { gap: 5px; padding: 5px; }
+    .elevator-panel { padding: 5px 4px; border-radius: 10px; }
+    .elevator-panel::before { left: 25%; right: 25%; }
+    .elevator-id { font-size: 0.8em; margin-bottom: 1px; }
+    .floor-indicator { font-size: 2.8em; margin: 1px 0; }
+    .direction-status { height: 22px; width: 22px; margin-bottom: 1px; }
+    .elevator-arrow-svg { width: 20px; height: 20px; }
+    .stop-status-svg { width: 22px; height: 22px; }
+    .eta-display { padding-top: 2px; margin-top: 2px; }
+    .floor-label { font-size: 0.58em; }
+    .eta-result { font-size: 0.82em; }
+    .elevator-panel.approaching .eta-result { font-size: 0.95em; }
+    
+    .side-controls-container { bottom: 30px; }
+    .control-btn-round { width: 32px; height: 32px; font-size: 0.85em; }
+    .screen-lock-btn { height: 32px; padding: 0 8px; font-size: 0.75em; }
+    .bottom-status-bar { padding: 5px 0; }
+    .status-text { font-size: 0.7em; }
+    .status-time { font-size: 0.85em; }
+    .bottom-left-logo { height: 14px; bottom: 34px; }
+    #persistentScreenMsg { bottom: 64px; font-size: 0.75em; }
+}
+
+/* --- Standard phones (381px — 480px) --- */
+@media (min-width: 381px) and (max-width: 480px) {
+    .top-logo { width: 120px; }
+    .top-logo-container { padding: 8px 0 5px; }
+    #main-shabbat-indicator { font-size: 1.15em; gap: 8px; padding: 5px 0 3px; }
+    .shabbat-candle-svg { width: 14px; }
+
+    .dashboard-container { gap: 7px; padding: 7px; }
+    .elevator-panel { padding: 7px 5px; border-radius: 12px; }
+    .elevator-id { font-size: 0.9em; }
+    .floor-indicator { font-size: 3.3em; margin: 2px 0; }
+    .direction-status { height: 28px; width: 28px; margin-bottom: 2px; }
+    .elevator-arrow-svg { width: 24px; height: 24px; }
+    .stop-status-svg { width: 26px; height: 26px; }
+    .eta-display { padding-top: 3px; margin-top: 3px; }
+    .floor-label { font-size: 0.65em; }
+    .eta-result { font-size: 0.95em; }
+    .elevator-panel.approaching .eta-result { font-size: 1.08em; }
+
+    .control-btn-round { width: 36px; height: 36px; font-size: 1em; }
+    .screen-lock-btn { height: 36px; font-size: 0.8em; }
+    .bottom-left-logo { height: 16px; }
+    #persistentScreenMsg { bottom: 76px; font-size: 0.82em; }
+}
+
+/* --- Medium phones (481px — 640px) --- */
+@media (min-width: 481px) and (max-width: 640px) {
+    .top-logo { width: 140px; }
+    #main-shabbat-indicator { font-size: 1.3em; }
+    .dashboard-container { gap: 10px; padding: 8px; }
+    .elevator-panel { padding: 10px 8px; }
+    .elevator-id { font-size: 1em; }
+    .floor-indicator { font-size: 3.8em; }
+    .direction-status { height: 32px; width: 32px; }
+    .elevator-arrow-svg { width: 28px; height: 28px; }
+    .stop-status-svg { width: 30px; height: 30px; }
+}
+
+/* --- Height-based: short screens --- */
+@media (max-height: 700px) {
+    .top-logo-container { padding: 4px 0 2px; }
+    .top-logo { width: min(100px, 15vw); }
+    #main-shabbat-indicator { font-size: 0.9em; padding: 3px 0 2px; }
+    .shabbat-candle-svg { width: 10px; }
+    #displayContainer { padding-top: 0; }
+}
+
+@media (max-height: 600px) {
+    .top-logo-container { padding: 3px 0 1px; border-bottom-width: 1px; }
+    .top-logo { width: 70px; }
+    #main-shabbat-indicator { font-size: 0.8em; padding: 2px 0 1px; gap: 4px; }
+
+    .dashboard-container { gap: 4px; padding: 4px; }
+    .elevator-panel { padding: 3px 2px; border-radius: 8px; }
+    .elevator-panel::before { display: none; }
+    .elevator-id { font-size: 0.65em; margin-bottom: 0; }
+    .floor-indicator { font-size: 2.2em; margin: 0; }
+    .direction-status { height: 16px; width: 16px; margin-bottom: 0; }
+    .elevator-arrow-svg { width: 14px; height: 14px; }
+    .stop-status-svg { width: 16px; height: 16px; }
+    .eta-display { padding-top: 1px; margin-top: 1px; }
+    .floor-label { font-size: 0.5em; }
+    .eta-result { font-size: 0.65em; }
+    .elevator-panel.approaching .eta-result { font-size: 0.8em; }
+
+    .side-controls-container { bottom: 26px; gap: 5px; }
+    .control-btn-round { width: 28px; height: 28px; font-size: 0.8em; }
+    .screen-lock-btn { height: 28px; padding: 0 8px; font-size: 0.7em; }
+    .screen-lock-btn span { display: none; }
+    .bottom-status-bar { padding: 3px 0; }
+    .status-text { font-size: 0.65em; }
+    .bottom-left-logo { height: 12px; bottom: 30px; }
+    #persistentScreenMsg { bottom: 56px; font-size: 0.7em; }
+    #displayContainer { padding-bottom: 75px; }
+}
+
+@media (max-height: 500px) {
+    .top-logo-container { padding: 2px 0 0; }
+    .top-logo { width: 50px; }
+    #main-shabbat-indicator { font-size: 0.7em; padding: 1px 0; }
+    .shabbat-candle-svg { width: 7px; }
+
+    .elevator-panel { padding: 2px; border-radius: 6px; }
+    .elevator-id { font-size: 0.55em; }
+    .floor-indicator { font-size: 1.6em; }
+    .direction-status { height: 12px; width: 12px; }
+    .elevator-arrow-svg { width: 10px; height: 10px; }
+    .stop-status-svg { width: 12px; height: 12px; }
+    .eta-result { font-size: 0.55em; }
+    .floor-label { font-size: 0.45em; }
+
+    .side-controls-container { bottom: 22px; }
+    .control-btn-round { width: 24px; height: 24px; font-size: 0.7em; }
+    .screen-lock-btn { height: 24px; font-size: 0.6em; padding: 0 5px; }
+    .bottom-left-logo { display: none; }
+    #persistentScreenMsg { display: none; }
+}
+
+/* --- Tablet / Large --- */
+@media (min-width: 641px) {
+    .dashboard-container { max-width: 700px; gap: 14px; }
+    .elevator-panel { max-width: 280px; padding: 14px 12px; }
+    .elevator-id { font-size: 1.1em; }
+    .floor-indicator { font-size: 4.5em; }
+}
+
+/* --- Landscape --- */
+@media (orientation: landscape) and (max-height: 500px) {
+    .dashboard-container { max-width: 100%; padding: 0 10px; }
+    .elevator-panel { width: 23%; max-width: none; }
+}

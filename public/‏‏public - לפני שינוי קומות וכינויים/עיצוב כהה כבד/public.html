@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעלית שבת - תצוגת קיוסק ציבורית</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="stylesheet" href="kiosk-style.css">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    
+    <!-- Firebase SDK (Compat v8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Configuration & Logic -->
+    <script src="/firebase-config.js"></script>
+
+    <!-- Internal Overrides for Public Kiosk Specifics -->
+    <style>
+        .bottom-logo {
+            bottom: 10px; 
+            left: 50%;     
+            transform: translateX(-50%); 
+            max-height: 50px; 
+            opacity: 0.9; 
+            transition: all 0.3s ease;
+        }
+
+        .bottom-status-bar {
+            padding: 15px 20px;
+            font-size: 2.2em; 
+            display: block !important; 
+        }
+
+        @media (orientation: portrait) {
+            .dashboard-container {
+                margin-top: 0;
+                padding-bottom: 280px; 
+            }
+            .elevator-panel:only-child {
+                margin-top: 15vh;
+            }
+            .elevator-panel:not(:only-child) {
+                margin-top: 2vh;
+            }
+        }
+        
+        @media (orientation: landscape) and (max-height: 640px) {
+            #displayContainer {
+                padding-bottom: 90px;
+            }
+            .bottom-logo { max-height: 40px; bottom: 60px; left: 50%; transform: translateX(-50%); }
+            .bottom-status-bar { font-size: 1.5em; padding: 8px; }
+        }
+
+        @media (max-width: 480px) and (orientation: portrait) {
+             .bottom-status-bar { font-size: 1.5em; }
+             .bottom-logo { bottom: 80px; max-height: 80px; }
+        }
+    </style>
+</head>
+
+<body class="weekday-mode">
+    
+    <div id="errorScreen">
+        <i class="fas fa-exclamation-triangle" style="font-size: 4em; margin-bottom: 20px; color: var(--gold-primary);"></i>
+        <h2 style="color: var(--text-main);">שגיאת קונפיגורציה</h2>
+        <p style="color: var(--text-main);">לא הוגדרה קומה עבור מסך זה.</p>
+        <p style="direction: ltr; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 4px; color: var(--text-main); border: 1px solid var(--gold-primary);">
+            Add <b>?floor=X</b> to the URL.<br>Example: <i>kiosk.html?floor=5</i>
+        </p>
+    </div>
+
+    <!-- Top Logo -->
+    <img id="mainLogo" class="top-logo" src="" alt="Main Logo">
+
+    <div id="displayContainer">
+        
+        <div id="main-shabbat-indicator">
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M35 190 C 40 170, 60 170, 65 190" />
+                <rect x="42" y="90" width="16" height="100" rx="2" />
+                <path d="M50 90 V 80" />
+                <path d="M50 75 C 45 60, 55 40, 50 20 C 45 40, 55 60, 50 75 Z" />
+            </svg>
+            
+            <span>שבת שלום</span>
+            
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M35 190 C 40 170, 60 170, 65 190" />
+                <rect x="42" y="90" width="16" height="100" rx="2" />
+                <path d="M50 90 V 80" />
+                <path d="M50 75 C 45 60, 55 40, 50 20 C 45 40, 55 60, 50 75 Z" />
+            </svg>
+        </div>
+        
+        <div class="dashboard-container"></div>
+        
+    </div>
+    
+    <img id="poweredByLogo" src="" alt="Powered By Logo" class="bottom-logo">
+    <div class="notification" id="notificationPopup"></div>
+    
+    <div class="bottom-status-bar" id="bottomStatusBar">
+        <span class="status-time" id="statusTime" style="font-weight:500; color: var(--text-main);">00:00:00</span> | 
+        <span id="statusDate" style="color: var(--gold-primary);"></span> | 
+        <span id="statusHebrewDate" style="margin-right: 8px; color: var(--text-main);"></span>
+    </div>
+
+    <!-- Main Logic -->
+    <script src="kiosk-logic.js"></script>
+</body>
+</html>

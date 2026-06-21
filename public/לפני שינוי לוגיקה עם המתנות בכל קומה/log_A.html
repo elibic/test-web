@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elevator Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-gold: #fbbf24;
+            --accent-blue: #38bdf8;
+            --accent-red: #ef4444;
+            --text-main: #e2e8f0;
+            --text-dim: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header Section --- */
+        header {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10;
+            backdrop-filter: blur(5px);
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: #ef4444;
+            color: white;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .status-badge.connected { background: #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+        }
+
+        .btn:active { transform: scale(0.95); }
+        .btn:hover { background: #334155; }
+        
+        .btn.active-scroll { color: var(--accent-blue); border-color: var(--accent-blue); }
+        
+        .btn-danger {
+            color: var(--accent-red);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        /* --- Log Container --- */
+        #logContainer {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scroll-behavior: smooth;
+        }
+
+        #logContainer::-webkit-scrollbar { width: 6px; }
+        #logContainer::-webkit-scrollbar-track { background: var(--bg-color); }
+        #logContainer::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+        /* --- Log Entry Card --- */
+        .log-entry {
+            background: var(--card-bg);
+            border-right: 4px solid var(--accent-gold);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 6px;
+            margin-bottom: 2px;
+        }
+
+        /* עיצוב משולב לתאריך ושעה */
+        .datetime-wrapper {
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .log-date {
+            color: var(--text-dim); /* תאריך בצבע אפור */
+            font-size: 0.85rem;
+        }
+        
+        .log-time { 
+            color: var(--accent-blue); /* שעה בצבע כחול בולט */
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+        
+        .log-message {
+            font-family: 'Heebo', sans-serif;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .info-bar {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            padding: 5px;
+            background: var(--bg-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* --- Login Overlay --- */
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .login-card {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            max-width: 90%;
+            width: 350px;
+        }
+        .login-btn {
+            background: #fff;
+            color: #333;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+            margin: 20px auto 0;
+        }
+        .login-btn:hover { background: #f1f5f9; transform: translateY(-2px); }
+        .google-icon { width: 20px; height: 20px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Login Overlay -->
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2 style="color:var(--accent-gold); margin-bottom:10px;">מערכת ניטור מעליות</h2>
+            <p style="color:var(--text-dim);">נדרשת התחברות לצפייה בנתונים</p>
+            <button class="login-btn" onclick="loginWithGoogle()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="google-icon" alt="G">
+                התחבר עם Google
+            </button>
+        </div>
+    </div>
+
+    <header>
+        <h1>
+            <i class="fas fa-microchip"></i>
+            Elevator Log
+            <span id="statusBadge" class="status-badge">מנותק</span>
+        </h1>
+        <div class="controls">
+            <button class="btn active-scroll" id="scrollBtn" onclick="toggleAutoScroll()" title="גלילה אוטומטית">
+                <i class="fas fa-arrow-down"></i>
+            </button>
+            <button class="btn" onclick="clearLocalLog()" title="נקה מסך בלבד">
+                <i class="fas fa-eraser"></i>
+            </button>
+            <button class="btn btn-danger" onclick="deleteCloudHistory()" title="מחק היסטוריה מהענן">
+                <i class="fas fa-database"></i>
+                <i class="fas fa-times" style="font-size: 0.6em; margin-right: -5px; margin-top: -8px;"></i>
+            </button>
+            <!-- Logout Button -->
+            <button class="btn" onclick="logout()" title="התנתק" style="color:var(--text-dim);">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    <div id="logContainer">
+        <div id="loadingMsg" style="text-align:center; margin-top: 50px; color: var(--text-dim); display:none;">
+            <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+            <p style="margin-top:10px">טוען נתונים...</p>
+        </div>
+    </div>
+
+    <div class="info-bar" id="lineCount">שורות: 0/80</div>
+
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyABExU11JS2KsumwG5z6-X_Tnn_OJZkusg",
+            authDomain: "nitzaelev.firebaseapp.com",
+            databaseURL: "https://nitzaelev-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "nitzaelev",
+            storageBucket: "nitzaelev.firebasestorage.app",
+            messagingSenderId: "922911314024",
+            appId: "1:922911314024:web:560493db03aa477cd7ebdd",
+            measurementId: "G-6BQ4RTV03F"
+        };  
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const database = firebase.database();
+        const container = document.getElementById('logContainer');
+        const scrollBtn = document.getElementById('scrollBtn');
+        const statusBadge = document.getElementById('statusBadge');
+        const loginOverlay = document.getElementById('loginOverlay');
+        const loadingMsg = document.getElementById('loadingMsg');
+        
+        const MAX_LINES = 80;
+        let autoScroll = true;
+        let isFirstLoad = true;
+        let logsRef = null;
+
+        // --- AUTH LOGIC ---
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                console.log("User logged in:", user.email);
+                loginOverlay.style.display = 'none';
+                loadingMsg.style.display = 'block';
+                initLogListeners();
+            } else {
+                // User is signed out
+                loginOverlay.style.display = 'flex';
+                container.innerHTML = ''; 
+                loadingMsg.style.display = 'none';
+                if(logsRef) logsRef.off(); // Stop listening
+            }
+        });
+
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch((error) => {
+                console.error("Login failed:", error);
+                alert("ההתחברות נכשלה: " + error.message);
+            });
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                location.reload();
+            });
+        }
+
+        // --- APP LOGIC ---
+        function initLogListeners() {
+            database.ref('.info/connected').on('value', snap => {
+                if (snap.val() === true) {
+                    statusBadge.innerText = "ONLINE";
+                    statusBadge.classList.add('connected');
+                } else {
+                    statusBadge.innerText = "OFFLINE";
+                    statusBadge.classList.remove('connected');
+                }
+            });
+
+            logsRef = database.ref('logs/A');
+
+            logsRef.limitToLast(MAX_LINES).on('child_added', snapshot => {
+                loadingMsg.style.display = 'none'; // Hide loading once data arrives
+                const data = snapshot.val();
+                if (data) addLogCard(data);
+            }, (error) => {
+                console.error("Error reading logs:", error);
+                loadingMsg.innerHTML = `<span style="color:red">שגיאה בקריאת נתונים: ${error.message}</span>`;
+            });
+
+            logsRef.on('child_removed', snapshot => {
+                 // Optional: Handle removal
+            });
+        }
+
+        function addLogCard(data) {
+            // If it's the very first time we get data after login, clear container (except loading msg)
+            if (isFirstLoad) {
+                // Clear any existing children but keep loading msg logic clean
+                Array.from(container.children).forEach(child => {
+                    if (child.id !== 'loadingMsg') container.removeChild(child);
+                });
+                isFirstLoad = false;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            
+            const dateObj = new Date(data.timestamp * 1000);
+            
+            const dateStr = dateObj.toLocaleDateString('he-IL', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit'
+            });
+            
+            const timeStr = dateObj.toLocaleTimeString('he-IL', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            div.innerHTML = `
+                <div class="log-header">
+                    <div class="datetime-wrapper">
+                        <span class="log-date">${dateStr}</span>
+                        <span style="opacity:0.3">|</span>
+                        <span class="log-time">${timeStr}</span>
+                    </div>
+                    <i class="fas fa-history" style="font-size:0.7em; opacity:0.5;"></i>
+                </div>
+                <div class="log-message">${data.message}</div>
+            `;
+
+            container.appendChild(div);
+
+            // Maintain max lines
+            const visibleEntries = container.querySelectorAll('.log-entry');
+            if (visibleEntries.length > MAX_LINES) {
+                container.removeChild(visibleEntries[0]);
+            }
+            
+            updateCount();
+
+            if (autoScroll) {
+                requestAnimationFrame(() => {
+                    container.scrollTop = container.scrollHeight;
+                });
+            }
+        }
+
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            if (autoScroll) {
+                scrollBtn.classList.add('active-scroll');
+                scrollBtn.style.color = "var(--accent-blue)";
+                container.scrollTop = container.scrollHeight;
+            } else {
+                scrollBtn.classList.remove('active-scroll');
+                scrollBtn.style.color = "var(--text-dim)";
+            }
+        }
+        
+        function clearLocalLog() {
+            // Remove all log-entries
+            const entries = container.querySelectorAll('.log-entry');
+            entries.forEach(e => e.remove());
+            
+            const msg = document.createElement('div');
+            msg.style.cssText = "text-align:center; padding:20px; opacity:0.5;";
+            msg.innerText = "המסך נוקה (הענן נשמר)";
+            container.appendChild(msg);
+            
+            updateCount();
+        }
+
+        function deleteCloudHistory() {
+            if(confirm('שים לב!\nפעולה זו תמחק את כל היסטוריית הלוגים מהשרת לצמיתות.\nהאם להמשיך?')) {
+                logsRef.remove()
+                    .then(() => {
+                        const entries = container.querySelectorAll('.log-entry');
+                        entries.forEach(e => e.remove());
+                        
+                        const msg = document.createElement('div');
+                        msg.style.cssText = "text-align:center; padding:20px; color:#ef4444;";
+                        msg.innerHTML = '<i class="fas fa-trash"></i><br>ההיסטוריה בענן נמחקה בהצלחה';
+                        container.appendChild(msg);
+                        
+                        updateCount();
+                    })
+                    .catch((error) => {
+                        alert('שגיאה במחיקה: ' + error.message);
+                    });
+            }
+        }
+
+        function updateCount() {
+            const count = container.querySelectorAll('.log-entry').length;
+            document.getElementById('lineCount').innerText = `שורות מוצגות: ${count}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <title>מעביר...</title>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; }
+        body {
+            background: linear-gradient(135deg, #fff, #f5f0eb);
+            color: #8c7354;
+            font-family: 'Heebo', system-ui, -apple-system, sans-serif;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+        }
+        .spinner {
+            width: 56px; height: 56px;
+            border: 5px solid rgba(197, 164, 126, 0.25);
+            border-top-color: #c5a47e;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 18px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        h1 { color: #c5a47e; font-size: 1.4em; font-weight: 600; margin: 0 0 6px; }
+        p  { color: #8c7354; font-size: 0.95em; margin: 0; opacity: 0.85; }
+        .err { color: #b94a48; }
+        a   { color: #c5a47e; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="spinner" id="spinner"></div>
+    <h1 id="msg">מעביר...</h1>
+    <p id="sub">אנא המתן לרגע</p>
+
+    <!-- Firebase SDK (same versions as the rest of the site) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+    (function () {
+        // ── Config ──────────────────────────────────────────────────────────────
+        const FALLBACK_URLS = {
+            whatsapp: 'https://wa.me/972525705289',
+            website:  'https://ramada.econtrol.co.il/'
+        };
+        const KNOWN_KEYS = Object.keys(FALLBACK_URLS);
+        const REDIRECT_TIMEOUT_MS = 1500;
+        // Skip counting on common bots/preview-fetchers (WhatsApp, Slack, Twitter, etc.)
+        const BOT_RE = /bot|crawler|spider|preview|whatsapp|telegram|slackbot|discordbot|facebookexternalhit|twitterbot|linkedinbot|skype/i;
+
+        // ── Parse query ─────────────────────────────────────────────────────────
+        const params = new URLSearchParams(location.search);
+        const to = (params.get('to') || '').toLowerCase();
+        const from = (params.get('from') || 'unknown').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
+
+        const msgEl = document.getElementById('msg');
+        const subEl = document.getElementById('sub');
+        const spinnerEl = document.getElementById('spinner');
+
+        function showError(text, sub) {
+            spinnerEl.style.display = 'none';
+            msgEl.className = 'err';
+            msgEl.textContent = text;
+            subEl.textContent = sub || '';
+        }
+
+        if (!KNOWN_KEYS.includes(to)) {
+            showError('יעד לא ידוע', 'הקישור לא תקין. ניתן לחזור לדף הקודם.');
+            return;
+        }
+
+        // ── Sanitize URL: only http(s) ──────────────────────────────────────────
+        function sanitizeUrl(u) {
+            if (!u || typeof u !== 'string') return null;
+            const trimmed = u.trim();
+            if (!/^https?:\/\//i.test(trimmed)) return null;
+            return trimmed;
+        }
+
+        // ── Redirect once (idempotent) ──────────────────────────────────────────
+        let didRedirect = false;
+        function redirectTo(url) {
+            if (didRedirect) return;
+            didRedirect = true;
+            const safe = sanitizeUrl(url) || FALLBACK_URLS[to];
+            location.replace(safe);
+        }
+
+        // Hard timeout: if Firebase is slow/down, fall back.
+        const timeoutId = setTimeout(() => redirectTo(FALLBACK_URLS[to]), REDIRECT_TIMEOUT_MS);
+
+        // ── Firebase init guard ─────────────────────────────────────────────────
+        if (typeof firebase === 'undefined' || !window.database) {
+            // No Firebase: just redirect to fallback
+            clearTimeout(timeoutId);
+            redirectTo(FALLBACK_URLS[to]);
+            return;
+        }
+
+        const db = window.database;
+        const isBot = BOT_RE.test(navigator.userAgent || '');
+
+        // Increment counters (best-effort, fire-and-forget).
+        // ServerValue.increment is atomic and works without auth if rules allow,
+        // otherwise we sign in anonymously first (kiosk-logic does the same).
+        function bumpCounters() {
+            if (isBot) return Promise.resolve(); // skip noisy preview-fetchers
+            try {
+                const inc = firebase.database.ServerValue.increment(1);
+                return Promise.all([
+                    db.ref('qrStats/' + to + '/total').set(inc),
+                    db.ref('qrStats/' + to + '/bySource/' + from).set(inc)
+                ]).catch(() => {/* swallow — never block redirect */});
+            } catch (e) {
+                return Promise.resolve();
+            }
+        }
+
+        function fetchAndGo() {
+            db.ref('settings/qrLinks/' + to).once('value')
+                .then(snap => {
+                    const url = snap && snap.val();
+                    clearTimeout(timeoutId);
+                    const dest = url || FALLBACK_URLS[to];
+                    // ── FIX (2026-06-01): WAIT for the scan counter to flush
+                    // before navigating away. Previously bumpCounters() was
+                    // fire-and-forget and redirectTo() immediately did
+                    // location.replace(), tearing down the page before the
+                    // async Firebase write reached the server → most scans
+                    // were lost. We now await the write, but cap the wait at
+                    // 700ms so a slow/offline DB never blocks the guest.
+                    Promise.race([
+                        bumpCounters(),
+                        new Promise(res => setTimeout(res, 700))
+                    ]).then(() => redirectTo(dest));
+                })
+                .catch(() => {
+                    // qrLinks read failed — still try to count, then redirect.
+                    clearTimeout(timeoutId);
+                    Promise.race([
+                        bumpCounters(),
+                        new Promise(res => setTimeout(res, 700))
+                    ]).then(() => redirectTo(FALLBACK_URLS[to]));
+                });
+        }
+
+        // If rules require auth for reads/writes, sign in anonymously first.
+        if (window.auth) {
+            window.auth.onAuthStateChanged(user => {
+                if (user) {
+                    fetchAndGo();
+                } else {
+                    window.auth.signInAnonymously().catch(() => {
+                        // Even if sign-in fails, try the read (rules may be public for settings).
+                        fetchAndGo();
+                    });
+                }
+            });
+        } else {
+            fetchAndGo();
+        }
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,3220 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f1ea">
+    <title>הגדרות מערכת — מעלית שבת</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           DESIGN TOKENS
+           ═══════════════════════════════════════════════════════════════ */
+        :root {
+            /* Palette — bronze-gold on warm light (light theme) */
+            --bg-base:        #eceef3;   /* page background */
+            --bg-elevated:    #ffffff;   /* dialogs / top surfaces */
+            --bg-surface:     #ffffff;   /* cards */
+            --bg-input:       #f4f0e9;   /* form fields & filled boxes (pop off white cards) */
+            --bg-input-hover: #ece6db;
+
+            /* Semantic surfaces (replace the old navy gradients) */
+            --surface-card:   #ffffff;
+            --surface-nav:    rgba(255,255,255,0.82);   /* glassy topbar / sidenav */
+            --surface-nav-solid: rgba(255,255,255,0.94);/* bottom nav (more opaque) */
+            --surface-soft:   #f6f3ee;
+
+            /* Overlays — tuned for a light background */
+            --hover-overlay:  rgba(45,33,15,0.05);      /* hover wash */
+            --inset-bg:       rgba(140,115,84,0.08);    /* sunken boxes */
+
+            --border-subtle:  rgba(120,98,64,0.16);
+            --border-default: rgba(120,98,64,0.30);
+            --border-strong:  rgba(120,98,64,0.52);
+
+            --gold:           #bb9460;   /* button fill base */
+            --gold-bright:    #997633;   /* accent text / icons — readable on light */
+            --gold-soft:      #876a39;
+            --gold-dim:       #a08a63;
+
+            --text-primary:   #2b2a31;   /* dark slate */
+            --text-secondary: #5e5a67;
+            --text-tertiary:  #948f9d;
+            --text-inverse:   #2b2113;   /* dark text on gold buttons */
+
+            --success:        #2e9e4f;
+            --success-bg:     rgba(46,158,79,0.13);
+            --warning:        #c77d11;
+            --warning-bg:     rgba(199,125,17,0.15);
+            --danger:         #d6342a;
+            --danger-bg:      rgba(214,52,42,0.12);
+            --info:           #2d7fbf;
+            --info-bg:        rgba(45,127,191,0.13);
+
+            /* Shape */
+            --r-sm: 8px;
+            --r-md: 12px;
+            --r-lg: 16px;
+            --r-xl: 22px;
+            --r-pill: 999px;
+
+            /* Spacing */
+            --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+            --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+            /* Type */
+            --t-xs:   0.72rem;
+            --t-sm:   0.82rem;
+            --t-base: 0.95rem;
+            --t-md:   1.05rem;
+            --t-lg:   1.22rem;
+            --t-xl:   1.5rem;
+            --t-2xl:  1.85rem;
+
+            /* Elevation — soft warm shadows for a light surface */
+            --sh-1: 0 1px 2px rgba(60,45,25,0.08);
+            --sh-2: 0 4px 16px rgba(60,45,25,0.10);
+            --sh-3: 0 16px 44px rgba(40,30,15,0.18);
+            --sh-glow: 0 0 0 3px rgba(187,148,96,0.30);
+
+            /* Motion */
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+
+            /* Layout */
+            --nav-w: 264px;
+            --topbar-h: 60px;
+            --bottomnav-h: 64px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           RESET + BASE
+           ═══════════════════════════════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            font-family: 'Heebo', -apple-system, system-ui, Arial, sans-serif;
+            background: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100dvh;
+            font-size: 16px;
+            line-height: 1.45;
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior-y: none;
+        }
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(circle at 82% -8%, rgba(187,148,96,0.16), transparent 46%),
+                radial-gradient(circle at -8% 92%, rgba(120,150,200,0.10), transparent 46%),
+                linear-gradient(155deg, #eef0f5 0%, #f5f1ea 100%);
+            pointer-events: none;
+        }
+        h1, h2, h3, h4 { margin: 0; color: var(--text-primary); font-weight: 700; }
+        button { font-family: inherit; cursor: pointer; }
+        input, select, textarea { font-family: inherit; }
+        a { color: var(--gold-bright); }
+
+        /* ═══════════════════════════════════════════════════════════════
+           AUTH SCREEN
+           ═══════════════════════════════════════════════════════════════ */
+        #authScreen {
+            position: fixed; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            padding: var(--s-5);
+            z-index: 100;
+        }
+        .auth-card {
+            width: 100%; max-width: 420px;
+            background: linear-gradient(180deg, #ffffff, #faf7f1);
+            border: 1px solid var(--border-default);
+            border-radius: var(--r-xl);
+            padding: var(--s-8);
+            box-shadow: var(--sh-3), 0 0 60px rgba(187,148,96,0.10);
+            text-align: center;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            animation: cardIn 0.45s var(--ease);
+        }
+        .auth-logo {
+            width: 64px; height: 64px;
+            margin: 0 auto var(--s-4);
+            border-radius: var(--r-lg);
+            background: linear-gradient(135deg, var(--gold), #8c7354);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 30px; box-shadow: var(--sh-2);
+        }
+        .auth-card h2 { font-size: var(--t-xl); margin-bottom: var(--s-2); }
+        .auth-card .auth-sub { color: var(--text-secondary); font-size: var(--t-sm); margin-bottom: var(--s-6); }
+        .auth-view { display: none; flex-direction: column; gap: var(--s-3); }
+        .auth-view.active { display: flex; animation: fadeIn 0.3s var(--ease); }
+        .auth-divider {
+            display: flex; align-items: center; gap: var(--s-3);
+            color: var(--text-tertiary); font-size: var(--t-xs);
+            margin: var(--s-2) 0;
+        }
+        .auth-divider::before, .auth-divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border-subtle);
+        }
+        .forgot-link { color: var(--gold-soft); text-decoration: none; font-size: var(--t-sm); cursor: pointer; padding: var(--s-2); display: inline-block; }
+        .forgot-link:hover { text-decoration: underline; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           APP SHELL
+           ═══════════════════════════════════════════════════════════════ */
+        .app-shell { display: none; min-height: 100dvh; }
+        .app-shell[data-ready="1"] { display: grid; }
+
+        .app-shell {
+            grid-template-columns: var(--nav-w) 1fr;
+            grid-template-rows: var(--topbar-h) 1fr;
+            grid-template-areas:
+                "nav  topbar"
+                "nav  main";
+        }
+
+        /* Top bar */
+        .topbar {
+            grid-area: topbar;
+            display: flex; align-items: center; gap: var(--s-3);
+            padding: 0 var(--s-5);
+            background: var(--surface-nav);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-subtle);
+            position: sticky; top: 0; z-index: 30;
+        }
+        .topbar-title {
+            font-size: var(--t-md); font-weight: 700;
+            color: var(--gold-soft);
+            display: flex; align-items: center; gap: var(--s-2);
+            flex: 1; min-width: 0;
+        }
+        .topbar-title .crumb-sep { color: var(--text-tertiary); margin: 0 4px; }
+        .topbar-actions { display: flex; align-items: center; gap: var(--s-2); }
+        .icon-btn {
+            width: 38px; height: 38px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: transparent;
+            color: var(--gold-soft);
+            border: 1px solid transparent;
+            border-radius: var(--r-md);
+            font-size: 1.2em;
+            transition: all 0.18s var(--ease);
+        }
+        .icon-btn:hover { background: var(--hover-overlay); border-color: var(--border-subtle); }
+        .icon-btn.has-dot { position: relative; }
+        .icon-btn.has-dot::after {
+            content: ''; position: absolute;
+            width: 8px; height: 8px;
+            background: var(--warning);
+            border-radius: 50%;
+            top: 8px; left: 8px;
+            box-shadow: 0 0 0 2px var(--bg-elevated);
+        }
+        .user-chip {
+            display: inline-flex; align-items: center; gap: var(--s-2);
+            background: var(--bg-input);
+            padding: 6px var(--s-3);
+            border-radius: var(--r-pill);
+            border: 1px solid var(--border-subtle);
+            font-size: var(--t-sm);
+            color: var(--text-primary);
+            max-width: 200px;
+        }
+        .user-chip .u-avatar {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), #8c7354);
+            color: var(--text-inverse);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85em;
+        }
+        .user-chip .u-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #navToggleBtn { display: none; }
+
+        /* Side nav */
+        .sidenav {
+            grid-area: nav;
+            display: flex; flex-direction: column;
+            background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(248,244,237,0.85) 100%);
+            border-left: 1px solid var(--border-subtle);
+            padding: var(--s-5) var(--s-3);
+            backdrop-filter: blur(10px);
+            position: sticky; top: 0; height: 100dvh;
+            overflow-y: auto;
+            z-index: 25;
+        }
+        .sidenav-brand {
+            display: flex; align-items: center; gap: var(--s-3);
+            padding: var(--s-2) var(--s-3) var(--s-6);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: var(--s-4);
+        }
+        .sidenav-brand .b-icon {
+            width: 38px; height: 38px;
+            border-radius: var(--r-md);
+            background: linear-gradient(135deg, var(--gold), #8c7354);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: var(--text-inverse);
+            box-shadow: var(--sh-1);
+        }
+        .sidenav-brand .b-text { font-size: var(--t-md); font-weight: 700; color: var(--gold-soft); }
+        .sidenav-brand .b-sub  { font-size: var(--t-xs); color: var(--text-tertiary); }
+
+        .nav-list { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: var(--s-3);
+            padding: var(--s-3) var(--s-3);
+            border-radius: var(--r-md);
+            color: var(--text-secondary);
+            background: transparent;
+            border: 1px solid transparent;
+            text-align: right;
+            font-size: var(--t-base);
+            font-weight: 500;
+            width: 100%;
+            transition: all 0.18s var(--ease);
+        }
+        .nav-item:hover { background: var(--hover-overlay); color: var(--text-primary); }
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(197,164,126,0.22), rgba(197,164,126,0.08));
+            color: var(--gold-bright);
+            border-color: var(--border-default);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+        .nav-item .ni-icon { font-size: 1.2em; width: 24px; text-align: center; flex-shrink: 0; }
+        .nav-item .ni-badge {
+            margin-right: auto;
+            font-size: var(--t-xs);
+            background: var(--warning-bg);
+            color: var(--warning);
+            padding: 2px 8px;
+            border-radius: var(--r-pill);
+            font-weight: 600;
+        }
+        .sidenav-footer { padding-top: var(--s-3); border-top: 1px solid var(--border-subtle); }
+        .sidenav-footer .v-stamp { font-size: var(--t-xs); color: var(--text-tertiary); text-align: center; padding: var(--s-2); }
+
+        /* Bottom nav (mobile only) */
+        .bottomnav {
+            display: none;
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+            background: var(--surface-nav-solid);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-subtle);
+            padding: 6px var(--s-2) calc(6px + env(safe-area-inset-bottom));
+            height: calc(var(--bottomnav-h) + env(safe-area-inset-bottom));
+        }
+        .bottomnav-inner { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+        .bn-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px; padding: 6px 2px;
+            background: transparent; border: none;
+            color: var(--text-tertiary);
+            font-size: 0.66rem;
+            font-weight: 600;
+            border-radius: var(--r-sm);
+            transition: all 0.18s ease;
+            position: relative;
+            min-height: 50px;
+        }
+        .bn-item .bn-icon { font-size: 1.3em; transition: transform 0.18s var(--ease); }
+        .bn-item.active { color: var(--gold-bright); }
+        .bn-item.active .bn-icon { transform: scale(1.08) translateY(-1px); }
+        .bn-item.active::after {
+            content: ''; position: absolute; top: 3px;
+            width: 24px; height: 3px;
+            background: var(--gold);
+            border-radius: 2px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           MAIN CONTENT
+           ═══════════════════════════════════════════════════════════════ */
+        .main {
+            grid-area: main;
+            padding: var(--s-6) var(--s-6) var(--s-10);
+            min-height: 0;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .view { display: none; animation: viewIn 0.32s var(--ease); }
+        .view.active { display: block; }
+
+        @keyframes viewIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Section header */
+        .view-header {
+            display: flex; align-items: flex-start; gap: var(--s-4);
+            margin-bottom: var(--s-6); flex-wrap: wrap;
+        }
+        .view-header h2 { font-size: var(--t-2xl); margin: 0; }
+        .view-header .v-desc { color: var(--text-secondary); font-size: var(--t-sm); margin-top: 4px; max-width: 60ch; }
+        .view-header .v-actions { margin-right: auto; display: flex; gap: var(--s-2); flex-wrap: wrap; }
+
+        /* Section / Card */
+        .card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-lg);
+            padding: var(--s-5) var(--s-6);
+            margin-bottom: var(--s-5);
+            box-shadow: var(--sh-1);
+            backdrop-filter: blur(10px);
+        }
+        .card-header {
+            display: flex; align-items: flex-start; gap: var(--s-3);
+            margin-bottom: var(--s-4);
+            padding-bottom: var(--s-3);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .card-header .ch-icon {
+            width: 40px; height: 40px; flex-shrink: 0;
+            border-radius: var(--r-md);
+            background: rgba(197,164,126,0.14);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: var(--gold-bright);
+        }
+        .card-header h3 { font-size: var(--t-md); margin: 0; color: var(--text-primary); }
+        .card-header .ch-desc { font-size: var(--t-sm); color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+        .card-header .ch-actions { margin-right: auto; }
+
+        .card-section {
+            margin-top: var(--s-5); padding-top: var(--s-4);
+            border-top: 1px dashed var(--border-subtle);
+        }
+        .card-section-title {
+            font-size: var(--t-sm); font-weight: 700;
+            color: var(--gold-soft);
+            margin-bottom: var(--s-2);
+            display: flex; align-items: center; gap: var(--s-2);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           BUTTONS
+           ═══════════════════════════════════════════════════════════════ */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: var(--s-2);
+            padding: 10px var(--s-5);
+            border-radius: var(--r-md);
+            font-size: var(--t-base);
+            font-weight: 600;
+            border: 1px solid transparent;
+            transition: all 0.18s var(--ease);
+            min-height: 42px;
+            white-space: nowrap;
+            line-height: 1;
+        }
+        .btn:focus-visible { outline: none; box-shadow: var(--sh-glow); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #c2a066, #b0894f);
+            color: var(--text-inverse);
+            box-shadow: var(--sh-1);
+        }
+        .btn-primary:hover { background: linear-gradient(135deg, #cdad72, #ba945a); transform: translateY(-1px); box-shadow: var(--sh-2); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border-color: var(--border-default);
+        }
+        .btn-secondary:hover { background: var(--surface-soft); border-color: var(--border-strong); }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--gold-soft);
+        }
+        .btn-ghost:hover { background: var(--hover-overlay); color: var(--gold-bright); }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #c62828, #8b0000);
+            color: #fff;
+            box-shadow: var(--sh-1);
+        }
+        .btn-danger:hover { background: linear-gradient(135deg, #d32f2f, #b71c1c); transform: translateY(-1px); }
+
+        .btn-sm { padding: 6px 12px; font-size: var(--t-sm); min-height: 34px; }
+        .btn-block { width: 100%; }
+
+        .btn-google {
+            background: #fff; color: #1f1f1f;
+            border: 1px solid #dadce0;
+        }
+        .btn-google:hover { background: #f8f9fa; box-shadow: var(--sh-2); }
+        .btn-google svg { width: 18px; height: 18px; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           FORMS
+           ═══════════════════════════════════════════════════════════════ */
+        .field { margin-bottom: var(--s-4); }
+        .field-label {
+            display: flex; align-items: center; gap: var(--s-2);
+            font-size: var(--t-sm); font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .field-label .help-trigger {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--bg-input); border: 1px solid var(--border-default);
+            color: var(--gold-soft);
+            font-size: 11px; font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: help;
+            transition: all 0.15s;
+        }
+        .field-label .help-trigger:hover { background: var(--gold); color: var(--text-inverse); border-color: var(--gold); }
+        .field-hint {
+            font-size: var(--t-xs); color: var(--text-tertiary);
+            margin-top: 4px; line-height: 1.4;
+        }
+        .input, input[type="text"], input[type="number"], input[type="email"],
+        input[type="password"], input[type="time"], input[type="url"], select, textarea {
+            width: 100%;
+            padding: 10px var(--s-3);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--r-md);
+            font-size: var(--t-base);
+            transition: all 0.15s;
+            min-height: 42px;
+        }
+        .input:focus, input:focus, select:focus, textarea:focus {
+            outline: none; background: var(--bg-input-hover);
+            border-color: var(--gold); box-shadow: var(--sh-glow);
+        }
+        .input::placeholder, input::placeholder { color: var(--text-tertiary); }
+
+        .field-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--s-4);
+        }
+
+        /* Toggle */
+        .toggle-card {
+            display: flex; align-items: center; gap: var(--s-3);
+            padding: var(--s-3) var(--s-4);
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            margin-bottom: var(--s-3);
+        }
+        .toggle-card .tc-body { flex: 1; min-width: 0; }
+        .toggle-card .tc-title {
+            font-weight: 600; color: var(--text-primary); font-size: var(--t-base);
+            display: flex; align-items: center; gap: var(--s-2);
+        }
+        .toggle-card .tc-desc { font-size: var(--t-xs); color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+        .switch {
+            position: relative; display: inline-block;
+            width: 44px; height: 24px; flex-shrink: 0;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background: #cdc7d0;
+            transition: 0.25s var(--ease);
+            border-radius: var(--r-pill);
+        }
+        .switch .slider::before {
+            content: ''; position: absolute;
+            height: 18px; width: 18px;
+            right: 3px; top: 3px;
+            background: #fff; border-radius: 50%;
+            transition: 0.25s var(--ease);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+        }
+        .switch input:checked + .slider { background: var(--gold); }
+        .switch input:checked + .slider::before { transform: translateX(-20px); }
+        .switch input:focus-visible + .slider { box-shadow: var(--sh-glow); }
+
+        /* Radio cards */
+        .radio-cards { display: grid; grid-template-columns: 1fr; gap: var(--s-2); }
+        .radio-card {
+            position: relative;
+            display: flex; align-items: flex-start; gap: var(--s-3);
+            padding: var(--s-3) var(--s-4);
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            cursor: pointer;
+            transition: all 0.18s var(--ease);
+        }
+        .radio-card:hover { background: var(--bg-input-hover); border-color: var(--border-default); }
+        .radio-card input { position: absolute; opacity: 0; pointer-events: none; }
+        .radio-card .rc-dot {
+            width: 18px; height: 18px; border-radius: 50%;
+            border: 2px solid var(--text-tertiary);
+            flex-shrink: 0; margin-top: 2px;
+            transition: all 0.18s;
+            position: relative;
+        }
+        .radio-card .rc-dot::after {
+            content: ''; position: absolute;
+            inset: 3px; border-radius: 50%;
+            background: var(--gold-bright);
+            transform: scale(0);
+            transition: transform 0.18s var(--ease);
+        }
+        .radio-card .rc-body { flex: 1; }
+        .radio-card .rc-title { font-weight: 600; color: var(--text-primary); }
+        .radio-card .rc-desc { font-size: var(--t-xs); color: var(--text-secondary); margin-top: 2px; }
+        .radio-card input:checked ~ .rc-dot { border-color: var(--gold); }
+        .radio-card input:checked ~ .rc-dot::after { transform: scale(1); }
+        .radio-card:has(input:checked) {
+            background: rgba(197,164,126,0.08);
+            border-color: var(--border-strong);
+        }
+
+        /* Floor chips */
+        .floor-chips {
+            display: flex; flex-wrap: wrap; gap: 5px;
+            direction: ltr;
+            margin-top: var(--s-2);
+        }
+        .floor-chip {
+            min-width: 38px; height: 38px; padding: 0 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+            border-radius: var(--r-sm);
+            font-size: var(--t-sm); font-weight: 600;
+            transition: all 0.15s var(--ease);
+        }
+        .floor-chip:hover { background: var(--bg-input-hover); transform: scale(1.05); }
+        .floor-chip.active {
+            background: var(--gold); color: var(--text-inverse);
+            border-color: var(--gold-bright);
+            transform: scale(1.02);
+        }
+
+        /* Floor matrix table */
+        .floor-matrix {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            overflow: hidden;
+            margin-top: var(--s-2);
+        }
+        .floor-matrix table { width: 100%; border-collapse: collapse; }
+        .floor-matrix th, .floor-matrix td {
+            padding: 8px 6px; text-align: center;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: var(--t-sm);
+        }
+        .floor-matrix th {
+            background: var(--inset-bg);
+            color: var(--gold-soft);
+            font-weight: 700;
+            font-size: var(--t-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: sticky; top: 0;
+        }
+        .floor-matrix tr:last-child td { border-bottom: none; }
+        .floor-matrix tr:hover td { background: var(--hover-overlay); }
+        .floor-matrix .fm-floor {
+            font-weight: 700; color: var(--gold-bright);
+            font-size: var(--t-md);
+        }
+        .fm-cell-toggle {
+            width: 30px; height: 30px;
+            border-radius: var(--r-sm);
+            border: 1.5px solid var(--border-default);
+            background: transparent;
+            color: transparent;
+            transition: all 0.15s var(--ease);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px;
+        }
+        .fm-cell-toggle:hover { background: var(--bg-input-hover); border-color: var(--gold-soft); }
+        .fm-cell-toggle.active {
+            background: var(--gold); color: var(--text-inverse);
+            border-color: var(--gold-bright);
+        }
+        .fm-cell-toggle.active::after { content: '✓'; }
+        .floor-matrix-wrap { max-height: 380px; overflow-y: auto; }
+
+        /* Alias grid */
+        .alias-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+            gap: var(--s-2);
+            direction: ltr;
+        }
+        .alias-cell {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-sm);
+            padding: var(--s-2);
+            display: flex; flex-direction: column; align-items: center;
+            gap: 4px;
+        }
+        .alias-cell .ac-num { font-size: var(--t-xs); color: var(--text-tertiary); }
+        .alias-cell input {
+            width: 100%; text-align: center;
+            padding: 6px; font-size: var(--t-base);
+            font-weight: 600; color: var(--gold-bright);
+            min-height: 36px;
+        }
+
+        /* Repeatable rows */
+        .rep-rows { display: flex; flex-direction: column; gap: var(--s-2); }
+        .rep-row {
+            display: flex; align-items: center; gap: var(--s-2);
+            padding: var(--s-2);
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-sm);
+        }
+        .rep-row .field { flex: 1; margin-bottom: 0; min-width: 0; }
+        .rep-row .field-label { font-size: var(--t-xs); margin-bottom: 2px; }
+        .rep-row input { min-height: 36px; padding: 6px var(--s-2); font-size: var(--t-sm); }
+        .rep-row .rm-btn {
+            width: 32px; height: 32px;
+            background: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            transition: all 0.15s;
+            flex-shrink: 0;
+            margin-top: 14px;
+        }
+        .rep-row .rm-btn:hover { background: var(--danger); color: #fff; transform: scale(1.05); }
+        .add-row-btn {
+            background: transparent;
+            border: 1.5px dashed var(--border-default);
+            color: var(--gold-soft);
+            border-radius: var(--r-md);
+            padding: var(--s-3);
+            font-size: var(--t-sm); font-weight: 600;
+            margin-top: var(--s-2);
+            transition: all 0.18s var(--ease);
+            width: 100%;
+        }
+        .add-row-btn:hover { background: rgba(197,164,126,0.06); border-color: var(--gold); color: var(--gold-bright); }
+
+        /* ═══════════════════════════════════════════════════════════════
+           ELEVATOR CARDS
+           ═══════════════════════════════════════════════════════════════ */
+        .elev-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--s-4);
+        }
+        .elev-card {
+            background: linear-gradient(180deg, #ffffff, #fbf8f3);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-lg);
+            padding: var(--s-4);
+            display: flex; flex-direction: column; gap: var(--s-3);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.22s var(--ease);
+            overflow: hidden;
+            box-shadow: var(--sh-1);
+        }
+        .elev-card::before {
+            content: '';
+            position: absolute; right: 0; top: 0; bottom: 0;
+            width: 4px;
+            background: #cdc8d0;
+            transition: width 0.2s, background 0.2s;
+        }
+        .elev-card:hover { transform: translateY(-3px); box-shadow: var(--sh-3); border-color: var(--border-default); }
+        .elev-card:hover::before { width: 6px; }
+        .elev-card.s-shabbat::before { background: var(--success); box-shadow: 0 0 18px var(--success); }
+        .elev-card.s-candidate::before { background: var(--warning); box-shadow: 0 0 18px var(--warning); }
+        .elev-card.s-exit::before { background: var(--danger); box-shadow: 0 0 18px var(--danger); }
+
+        .ec-top { display: flex; align-items: center; gap: var(--s-3); }
+        .ec-icon {
+            width: 44px; height: 44px;
+            border-radius: var(--r-md);
+            background: rgba(197,164,126,0.16);
+            color: var(--gold-bright);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .ec-name { font-size: var(--t-md); font-weight: 700; color: var(--text-primary); }
+        .ec-sub { font-size: var(--t-xs); color: var(--text-tertiary); }
+        .ec-state-pill {
+            margin-right: auto;
+            padding: 4px 10px;
+            border-radius: var(--r-pill);
+            font-size: var(--t-xs);
+            font-weight: 700;
+            white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .ec-state-pill.shabbat   { background: var(--success-bg); color: var(--success); }
+        .ec-state-pill.candidate { background: var(--warning-bg); color: var(--warning); }
+        .ec-state-pill.exit      { background: var(--danger-bg); color: var(--danger); }
+        .ec-state-pill.normal    { background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border-subtle); }
+
+        .ec-stats {
+            display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2);
+        }
+        .ec-stat {
+            background: var(--bg-input);
+            border-radius: var(--r-sm);
+            padding: 8px 10px;
+        }
+        .ec-stat .es-k { font-size: var(--t-xs); color: var(--text-tertiary); }
+        .ec-stat .es-v { font-size: var(--t-sm); font-weight: 600; color: var(--gold-bright); margin-top: 2px; }
+
+        .ec-reason {
+            font-size: var(--t-xs); color: var(--text-tertiary);
+            padding: 6px 10px;
+            background: var(--inset-bg);
+            border-radius: var(--r-sm);
+            line-height: 1.4;
+        }
+        .ec-cta {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-top: var(--s-2);
+            border-top: 1px dashed var(--border-subtle);
+        }
+        .ec-cta .ec-link {
+            color: var(--gold-bright); font-size: var(--t-sm); font-weight: 600;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .ec-cta .ec-link::after { content: '←'; transition: transform 0.18s; }
+        .elev-card:hover .ec-link::after { transform: translateX(-3px); }
+
+        /* Skeleton loading */
+        .skel {
+            background: linear-gradient(90deg, var(--bg-input) 25%, var(--bg-input-hover) 50%, var(--bg-input) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s linear infinite;
+            border-radius: var(--r-sm);
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skel-card {
+            height: 180px; border-radius: var(--r-lg);
+            background: var(--surface-soft);
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           DASHBOARD
+           ═══════════════════════════════════════════════════════════════ */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--s-3);
+            margin-bottom: var(--s-6);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff, #f8f5ef);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-lg);
+            padding: var(--s-4);
+            display: flex; flex-direction: column; gap: var(--s-2);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card .sc-icon {
+            width: 36px; height: 36px;
+            border-radius: var(--r-md);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .stat-card .sc-icon.g { background: var(--success-bg); color: var(--success); }
+        .stat-card .sc-icon.y { background: var(--warning-bg); color: var(--warning); }
+        .stat-card .sc-icon.b { background: var(--info-bg); color: var(--info); }
+        .stat-card .sc-icon.o { background: rgba(197,164,126,0.18); color: var(--gold-bright); }
+        .stat-card .sc-label { font-size: var(--t-sm); color: var(--text-secondary); }
+        .stat-card .sc-value { font-size: var(--t-2xl); font-weight: 700; color: var(--text-primary); }
+        .stat-card .sc-meta { font-size: var(--t-xs); color: var(--text-tertiary); }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--s-3);
+        }
+        .qa-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            padding: var(--s-4);
+            display: flex; flex-direction: column; align-items: center; gap: var(--s-2);
+            color: var(--text-primary);
+            text-align: center;
+            transition: all 0.18s var(--ease);
+        }
+        .qa-btn:hover { background: var(--bg-input-hover); border-color: var(--border-strong); transform: translateY(-2px); }
+        .qa-btn .qa-icon { font-size: 28px; }
+        .qa-btn .qa-label { font-size: var(--t-sm); font-weight: 600; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           BANNERS
+           ═══════════════════════════════════════════════════════════════ */
+        .banner-list { display: flex; flex-direction: column; gap: var(--s-3); }
+        .banner-item {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            padding: var(--s-3) var(--s-4);
+        }
+        .banner-preview {
+            border-radius: var(--r-sm);
+            padding: 8px 14px;
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+            color: #fff;
+            text-align: center;
+            font-size: var(--t-sm);
+            box-shadow: var(--sh-1);
+        }
+        .banner-controls {
+            display: flex; align-items: center; gap: var(--s-2);
+            flex-wrap: wrap;
+        }
+        .banner-controls input[type="text"] {
+            flex: 1; min-width: 180px;
+        }
+        .banner-controls input[type="color"] {
+            width: 44px; height: 42px;
+            padding: 4px;
+            background: transparent;
+            border: 1px solid var(--border-default);
+            border-radius: var(--r-md);
+            cursor: pointer;
+        }
+        .b-pages-wrap {
+            margin-top: var(--s-3);
+            display: flex; gap: var(--s-2); flex-wrap: wrap;
+            padding-top: var(--s-2);
+            border-top: 1px dashed var(--border-subtle);
+        }
+        .b-page-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px;
+            background: var(--inset-bg);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-pill);
+            font-size: var(--t-xs);
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-secondary);
+        }
+        .b-page-chip:has(input:checked) {
+            background: rgba(197,164,126,0.18);
+            border-color: var(--gold);
+            color: var(--gold-bright);
+        }
+        .b-page-chip input { display: none; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           QR CARDS
+           ═══════════════════════════════════════════════════════════════ */
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--s-3);
+        }
+        .qr-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            padding: var(--s-4);
+            display: flex; flex-direction: column; gap: var(--s-3);
+        }
+        .qr-card h4 {
+            font-size: var(--t-md); margin: 0;
+            display: flex; align-items: center; gap: var(--s-2);
+        }
+        .qr-pages-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+        .qr-pages-tags .qr-tag {
+            font-size: var(--t-xs);
+            background: var(--inset-bg);
+            padding: 2px 8px;
+            border-radius: var(--r-pill);
+            color: var(--text-tertiary);
+        }
+        .qr-stats-box {
+            background: var(--inset-bg);
+            border-radius: var(--r-sm);
+            padding: var(--s-3);
+        }
+        .qr-total { color: var(--gold-bright); font-size: var(--t-xl); font-weight: 700; }
+        .qr-total-lbl { font-size: var(--t-xs); color: var(--text-tertiary); }
+        .qr-sources {
+            margin-top: var(--s-2);
+            display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+            font-size: var(--t-xs);
+        }
+        .qr-src-row {
+            display: flex; justify-content: space-between;
+            color: var(--text-secondary);
+            padding: 2px 0;
+        }
+        .qr-src-row .src-v { color: var(--gold-soft); font-weight: 600; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           ACTIONS (Remote reload)
+           ═══════════════════════════════════════════════════════════════ */
+        .reload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: var(--s-3);
+        }
+        .reload-btn {
+            display: flex; flex-direction: column; align-items: center; gap: var(--s-2);
+            padding: var(--s-4);
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            color: var(--text-primary);
+            font-weight: 600;
+            transition: all 0.18s var(--ease);
+        }
+        .reload-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: var(--border-strong);
+            background: var(--bg-input-hover);
+        }
+        .reload-btn .rb-icon { font-size: 24px; }
+        .reload-btn .rb-name { font-size: var(--t-sm); }
+        .reload-btn .rb-meta { font-size: var(--t-xs); color: var(--text-tertiary); }
+        .reload-btn.danger {
+            background: linear-gradient(135deg, var(--danger-bg), rgba(244,67,54,0.05));
+            border-color: rgba(244,67,54,0.4);
+            color: #ff9090;
+        }
+        .reload-btn.danger:hover:not(:disabled) {
+            background: rgba(244,67,54,0.25);
+            border-color: var(--danger);
+        }
+        .reload-btn:disabled { opacity: 0.5; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           MODAL (Dialog)
+           ═══════════════════════════════════════════════════════════════ */
+        dialog {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--r-xl);
+            color: var(--text-primary);
+            font-family: inherit;
+            padding: 0;
+            max-width: 760px;
+            width: 100%;
+            max-height: 92vh;
+            overflow: hidden;
+            box-shadow: var(--sh-3);
+        }
+        dialog[open] { display: flex; flex-direction: column; }
+        dialog::backdrop {
+            background: rgba(0,0,0,0); backdrop-filter: blur(0px);
+            transition: background 0.25s, backdrop-filter 0.25s;
+        }
+        dialog[open]::backdrop { background: rgba(30,22,10,0.42); backdrop-filter: blur(5px); }
+        dialog[open] { animation: dialogIn 0.3s var(--ease); }
+        dialog.closing { animation: dialogOut 0.2s var(--ease-out) forwards; }
+        @keyframes dialogIn {
+            from { opacity: 0; transform: scale(0.96) translateY(-12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes dialogOut {
+            from { opacity: 1; transform: scale(1); }
+            to   { opacity: 0; transform: scale(0.96) translateY(8px); }
+        }
+
+        .modal-head {
+            display: flex; align-items: center; gap: var(--s-3);
+            padding: var(--s-4) var(--s-5);
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            background: linear-gradient(180deg, rgba(197,164,126,0.06), transparent);
+        }
+        .modal-head .mh-icon {
+            width: 38px; height: 38px;
+            border-radius: var(--r-md);
+            background: rgba(197,164,126,0.16);
+            color: var(--gold-bright);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .modal-head .mh-title {
+            font-size: var(--t-md);
+            font-weight: 700;
+            flex: 1; min-width: 0;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .modal-head .mh-sub {
+            font-size: var(--t-xs); color: var(--text-tertiary); font-weight: normal;
+            margin-right: var(--s-2);
+        }
+        .modal-close {
+            width: 36px; height: 36px;
+            background: transparent; border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            border-radius: var(--r-md);
+            transition: all 0.18s;
+        }
+        .modal-close:hover { background: var(--hover-overlay); color: var(--text-primary); transform: rotate(90deg); }
+
+        .modal-tabs {
+            display: flex; gap: 2px;
+            padding: 0 var(--s-4);
+            overflow-x: auto;
+            scrollbar-width: none;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            background: var(--inset-bg);
+        }
+        .modal-tabs::-webkit-scrollbar { display: none; }
+        .modal-tab {
+            background: transparent; border: none;
+            color: var(--text-tertiary);
+            padding: var(--s-3) var(--s-3);
+            border-bottom: 2px solid transparent;
+            font-size: var(--t-sm); font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.18s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .modal-tab:hover { color: var(--text-secondary); }
+        .modal-tab.active { color: var(--gold-bright); border-bottom-color: var(--gold); }
+
+        .modal-body { flex: 1; overflow-y: auto; padding: var(--s-5); }
+        .modal-panel { display: none; animation: tabIn 0.22s var(--ease); }
+        .modal-panel.active { display: block; }
+        @keyframes tabIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        .modal-foot {
+            display: flex; gap: var(--s-3); align-items: center;
+            padding: var(--s-4) var(--s-5);
+            border-top: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            background: var(--inset-bg);
+        }
+        .modal-foot .ft-spacer { flex: 1; }
+        .modal-foot .ft-saved {
+            font-size: var(--t-xs);
+            color: var(--text-tertiary);
+            display: flex; align-items: center; gap: 4px;
+        }
+        .modal-foot .ft-saved.dirty { color: var(--warning); }
+
+        /* Status block */
+        .status-list {
+            display: flex; flex-direction: column;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            overflow: hidden;
+        }
+        .status-list .s-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: var(--s-3);
+            padding: 10px var(--s-3);
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: var(--t-sm);
+        }
+        .status-list .s-row:last-child { border-bottom: none; }
+        .status-list .s-k { color: var(--text-tertiary); }
+        .status-list .s-v { color: var(--text-primary); word-break: break-word; }
+
+        /* Violation list */
+        .viol-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+        .viol-list li {
+            background: var(--danger-bg);
+            border: 1px solid rgba(244,67,54,0.25);
+            border-radius: var(--r-sm);
+            padding: 6px 10px;
+            font-size: var(--t-xs);
+            display: flex; gap: var(--s-2);
+        }
+        .viol-list li .vt { color: var(--text-tertiary); flex-shrink: 0; min-width: 64px; }
+
+        /* Empty states */
+        .empty-state {
+            text-align: center;
+            padding: var(--s-8) var(--s-4);
+            color: var(--text-tertiary);
+        }
+        .empty-state .es-icon { font-size: 40px; margin-bottom: var(--s-3); opacity: 0.4; }
+        .empty-state .es-title { font-size: var(--t-md); color: var(--text-secondary); margin-bottom: 4px; }
+        .empty-state .es-desc { font-size: var(--t-sm); color: var(--text-tertiary); }
+
+        /* ═══════════════════════════════════════════════════════════════
+           TOAST
+           ═══════════════════════════════════════════════════════════════ */
+        .toasts {
+            position: fixed;
+            bottom: var(--s-5); left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex; flex-direction: column-reverse;
+            gap: var(--s-2);
+            pointer-events: none;
+            max-width: 92vw;
+        }
+        .toast {
+            display: flex; align-items: center; gap: var(--s-3);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--r-md);
+            padding: 12px var(--s-4);
+            box-shadow: var(--sh-3);
+            color: var(--text-primary);
+            font-size: var(--t-sm); font-weight: 500;
+            pointer-events: auto;
+            min-width: 240px; max-width: 420px;
+            animation: toastIn 0.32s var(--ease) forwards;
+        }
+        .toast.out { animation: toastOut 0.25s var(--ease-out) forwards; }
+        .toast .t-icon {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px; font-weight: 700;
+        }
+        .toast.success .t-icon { background: var(--success-bg); color: var(--success); }
+        .toast.error   .t-icon { background: var(--danger-bg);  color: var(--danger); }
+        .toast.info    .t-icon { background: var(--info-bg);    color: var(--info); }
+        .toast .t-msg { flex: 1; word-break: break-word; }
+        .toast .t-x {
+            background: transparent; border: none;
+            color: var(--text-tertiary);
+            font-size: 18px; line-height: 1;
+            padding: 0 6px;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateY(8px); }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           HELP POPOVER
+           ═══════════════════════════════════════════════════════════════ */
+        #helpDialog {
+            max-width: 540px;
+        }
+        .help-content h4 {
+            color: var(--gold-bright);
+            font-size: var(--t-md);
+            margin: 0 0 var(--s-2);
+            display: flex; align-items: center; gap: var(--s-2);
+        }
+        .help-content p { margin: 0 0 var(--s-3); font-size: var(--t-sm); line-height: 1.55; color: var(--text-primary); }
+        .help-content .help-example {
+            background: var(--bg-input);
+            border-right: 3px solid var(--gold);
+            padding: var(--s-3);
+            border-radius: var(--r-sm);
+            font-size: var(--t-xs);
+            color: var(--text-secondary);
+            margin-bottom: var(--s-3);
+        }
+        .help-content code {
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--gold-bright);
+            font-family: 'Heebo', monospace;
+            direction: ltr; display: inline-block;
+        }
+
+        /* Confirm dialog */
+        #confirmDialog { max-width: 460px; }
+        .confirm-body {
+            padding: var(--s-5);
+            text-align: center;
+        }
+        .confirm-icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: var(--warning-bg); color: var(--warning);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            margin: 0 auto var(--s-3);
+        }
+        .confirm-icon.danger { background: var(--danger-bg); color: var(--danger); }
+        .confirm-title { font-size: var(--t-md); font-weight: 700; margin-bottom: var(--s-2); }
+        .confirm-msg { color: var(--text-secondary); font-size: var(--t-sm); }
+
+        /* ═══════════════════════════════════════════════════════════════
+           HELPERS
+           ═══════════════════════════════════════════════════════════════ */
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+        .text-tertiary { color: var(--text-tertiary); }
+        .hide { display: none !important; }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(14px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Inline SVG icons (replace emoji that render as tofu on some systems) */
+        .ic { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+        .ic svg { width: 1em; height: 1em; display: block; }
+
+        /* Auto-learn explanation box */
+        .learn-explain {
+            background: linear-gradient(180deg, rgba(187,148,96,0.10), rgba(187,148,96,0.03));
+            border: 1px solid var(--border-default);
+            border-radius: var(--r-md);
+            padding: var(--s-4);
+            margin-bottom: var(--s-5);
+        }
+        .learn-explain .le-head {
+            display: flex; align-items: center; gap: var(--s-2);
+            font-size: var(--t-md); font-weight: 700; color: var(--gold-soft);
+            margin-bottom: var(--s-2);
+        }
+        .learn-explain p { margin: 0 0 var(--s-2); font-size: var(--t-sm); line-height: 1.55; color: var(--text-primary); }
+        .learn-explain .le-foot { margin-top: var(--s-2); margin-bottom: 0; color: var(--text-secondary); }
+        .learn-explain .le-list {
+            list-style: none; padding: 0; margin: 0 0 var(--s-2);
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .learn-explain .le-list li {
+            font-size: var(--t-sm); color: var(--text-primary);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-sm);
+            padding: 7px 10px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════════════════════════ */
+        @media (max-width: 1023px) {
+            .app-shell {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "topbar"
+                    "main";
+            }
+            .sidenav {
+                position: fixed; top: 0; right: 0; bottom: 0;
+                width: 280px;
+                transform: translateX(100%);
+                transition: transform 0.3s var(--ease);
+                z-index: 50;
+                box-shadow: -8px 0 30px rgba(0,0,0,0.4);
+            }
+            .sidenav.open { transform: translateX(0); }
+            .sidenav-overlay {
+                position: fixed; inset: 0;
+                background: rgba(30,22,10,0.40);
+                backdrop-filter: blur(2px);
+                z-index: 45;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.25s;
+            }
+            .sidenav-overlay.show { opacity: 1; pointer-events: all; }
+            #navToggleBtn { display: inline-flex; }
+        }
+
+        @media (max-width: 767px) {
+            .main { padding: var(--s-4) var(--s-3) calc(var(--bottomnav-h) + var(--s-6)); }
+            .view-header h2 { font-size: var(--t-xl); }
+            .card { padding: var(--s-4); border-radius: var(--r-md); }
+            .topbar { padding: 0 var(--s-3); }
+            .topbar-title { font-size: var(--t-sm); }
+            .user-chip { padding: 4px 8px; max-width: 100px; }
+            .user-chip .u-name { font-size: var(--t-xs); }
+
+            .bottomnav { display: block; }
+            .sidenav { width: 86%; max-width: 320px; }
+
+            /* Mobile bottom-sheet dialog */
+            dialog {
+                max-width: 100vw;
+                width: 100vw;
+                max-height: 94dvh;
+                margin: 0 auto;
+                margin-top: auto;
+                margin-bottom: 0;
+                border-radius: var(--r-xl) var(--r-xl) 0 0;
+                position: fixed;
+                bottom: 0; left: 0; right: 0; top: auto;
+                inset: auto 0 0 0;
+            }
+            dialog[open] { animation: sheetIn 0.32s var(--ease); }
+            dialog.closing { animation: sheetOut 0.22s var(--ease-out) forwards; }
+            @keyframes sheetIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+            @keyframes sheetOut { to { transform: translateY(100%); opacity: 0.5; } }
+
+            .modal-head { padding: var(--s-3) var(--s-4); }
+            .modal-body { padding: var(--s-4); }
+            .modal-foot { padding: var(--s-3) var(--s-4); }
+            .modal-tabs { padding: 0 var(--s-3); }
+            .modal-tab { padding: var(--s-3) 10px; font-size: var(--t-xs); }
+
+            .ec-stats { grid-template-columns: 1fr 1fr; }
+            .field-row { gap: var(--s-3); }
+            .stat-grid { gap: var(--s-2); }
+            .stat-card .sc-value { font-size: var(--t-xl); }
+
+            .floor-matrix th, .floor-matrix td { padding: 6px 4px; font-size: var(--t-xs); }
+            .fm-cell-toggle { width: 26px; height: 26px; }
+        }
+
+        @media (max-width: 420px) {
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+            .stat-card { padding: var(--s-3); }
+            .stat-card .sc-value { font-size: 1.4rem; }
+            .ec-icon { width: 36px; height: 36px; font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     AUTH SCREEN
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="authScreen">
+    <div class="auth-card">
+        <div class="auth-logo"><span class="ic" data-icon="elevator"></span></div>
+        <h2>הגדרות מערכת</h2>
+        <p class="auth-sub">כניסה למנהלי מערכת בלבד</p>
+
+        <div id="auth-main" class="auth-view active">
+            <button id="googleSignInBtn" class="btn btn-google btn-block">
+                <svg viewBox="0 0 24 24"><path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fbbc04" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                התחברות עם Google
+            </button>
+            <div class="auth-divider">או</div>
+            <button id="emailSignInBtn" class="btn btn-secondary btn-block">📧 התחברות עם אימייל</button>
+        </div>
+
+        <div id="auth-email" class="auth-view">
+            <form id="loginForm" style="display: flex; flex-direction: column; gap: var(--s-3);">
+                <div class="field"><input type="email" id="loginEmail" placeholder="אימייל" required autocomplete="email"></div>
+                <div class="field"><input type="password" id="loginPassword" placeholder="סיסמה" required autocomplete="current-password"></div>
+                <button type="submit" class="btn btn-primary btn-block">התחבר</button>
+            </form>
+            <a class="forgot-link" id="forgotPasswordLink">שכחתי סיסמה</a>
+            <button class="btn btn-ghost btn-block" data-target="auth-main">→ חזור</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     APP SHELL
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="appShell" class="app-shell">
+
+    <!-- Top bar -->
+    <header class="topbar">
+        <button id="navToggleBtn" class="icon-btn" aria-label="פתח תפריט">☰</button>
+        <div class="topbar-title">
+            <span id="crumbSection">סקירה</span>
+        </div>
+        <div class="topbar-actions">
+            <button class="icon-btn" id="helpBtn" aria-label="עזרה" title="עזרה ושאלות נפוצות">?</button>
+            <div class="user-chip">
+                <span class="u-avatar" id="userAvatar">?</span>
+                <span class="u-name" id="userName">—</span>
+            </div>
+            <button class="icon-btn" id="logoutBtn" aria-label="התנתק" title="התנתק"><span class="ic" data-icon="power"></span></button>
+        </div>
+    </header>
+
+    <!-- Side nav (drawer on mobile) -->
+    <aside class="sidenav" id="sidenav">
+        <div class="sidenav-brand">
+            <div class="b-icon"><span class="ic" data-icon="elevator"></span></div>
+            <div>
+                <div class="b-text">מעלית שבת</div>
+                <div class="b-sub">ניהול מערכת</div>
+            </div>
+        </div>
+
+        <nav class="nav-list" role="navigation">
+            <button class="nav-item active" data-view="overview"><span class="ni-icon">🏠</span><span>סקירה</span></button>
+            <button class="nav-item"        data-view="elevators"><span class="ni-icon ic" data-icon="elevator"></span><span>מעליות</span><span class="ni-badge hide" id="navElevBadge"></span></button>
+            <button class="nav-item"        data-view="system"><span class="ni-icon">⚙️</span><span>הגדרות מערכת</span></button>
+            <button class="nav-item"        data-view="content"><span class="ni-icon">🎨</span><span>תוכן ציבורי</span></button>
+            <button class="nav-item"        data-view="actions"><span class="ni-icon">🛠</span><span>פעולות מרחוק</span></button>
+        </nav>
+
+        <div class="sidenav-footer">
+            <div class="v-stamp">SETUP · 2026</div>
+        </div>
+    </aside>
+    <div class="sidenav-overlay" id="sidenavOverlay"></div>
+
+    <!-- Main -->
+    <main class="main">
+
+        <!-- ─────────── VIEW: OVERVIEW ─────────── -->
+        <section class="view active" id="view-overview" aria-labelledby="ov-title">
+            <header class="view-header">
+                <div>
+                    <h2 id="ov-title">סקירה כללית</h2>
+                    <p class="v-desc">מצב המערכת בזמן אמת — מעליות פעילות, מצב שבת, וקיצורי דרך לפעולות נפוצות.</p>
+                </div>
+            </header>
+
+            <div class="stat-grid" id="dashStats">
+                <!-- Filled in JS -->
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">⚡</div>
+                    <div>
+                        <h3>פעולות מהירות</h3>
+                        <p class="ch-desc">הקיצורים הנפוצים ביותר</p>
+                    </div>
+                </div>
+                <div class="quick-actions">
+                    <button class="qa-btn" data-jump="elevators">
+                        <span class="qa-icon ic" data-icon="elevator"></span>
+                        <span class="qa-label">ערוך מעלית</span>
+                    </button>
+                    <button class="qa-btn" data-jump="content">
+                        <span class="qa-icon">📢</span>
+                        <span class="qa-label">באנר חדש</span>
+                    </button>
+                    <button class="qa-btn" data-jump="actions">
+                        <span class="qa-icon">🔄</span>
+                        <span class="qa-label">רענון מרחוק</span>
+                    </button>
+                    <button class="qa-btn" id="qaHelp">
+                        <span class="qa-icon">❓</span>
+                        <span class="qa-label">עזרה והסבר</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon ic" data-icon="elevator"></div>
+                    <div>
+                        <h3>סטטוס מעליות</h3>
+                        <p class="ch-desc">לחץ על מעלית לעריכה</p>
+                    </div>
+                    <div class="ch-actions">
+                        <button class="btn btn-ghost btn-sm" data-jump="elevators">תצוגה מלאה ←</button>
+                    </div>
+                </div>
+                <div class="elev-grid" id="dashElevs"></div>
+            </div>
+        </section>
+
+        <!-- ─────────── VIEW: ELEVATORS ─────────── -->
+        <section class="view" id="view-elevators" aria-labelledby="el-title">
+            <header class="view-header">
+                <div>
+                    <h2 id="el-title">מעליות</h2>
+                    <p class="v-desc">לחץ על מעלית כדי לערוך הגדרות, לראות מצב חי, ולנהל את זמני שבת.</p>
+                </div>
+            </header>
+
+            <div class="elev-grid" id="elevGrid">
+                <div class="skel-card skel"></div>
+                <div class="skel-card skel"></div>
+                <div class="skel-card skel"></div>
+                <div class="skel-card skel"></div>
+            </div>
+        </section>
+
+        <!-- ─────────── VIEW: SYSTEM ─────────── -->
+        <section class="view" id="view-system" aria-labelledby="sys-title">
+            <header class="view-header">
+                <div>
+                    <h2 id="sys-title">הגדרות מערכת</h2>
+                    <p class="v-desc">הגדרות גלובליות שמשפיעות על כל המעליות יחד.</p>
+                </div>
+                <div class="v-actions">
+                    <button class="btn btn-primary" id="saveSystemBtn">💾 שמור הגדרות</button>
+                </div>
+            </header>
+
+            <!-- Hebcal -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">🕯️</div>
+                    <div>
+                        <h3>זיהוי שבת לפי Hebcal</h3>
+                        <p class="ch-desc">מאפשר/חוסם זיהוי אוטומטי לפי לוח השנה היהודי</p>
+                    </div>
+                </div>
+
+                <div class="toggle-card">
+                    <div class="tc-body">
+                        <div class="tc-title">
+                            הפעל בדיקת Hebcal כשכבת בטיחות
+                            <button class="help-trigger" data-help="hebcal-gate">?</button>
+                        </div>
+                        <div class="tc-desc">כאשר מופעל: כניסה אוטומטית למצב שבת רק סמוך לזמני שבת אמיתיים. כיבוי = זיהוי התנהגותי טהור (לא מומלץ אלא לבדיקות).</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="hebcalGateToggle"><span class="slider"></span></label>
+                </div>
+
+                <div id="hebcalFields">
+                    <div class="field-row">
+                        <div class="field">
+                            <label class="field-label" for="hebcalBefore">חלון לפני הדלקת נרות (דק׳) <button class="help-trigger" data-help="hebcal-before">?</button></label>
+                            <input type="number" id="hebcalBefore" value="240" min="0" max="600">
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="hebcalAfter">חלון אחרי הבדלה (דק׳) <button class="help-trigger" data-help="hebcal-after">?</button></label>
+                            <input type="number" id="hebcalAfter" value="120" min="0" max="600">
+                        </div>
+                    </div>
+
+                    <div class="toggle-card">
+                        <div class="tc-body">
+                            <div class="tc-title">יום טוב שני (חו"ל) <button class="help-trigger" data-help="yom-tov-sheni">?</button></div>
+                            <div class="tc-desc">משפיע רק על שכבת Hebcal — לא משנה את הזיהוי ההתנהגותי.</div>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="yomtovSheniToggle"><span class="slider"></span></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detection tunables -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">🎛️</div>
+                    <div>
+                        <h3>תנאי זיהוי שבת (מתקדם)</h3>
+                        <p class="ch-desc">פרמטרים שמכתיבים מתי המערכת נכנסת ויוצאת ממצב שבת אוטומטית. השאר ריק להשתמש בברירת המחדל.</p>
+                    </div>
+                </div>
+
+                <div class="card-section-title">📥 תנאי כניסה למצב שבת</div>
+                <div class="field-row">
+                    <div class="field">
+                        <label class="field-label" for="sd-required-cycles">מחזורים תואמים נדרשים <button class="help-trigger" data-help="sd-cycles">?</button></label>
+                        <input type="number" id="sd-required-cycles" min="1" max="10" placeholder="1 (ברירת מחדל)">
+                        <div class="field-hint">מחזורים רצופים לפני כניסה ל-SHABBAT</div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-timing-tol-pct">סובלנות טיימינג (%) <button class="help-trigger" data-help="sd-tol">?</button></label>
+                        <input type="number" id="sd-timing-tol-pct" min="0" max="100" placeholder="20">
+                        <div class="field-hint">±% סטייה מותרת מ-TIME_PER_FLOOR</div>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label class="field-label" for="sd-max-timing-exc">חריגות טיימינג מותרות</label>
+                        <input type="number" id="sd-max-timing-exc" min="0" max="20" placeholder="1">
+                        <div class="field-hint">לכל מחזור</div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-allow-illegal">עצירות לא חוקיות מותרות</label>
+                        <input type="number" id="sd-allow-illegal" min="0" max="10" placeholder="0">
+                        <div class="field-hint">לכל כיוון</div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-allow-missing">עצירות חסרות מותרות</label>
+                        <input type="number" id="sd-allow-missing" min="0" max="10" placeholder="1">
+                        <div class="field-hint">לכל כיוון</div>
+                    </div>
+                </div>
+
+                <div class="card-section-title" style="margin-top: var(--s-5);">📤 תנאי יציאה ממצב שבת</div>
+                <div class="field-row">
+                    <div class="field">
+                        <label class="field-label" for="sd-stickiness-min">זמן הדבקה מינימלי (דק׳) <button class="help-trigger" data-help="sd-stick">?</button></label>
+                        <input type="number" id="sd-stickiness-min" min="0" max="1440" placeholder="90">
+                        <div class="field-hint">משך מינ׳ במצב שבת לפני יציאה אפשרית</div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-violations-for-exit">חריגות נדרשות ליציאה</label>
+                        <input type="number" id="sd-violations-for-exit" min="1" max="20" placeholder="3">
+                        <div class="field-hint">בתוך חלון הספירה</div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-violation-window-min">חלון ספירת חריגות (דק׳)</label>
+                        <input type="number" id="sd-violation-window-min" min="1" max="240" placeholder="20">
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label class="field-label" for="sd-candidate-exit-timeout">פסק זמן ב-CANDIDATE_EXIT (דק׳)</label>
+                        <input type="number" id="sd-candidate-exit-timeout" min="1" max="240" placeholder="30">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-inactivity-min">חוסר תנועה בתחנה זרה (דק׳)</label>
+                        <input type="number" id="sd-inactivity-min" min="0" max="240" placeholder="10">
+                        <div class="field-hint">0 = כבוי. נספר כחריגה אחת.</div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-no-report-min">פסק זמן ללא דיווח (דק׳)</label>
+                        <input type="number" id="sd-no-report-min" min="0" max="240" placeholder="15">
+                        <div class="field-hint">0 = כבוי. ה-tracker שותק → חריגה.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floor aliases -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">🏷️</div>
+                    <div>
+                        <h3>כינויי קומות</h3>
+                        <p class="ch-desc">כאן נותנים שם תצוגה לכל תחנה (לדוגמה: תחנה -1 = "L" עבור לובי). השאר ריק להציג את המספר.</p>
+                    </div>
+                </div>
+                <div class="alias-grid" id="aliasGrid"></div>
+            </div>
+        </section>
+
+        <!-- ─────────── VIEW: CONTENT (Banners + QR) ─────────── -->
+        <section class="view" id="view-content" aria-labelledby="ct-title">
+            <header class="view-header">
+                <div>
+                    <h2 id="ct-title">תוכן ציבורי</h2>
+                    <p class="v-desc">באנרים, הודעות מערכת וניהול קודי QR שמופיעים על מסכי הלובי וההזמנה.</p>
+                </div>
+            </header>
+
+            <!-- Banners -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">📢</div>
+                    <div>
+                        <h3>באנרים והודעות מערכת</h3>
+                        <p class="ch-desc">הודעות שיוצגו בראש מסכי המערכת. ניתן לבחור באילו מסכים תוצג כל הודעה.</p>
+                    </div>
+                    <div class="ch-actions">
+                        <button class="btn btn-primary btn-sm" id="saveBannersBtn">💾 שמור</button>
+                    </div>
+                </div>
+                <div class="banner-list" id="bannerList"></div>
+                <button class="add-row-btn" id="addBannerBtn">+ הוסף באנר חדש</button>
+            </div>
+
+            <!-- QR codes -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">📱</div>
+                    <div>
+                        <h3>קודי QR וסטטיסטיקות סריקה</h3>
+                        <p class="ch-desc">קישורי היעד של קודי ה-QR שמופיעים על מסכי הציבור. הסטטיסטיקה מתעדכנת אוטומטית בכל סריקה.</p>
+                    </div>
+                    <div class="ch-actions">
+                        <button class="btn btn-primary btn-sm" id="saveQrLinksBtn">💾 שמור</button>
+                    </div>
+                </div>
+
+                <div class="qr-grid">
+                    <div class="qr-card">
+                        <h4>💬 WhatsApp</h4>
+                        <div class="qr-pages-tags">
+                            <span class="qr-tag">index</span><span class="qr-tag">kiosk</span><span class="qr-tag">display</span>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="qrLinkWhatsapp">קישור יעד</label>
+                            <input type="url" id="qrLinkWhatsapp" placeholder="https://wa.me/972...">
+                        </div>
+                        <div class="qr-stats-box">
+                            <div class="qr-total-lbl">סה״כ סריקות</div>
+                            <div class="qr-total" id="qrTotalWhatsapp">—</div>
+                            <div class="qr-sources" id="qrBySourceWhatsapp"></div>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" data-reset-key="whatsapp">↻ איפוס מונה</button>
+                    </div>
+
+                    <div class="qr-card">
+                        <h4>🌐 אתר / קיוסק ציבורי</h4>
+                        <div class="qr-pages-tags">
+                            <span class="qr-tag">public</span><span class="qr-tag">public1</span>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="qrLinkWebsite">קישור יעד</label>
+                            <input type="url" id="qrLinkWebsite" placeholder="https://...">
+                        </div>
+                        <div class="qr-stats-box">
+                            <div class="qr-total-lbl">סה״כ סריקות</div>
+                            <div class="qr-total" id="qrTotalWebsite">—</div>
+                            <div class="qr-sources" id="qrBySourceWebsite"></div>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" data-reset-key="website">↻ איפוס מונה</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─────────── VIEW: ACTIONS ─────────── -->
+        <section class="view" id="view-actions" aria-labelledby="ac-title">
+            <header class="view-header">
+                <div>
+                    <h2 id="ac-title">פעולות מרחוק</h2>
+                    <p class="v-desc">שליחת פקודות לכלל מסכי הלקוח. השימוש זהיר — הפקודות מתבצעות מיידית.</p>
+                </div>
+            </header>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">🔄</div>
+                    <div>
+                        <h3>רענון מסכים מרחוק</h3>
+                        <p class="ch-desc">שולח פקודת רענון עמוקה (ניקוי cache, ביטול service worker) למסכי הלקוח. הם יטענו מחדש תוך שנייה.</p>
+                    </div>
+                </div>
+
+                <div class="reload-grid">
+                    <button class="reload-btn danger" data-reload-scope="all">
+                        <span class="rb-icon">⚠️</span>
+                        <span class="rb-name">רענן את כולם</span>
+                        <span class="rb-meta">כל המסכים יחד</span>
+                    </button>
+                    <button class="reload-btn" data-reload-scope="public">
+                        <span class="rb-icon">🏠</span>
+                        <span class="rb-name">רענן PUBLIC</span>
+                        <span class="rb-meta">לובי ציבורי</span>
+                    </button>
+                    <button class="reload-btn" data-reload-scope="kiosk">
+                        <span class="rb-icon">📺</span>
+                        <span class="rb-name">רענן KIOSK</span>
+                        <span class="rb-meta">קיוסק מעלית</span>
+                    </button>
+                    <button class="reload-btn" data-reload-scope="display">
+                        <span class="rb-icon">🖥️</span>
+                        <span class="rb-name">רענן DISPLAY</span>
+                        <span class="rb-meta">תצוגה גדולה</span>
+                    </button>
+                    <button class="reload-btn" data-reload-scope="index">
+                        <span class="rb-icon">📱</span>
+                        <span class="rb-name">רענן INDEX</span>
+                        <span class="rb-meta">דף ראשי</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom nav (mobile) -->
+    <nav class="bottomnav" id="bottomnav" role="navigation" aria-label="ניווט תחתון">
+        <div class="bottomnav-inner">
+            <button class="bn-item active" data-view="overview"><span class="bn-icon">🏠</span><span>סקירה</span></button>
+            <button class="bn-item"        data-view="elevators"><span class="bn-icon ic" data-icon="elevator"></span><span>מעליות</span></button>
+            <button class="bn-item"        data-view="system"><span class="bn-icon">⚙️</span><span>מערכת</span></button>
+            <button class="bn-item"        data-view="content"><span class="bn-icon">🎨</span><span>תוכן</span></button>
+            <button class="bn-item"        data-view="actions"><span class="bn-icon">🛠</span><span>פעולות</span></button>
+        </div>
+    </nav>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ELEVATOR DIALOG
+     ═══════════════════════════════════════════════════════════════ -->
+<dialog id="elevatorDialog">
+    <div class="modal-head">
+        <div class="mh-icon ic" data-icon="elevator"></div>
+        <div class="mh-title" id="elDialogTitle">מעלית</div>
+        <span class="mh-sub" id="elDialogSub"></span>
+        <button class="modal-close" id="elDialogClose" aria-label="סגור">×</button>
+    </div>
+
+    <div class="modal-tabs" id="elDialogTabs">
+        <button class="modal-tab active" data-tab="ov">📋 סקירה</button>
+        <button class="modal-tab" data-tab="floors">📍 תחנות</button>
+        <button class="modal-tab" data-tab="timing">⏱ זמנים</button>
+        <button class="modal-tab" data-tab="shabbat">🕯 שבת</button>
+        <button class="modal-tab" data-tab="learn">🤖 למידה</button>
+        <button class="modal-tab" data-tab="live">📊 מצב חי</button>
+    </div>
+
+    <div class="modal-body">
+
+        <!-- Overview -->
+        <div class="modal-panel active" id="pan-ov">
+            <div class="field-row">
+                <div class="field">
+                    <label class="field-label" for="m-top">תחנה עליונה (TOP_FLOOR) <button class="help-trigger" data-help="top-floor">?</button></label>
+                    <input type="text" id="m-top">
+                </div>
+                <div class="field">
+                    <label class="field-label" for="m-bottom">תחנה תחתונה (BOTTOM_FLOOR) <button class="help-trigger" data-help="bottom-floor">?</button></label>
+                    <input type="text" id="m-bottom">
+                </div>
+            </div>
+
+            <div class="card-section-title">דריסה ידנית של מצב שבת <button class="help-trigger" data-help="override">?</button></div>
+            <p class="field-hint" style="margin-bottom: var(--s-3);">עוקף את הזיהוי האוטומטי. המנוע (FSM) ממשיך לרוץ ולתעד ברקע.</p>
+
+            <div class="radio-cards">
+                <label class="radio-card">
+                    <input type="radio" name="m-override" value="auto">
+                    <span class="rc-dot"></span>
+                    <div class="rc-body">
+                        <div class="rc-title">🤖 אוטומטי</div>
+                        <div class="rc-desc">המערכת מחליטה לפי זיהוי + Hebcal — מומלץ</div>
+                    </div>
+                </label>
+                <label class="radio-card">
+                    <input type="radio" name="m-override" value="force_on">
+                    <span class="rc-dot"></span>
+                    <div class="rc-body">
+                        <div class="rc-title">🟢 כפוי פעיל</div>
+                        <div class="rc-desc">מצב שבת תמיד דלוק — לבדיקות בלבד</div>
+                    </div>
+                </label>
+                <label class="radio-card">
+                    <input type="radio" name="m-override" value="force_off">
+                    <span class="rc-dot"></span>
+                    <div class="rc-body">
+                        <div class="rc-title">⚪ כפוי כבוי</div>
+                        <div class="rc-desc">לא שבת תמיד — מעקף לתקלות זיהוי</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Floors -->
+        <div class="modal-panel" id="pan-floors">
+            <p class="field-hint" style="margin-bottom: var(--s-3);">
+                <strong>תצוגה:</strong> מסכי הציבור יציגו את התחנה <strong>אם וי מסומן בעמודה "תצוגה"</strong>.<br>
+                <strong>עצירות:</strong> במצב שבת המעלית תעצור בתחנות עם וי בעמודה <strong>"עלייה ↑"</strong> או <strong>"ירידה ↓"</strong> בהתאם.
+            </p>
+
+            <input type="hidden" id="m-stopsUp">
+            <input type="hidden" id="m-stopsDown">
+            <input type="hidden" id="m-visible">
+
+            <div class="floor-matrix">
+                <div class="floor-matrix-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>תחנה</th>
+                                <th>תצוגה</th>
+                                <th>עלייה ↑</th>
+                                <th>ירידה ↓</th>
+                            </tr>
+                        </thead>
+                        <tbody id="floorMatrixBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timing -->
+        <div class="modal-panel" id="pan-timing">
+            <div class="field-row">
+                <div class="field">
+                    <label class="field-label" for="m-stopTime">זמן עצירה — TIME_PER_FLOOR (שניות) <button class="help-trigger" data-help="time-per-floor">?</button></label>
+                    <input type="number" id="m-stopTime" step="0.1">
+                    <div class="field-hint">משך עצירה בתחנה רגילה</div>
+                </div>
+                <div class="field">
+                    <label class="field-label" for="m-passTime">זמן חלוף — TIME_PASS_FLOOR (שניות) <button class="help-trigger" data-help="time-pass-floor">?</button></label>
+                    <input type="number" id="m-passTime" step="0.1">
+                    <div class="field-hint">משך לעבור תחנה ללא עצירה</div>
+                </div>
+            </div>
+
+            <div class="card-section">
+                <div class="card-section-title">המתנות מורחבות בתחנות (FLOOR_WAITS) <button class="help-trigger" data-help="floor-waits">?</button></div>
+                <p class="field-hint" style="margin-bottom: var(--s-2);">תחנות שבהן המעלית עוצרת לזמן ארוך יותר (למשל לובי).</p>
+                <div class="rep-rows" id="m-floorWaits"></div>
+                <button type="button" class="add-row-btn" id="m-addWaitBtn">+ הוסף המתנה בתחנה</button>
+            </div>
+        </div>
+
+        <!-- Shabbat breaks -->
+        <div class="modal-panel" id="pan-shabbat">
+            <div class="toggle-card">
+                <div class="tc-body">
+                    <div class="tc-title">הפעל מנגנון הפסקות שבת <button class="help-trigger" data-help="breaks">?</button></div>
+                    <div class="tc-desc">המעלית תפסיק לפעול בטווחי הזמן שמוגדרים מטה (למשל בזמן תפילות).</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="m-breakActive"><span class="slider"></span></label>
+            </div>
+
+            <div class="card-section">
+                <div class="card-section-title">טווחי הפסקה</div>
+                <div class="rep-rows" id="m-breaks"></div>
+                <button type="button" class="add-row-btn" id="m-addBreakBtn">+ הוסף הפסקה</button>
+            </div>
+        </div>
+
+        <!-- Auto-learn -->
+        <div class="modal-panel" id="pan-learn">
+            <div class="learn-explain">
+                <div class="le-head">🤖 מה זו למידה אוטומטית? <button class="help-trigger" data-help="auto-learn">?</button></div>
+                <p>בכל שבת המעלית חוזרת על אותו <strong>מחזור קבוע</strong>: עולה ועוצרת בתחנות מסוימות, יורדת ועוצרת בתחנות מסוימות, עם זמני נסיעה קבועים. המערכת <strong>מתעדת את המחזורים האלה</strong> ולומדת מהם את ההגדרות בפועל:</p>
+                <ul class="le-list">
+                    <li>📍 באילו תחנות המעלית עוצרת — בעלייה ובירידה</li>
+                    <li>⏱ זמן הנסיעה הממוצע בין תחנות (<code>TIME_PER_FLOOR</code>)</li>
+                    <li>⏳ תחנות עם המתנה ארוכה (לובי וכד׳)</li>
+                </ul>
+                <p class="le-foot">כך אפשר להגדיר מעלית חדשה <strong>בלי להזין ידנית</strong> את כל התחנות — המערכת מציעה אותן לבד. בחר מטה כיצד לטפל בהצעות:</p>
+            </div>
+
+            <div class="radio-cards">
+                <label class="radio-card">
+                    <input type="radio" name="m-autoLearn" value="off">
+                    <span class="rc-dot"></span>
+                    <div class="rc-body">
+                        <div class="rc-title">⚪ כבוי</div>
+                        <div class="rc-desc">שמור את ההגדרות שהוזנו ידנית</div>
+                    </div>
+                </label>
+                <label class="radio-card">
+                    <input type="radio" name="m-autoLearn" value="suggest">
+                    <span class="rc-dot"></span>
+                    <div class="rc-body">
+                        <div class="rc-title">🔍 הצעה בלבד</div>
+                        <div class="rc-desc">מציג הצעה — האדמין מאשר ידנית</div>
+                    </div>
+                </label>
+                <label class="radio-card">
+                    <input type="radio" name="m-autoLearn" value="auto">
+                    <span class="rc-dot"></span>
+                    <div class="rc-body">
+                        <div class="rc-title">⚡ אוטומטי</div>
+                        <div class="rc-desc">החלה אוטומטית לאחר 3 מחזורים עקביים</div>
+                    </div>
+                </label>
+            </div>
+
+            <div id="m-suggestedConfig" style="margin-top: var(--s-5);"></div>
+        </div>
+
+        <!-- Live -->
+        <div class="modal-panel" id="pan-live">
+            <div id="m-statusPanel">
+                <div class="empty-state">
+                    <div class="es-icon">📡</div>
+                    <div class="es-title">טוען נתונים...</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-foot">
+        <span class="ft-saved" id="elFtSaved">✓ עדכון אחרון: עכשיו</span>
+        <div class="ft-spacer"></div>
+        <button class="btn btn-ghost" id="elDialogCancel">ביטול</button>
+        <button class="btn btn-primary" id="elDialogSave">💾 שמור שינויים</button>
+    </div>
+</dialog>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HELP DIALOG
+     ═══════════════════════════════════════════════════════════════ -->
+<dialog id="helpDialog">
+    <div class="modal-head">
+        <div class="mh-icon">❓</div>
+        <div class="mh-title" id="helpTitle">עזרה</div>
+        <button class="modal-close" id="helpClose" aria-label="סגור">×</button>
+    </div>
+    <div class="modal-body">
+        <div class="help-content" id="helpContent"></div>
+    </div>
+    <div class="modal-foot">
+        <div class="ft-spacer"></div>
+        <button class="btn btn-primary" id="helpDone">הבנתי</button>
+    </div>
+</dialog>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CONFIRM DIALOG
+     ═══════════════════════════════════════════════════════════════ -->
+<dialog id="confirmDialog">
+    <div class="confirm-body">
+        <div class="confirm-icon" id="confirmIcon">⚠️</div>
+        <div class="confirm-title" id="confirmTitle">אשר פעולה</div>
+        <div class="confirm-msg" id="confirmMsg">האם אתה בטוח?</div>
+    </div>
+    <div class="modal-foot">
+        <button class="btn btn-ghost" id="confirmNo">ביטול</button>
+        <div class="ft-spacer"></div>
+        <button class="btn btn-danger" id="confirmYes">אשר</button>
+    </div>
+</dialog>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TOAST
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   APP STATE
+   ═══════════════════════════════════════════════════════════════ */
+const state = {
+    user: null,
+    settings: {},
+    configs: {},
+    activeView: 'overview',
+    editingId: null,
+};
+
+const $  = (sel, ctx = document) => ctx.querySelector(sel);
+const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+
+/* ═══════════════════════════════════════════════════════════════
+   SVG ICONS — replace emoji that render as empty squares (tofu)
+   on systems whose emoji font lacks them (e.g. 🛗 = Emoji 13).
+   Usage: put <span class="ic" data-icon="elevator"></span> in markup,
+   then call hydrateIcons(root) after inserting HTML.
+   ═══════════════════════════════════════════════════════════════ */
+const ICONS = {
+    elevator: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3" width="17" height="18" rx="2.5"/><line x1="12" y1="5.5" x2="12" y2="18.5"/><path d="M6.6 12.4 8.7 9.9l2.1 2.5"/><path d="M13.2 11.6 15.3 14.1l2.1-2.5"/></svg>`,
+    power: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v8"/><path d="M7.5 6.7a7 7 0 1 0 9 0"/></svg>`,
+};
+function hydrateIcons(root = document) {
+    root.querySelectorAll('[data-icon]').forEach(el => {
+        const name = el.getAttribute('data-icon');
+        if (ICONS[name]) { el.innerHTML = ICONS[name]; el.removeAttribute('data-icon'); }
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════════ */
+function toast(msg, type = 'success', timeout = 3800) {
+    const wrap = $('#toasts');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    const icons = { success: '✓', error: '!', info: 'i' };
+    el.innerHTML = `
+        <span class="t-icon">${icons[type] || 'i'}</span>
+        <span class="t-msg"></span>
+        <button class="t-x" aria-label="סגור">×</button>
+    `;
+    el.querySelector('.t-msg').textContent = msg;
+    wrap.appendChild(el);
+    const remove = () => {
+        el.classList.add('out');
+        setTimeout(() => el.remove(), 260);
+    };
+    el.querySelector('.t-x').addEventListener('click', remove);
+    if (timeout) setTimeout(remove, timeout);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONFIRM
+   ═══════════════════════════════════════════════════════════════ */
+function confirm2({ title = 'אשר פעולה', msg = '', okLabel = 'אשר', okClass = 'btn-danger', danger = true }) {
+    return new Promise(resolve => {
+        const d = $('#confirmDialog');
+        $('#confirmTitle').textContent = title;
+        $('#confirmMsg').textContent = msg;
+        const icon = $('#confirmIcon');
+        icon.className = 'confirm-icon' + (danger ? ' danger' : '');
+        icon.textContent = danger ? '⚠️' : '?';
+        const yes = $('#confirmYes');
+        yes.textContent = okLabel;
+        yes.className = `btn ${okClass}`;
+
+        const cleanup = (val) => {
+            yes.onclick = null;
+            $('#confirmNo').onclick = null;
+            closeDialog(d);
+            resolve(val);
+        };
+        yes.onclick = () => cleanup(true);
+        $('#confirmNo').onclick = () => cleanup(false);
+        d.showModal();
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DIALOG HELPERS (with close animation)
+   ═══════════════════════════════════════════════════════════════ */
+function closeDialog(d) {
+    if (!d || !d.open) return;
+    d.classList.add('closing');
+    setTimeout(() => {
+        d.classList.remove('closing');
+        d.close();
+    }, 200);
+}
+document.addEventListener('click', e => {
+    const d = e.target.closest('dialog');
+    if (d && e.target === d) closeDialog(d);
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   HELP SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+const HELP_DB = {
+    'hebcal-gate': {
+        title: '🕯 שכבת בטיחות Hebcal',
+        body: `
+            <h4>למה זה צריך להיות פעיל?</h4>
+            <p>המערכת מסוגלת לזהות מצב שבת לפי <strong>התנהגות המעלית</strong> בלבד (מחזורי עליה/ירידה תואמים). אך במצבים נדירים — לדוגמה, בדיקת אחזקה שבמקרה דומה למחזור שבת — אפשר שהמערכת תכריז על שבת בטעות.</p>
+            <p>שכבת Hebcal מבטיחה שהמעבר ל-SHABBAT יתבצע <strong>רק סמוך לזמן הדלקת נרות אמיתי</strong> (לפי לוח השנה היהודי + מיקום ההתקנה).</p>
+            <div class="help-example">✓ מומלץ להשאיר פעיל בייצור. השאר כבוי רק לבדיקות מערכת.</div>
+        `,
+    },
+    'hebcal-before': {
+        title: 'חלון לפני הדלקת נרות',
+        body: `
+            <p>כמה דקות לפני זמן הדלקת נרות הרשמי המערכת מתחילה לאפשר מעבר אוטומטי למצב שבת.</p>
+            <div class="help-example">ברירת מחדל: <code>240</code> (4 שעות לפני). זה משאיר מרווח בטוח לזיהוי שיתחיל מבעוד מועד.</div>
+        `,
+    },
+    'hebcal-after': {
+        title: 'חלון אחרי הבדלה',
+        body: `
+            <p>כמה דקות אחרי זמן ההבדלה ה-FSM ימשיך להחזיק במצב שבת כברירת מחדל, גם אם הזיהוי ההתנהגותי לא קולט שינוי. מעבר לטווח זה — חזרה אוטומטית למצב רגיל.</p>
+            <div class="help-example">ברירת מחדל: <code>120</code> (שעתיים אחרי הבדלה).</div>
+        `,
+    },
+    'yom-tov-sheni': {
+        title: 'יום טוב שני (חו"ל)',
+        body: `
+            <p>מערכת Hebcal יכולה לכלול את יום טוב שני (לקהל חו"ל). הגדרה זו רלוונטית רק לשכבת Hebcal — היא לא משנה את הזיהוי ההתנהגותי, שעובד באותו אופן בכל המקרים.</p>
+        `,
+    },
+    'sd-cycles': {
+        title: 'מחזורים תואמים נדרשים',
+        body: `
+            <p>כמה <strong>מחזורי עליה-ירידה</strong> רצופים שתואמים את "חתימת שבת" הצפויה (עצירות בכל התחנות, טיימינג קבוע) המערכת צריכה לראות לפני שהיא תכריז על מצב שבת.</p>
+            <div class="help-example">ברירת מחדל: <code>1</code>. הגדל ל-<code>2</code> או <code>3</code> אם יש false positives תכופים.</div>
+        `,
+    },
+    'sd-tol': {
+        title: 'סובלנות טיימינג',
+        body: `
+            <p>כמה אחוז סטייה מותרת בין הזמן שנמדד למעבר בין תחנות לבין <code>TIME_PER_FLOOR</code> שמוגדר. סטייה גדולה יותר נחשבת חריגה.</p>
+            <div class="help-example">ברירת מחדל: <code>20%</code>. בבניינים עם פעולה לא יציבה אפשר להעלות ל-<code>30%</code>.</div>
+        `,
+    },
+    'sd-stick': {
+        title: 'זמן הדבקה מינימלי',
+        body: `
+            <p>אחרי שה-FSM נכנס למצב שבת — כמה דקות מינימום הוא יישאר במצב הזה, גם אם הזיהוי קולט חריגה.</p>
+            <p>הגנה זו מונעת "ריצוד" בין מצב שבת לרגיל בגלל אנומליה זמנית.</p>
+            <div class="help-example">ברירת מחדל: <code>90</code> דקות.</div>
+        `,
+    },
+    'top-floor': {
+        title: 'תחנה עליונה',
+        body: `<p>התחנה הגבוהה ביותר שהמעלית מגיעה אליה. למשל <code>12</code> או <code>15</code>.</p>`,
+    },
+    'bottom-floor': {
+        title: 'תחנה תחתונה',
+        body: `<p>התחנה הנמוכה ביותר — בדרך כלל <code>-3</code> או <code>-2</code> (חניון). חיובי אם הבניין לא כולל חניון.</p>`,
+    },
+    'override': {
+        title: 'דריסה ידנית של מצב שבת',
+        body: `
+            <p>במצב <strong>אוטומטי</strong> המערכת מחליטה לבד מתי להיכנס/לצאת ממצב שבת. זהו ה-default ומומלץ.</p>
+            <p><strong>כפוי פעיל</strong> מכריח את המעלית למצב שבת ללא קשר לזיהוי — לבדיקות בלבד.</p>
+            <p><strong>כפוי כבוי</strong> חוסם את המעלית להיכנס למצב שבת — שימוש בעת תקלת זיהוי מתמשכת.</p>
+            <div class="help-example">המנוע (FSM) ממשיך לרוץ ולתעד ברקע גם בכל מצב כפוי.</div>
+        `,
+    },
+    'time-per-floor': {
+        title: 'TIME_PER_FLOOR — זמן עצירה',
+        body: `
+            <p>משך הזמן (בשניות) שהמעלית עוצרת בתחנה <strong>שהיא עוצרת בה</strong> במצב שבת — כולל זמן פתיחה/סגירה של דלת.</p>
+            <div class="help-example">ערך טיפוסי: <code>26</code> שניות. הגדל אם הזמן בפועל ארוך יותר.</div>
+        `,
+    },
+    'time-pass-floor': {
+        title: 'TIME_PASS_FLOOR — זמן חלוף',
+        body: `
+            <p>משך הזמן (בשניות) שלוקח למעלית לעבור תחנה ללא עצירה.</p>
+            <div class="help-example">ערך טיפוסי: <code>1.6</code> שניות. תלוי בסוג המעלית.</div>
+        `,
+    },
+    'floor-waits': {
+        title: 'FLOOR_WAITS — המתנות מורחבות',
+        body: `
+            <p>תחנות שבהן המעלית עוצרת לזמן <strong>ארוך יותר</strong> מ-<code>TIME_PER_FLOOR</code> הרגיל. שימושי בדרך כלל ללובי.</p>
+            <div class="help-example">דוגמה: בתחנה <code>0</code> (לובי) — <code>60</code> שניות במקום <code>26</code>.</div>
+        `,
+    },
+    'breaks': {
+        title: 'הפסקות שבת',
+        body: `
+            <p>טווחי זמן שבהם המעלית <strong>מפסיקה לפעול</strong> במצב שבת — לדוגמה במהלך תפילת שחרית או מנחה.</p>
+            <p>הגדר את שעת ההתחלה ושעת הסיום של כל הפסקה. ניתן להגדיר מספר טווחים.</p>
+        `,
+    },
+    'auto-learn': {
+        title: '🤖 למידה אוטומטית של תחנות וזמנים',
+        body: `
+            <h4>מה המערכת לומדת?</h4>
+            <p>במצב שבת המעלית חוזרת על מחזור קבוע. המערכת מתעדת את המחזורים ומחלצת מהם את ההגדרות בפועל — <strong>באילו תחנות עוצרים</strong> (בעלייה ובירידה), <strong>זמן הנסיעה בין תחנות</strong>, ו<strong>תחנות עם המתנה ארוכה</strong>.</p>
+            <h4>שלוש דרכי פעולה</h4>
+            <p><strong>⚪ כבוי</strong> — המערכת לא נוגעת בהגדרות. אתה מזין הכול ידנית.</p>
+            <p><strong>🔍 הצעה בלבד</strong> — המערכת מציגה הצעה (בתחתית הלשונית) ואתה מאשר בלחיצה. מומלץ בהתקנה חדשה.</p>
+            <p><strong>⚡ אוטומטי</strong> — לאחר 3 מחזורים עקביים המערכת מחילה את ההגדרות לבד, ללא אישור.</p>
+            <div class="help-example">💡 טיפ: בהתקנה חדשה התחל ב"הצעה בלבד", ודא שההצעות נכונות, ורק אז עבור ל"אוטומטי".</div>
+        `,
+    },
+};
+
+function openHelp(key) {
+    const data = HELP_DB[key];
+    if (!data) return;
+    $('#helpTitle').textContent = data.title;
+    $('#helpContent').innerHTML = data.body;
+    $('#helpDialog').showModal();
+}
+
+document.addEventListener('click', e => {
+    const t = e.target.closest('.help-trigger');
+    if (t) { e.preventDefault(); openHelp(t.dataset.help); }
+});
+$('#helpClose').addEventListener('click', () => closeDialog($('#helpDialog')));
+$('#helpDone').addEventListener('click', () => closeDialog($('#helpDialog')));
+$('#helpBtn').addEventListener('click', () => {
+    $('#helpTitle').textContent = '❓ עזרה ומדריך';
+    $('#helpContent').innerHTML = `
+        <h4>📖 מדריך מהיר</h4>
+        <p>על מנת לערוך מעלית — לחץ על כרטיס המעלית במסך "מעליות".</p>
+        <p>בכל שדה טכני יש כפתור <code>?</code> שמסביר אותו בפירוט.</p>
+        <h4>🟢 מצבי שבת</h4>
+        <p><strong>SHABBAT</strong> — המעלית במצב שבת. <strong>CANDIDATE_SHABBAT</strong> — המערכת בודקת אם להיכנס. <strong>CANDIDATE_EXIT</strong> — המערכת שוקלת לצאת.</p>
+        <h4>🆘 תמיכה</h4>
+        <p>לבעיות חמורות — צרו קשר עם תמיכת eControl.</p>
+    `;
+    $('#helpDialog').showModal();
+});
+$('#qaHelp').addEventListener('click', () => $('#helpBtn').click());
+
+/* ═══════════════════════════════════════════════════════════════
+   NAV
+   ═══════════════════════════════════════════════════════════════ */
+const VIEW_TITLES = {
+    overview:  'סקירה',
+    elevators: 'מעליות',
+    system:    'הגדרות מערכת',
+    content:   'תוכן ציבורי',
+    actions:   'פעולות מרחוק',
+};
+
+function switchView(name) {
+    state.activeView = name;
+    $$('.view').forEach(v => v.classList.toggle('active', v.id === `view-${name}`));
+    $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    $$('.bn-item').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    $('#crumbSection').textContent = VIEW_TITLES[name] || name;
+    closeNav();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$$('.nav-item, .bn-item, [data-jump]').forEach(b => {
+    b.addEventListener('click', () => {
+        const v = b.dataset.view || b.dataset.jump;
+        if (v) switchView(v);
+    });
+});
+
+function openNav()  { $('#sidenav').classList.add('open'); $('#sidenavOverlay').classList.add('show'); }
+function closeNav() { $('#sidenav').classList.remove('open'); $('#sidenavOverlay').classList.remove('show'); }
+$('#navToggleBtn').addEventListener('click', openNav);
+$('#sidenavOverlay').addEventListener('click', closeNav);
+
+/* ═══════════════════════════════════════════════════════════════
+   AUTH
+   ═══════════════════════════════════════════════════════════════ */
+$$('[data-target]').forEach(btn =>
+    btn.addEventListener('click', e => {
+        const target = e.currentTarget.dataset.target;
+        $$('.auth-view').forEach(v => v.classList.remove('active'));
+        $('#' + target).classList.add('active');
+    })
+);
+$('#emailSignInBtn').addEventListener('click', () => {
+    $$('.auth-view').forEach(v => v.classList.remove('active'));
+    $('#auth-email').classList.add('active');
+});
+$('#googleSignInBtn').addEventListener('click', () => {
+    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+        .catch(e => toast(e.message, 'error'));
+});
+$('#loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    auth.signInWithEmailAndPassword(
+        $('#loginEmail').value,
+        $('#loginPassword').value,
+    ).catch(err => toast(err.message, 'error'));
+});
+$('#forgotPasswordLink').addEventListener('click', () => {
+    const em = prompt('הכנס אימייל לאיפוס סיסמה:');
+    if (em) auth.sendPasswordResetEmail(em)
+        .then(() => toast('מייל איפוס נשלח!', 'success'))
+        .catch(e => toast(e.message, 'error'));
+});
+$('#logoutBtn').addEventListener('click', async () => {
+    const ok = await confirm2({
+        title: 'התנתקות',
+        msg: 'להתנתק מהמערכת?',
+        okLabel: 'התנתק',
+        okClass: 'btn-primary',
+        danger: false,
+    });
+    if (ok) auth.signOut();
+});
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        const enc = (user.email || '').replace(/\./g, '_');
+        if (!enc) {
+            // Anonymous / no-email user — sign them out silently so the auth screen reappears.
+            auth.signOut();
+            return;
+        }
+        database.ref('super_admins').child(enc).once('value').then(snap => {
+            if (snap.exists() && snap.val() === true) {
+                state.user = user;
+                $('#authScreen').style.display = 'none';
+                $('#appShell').setAttribute('data-ready', '1');
+                $('#userName').textContent = user.displayName || user.email;
+                $('#userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+                loadData();
+            } else {
+                toast('אין לך הרשאת גישה.', 'error');
+                auth.signOut();
+            }
+        });
+    } else {
+        $('#authScreen').style.display = 'flex';
+        $('#appShell').removeAttribute('data-ready');
+        state.user = null;
+    }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA LOAD
+   ═══════════════════════════════════════════════════════════════ */
+function loadData() {
+    Promise.all([
+        database.ref('settings').once('value'),
+        database.ref('elevator_configs').once('value'),
+    ]).then(([s, c]) => {
+        state.settings = s.val() || {};
+        state.configs  = c.val() || {};
+        renderAll();
+        bindQrStats();
+    }).catch(e => toast(e.message, 'error'));
+}
+
+function renderAll() {
+    renderDashboard();
+    renderSystem();
+    renderBanners();
+    renderQrLinks();
+    renderElevators();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ELEVATOR HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+function elevatorName(id) {
+    const names = (window.appConfig && window.appConfig.elevatorNames) || {};
+    return (names[id] && names[id].he) || `מעלית ${id}`;
+}
+function stateLabel(s) {
+    return s === 'SHABBAT' ? 'מצב שבת' :
+           s === 'CANDIDATE_SHABBAT' ? 'בודק כניסה' :
+           s === 'CANDIDATE_EXIT' ? 'בודק יציאה' : 'רגיל';
+}
+function stateEmoji(s) {
+    return s === 'SHABBAT' ? '🟢' :
+           s === 'CANDIDATE_SHABBAT' ? '🟡' :
+           s === 'CANDIDATE_EXIT' ? '🟠' : '⚪';
+}
+function stateClass(s) {
+    return s === 'SHABBAT' ? 's-shabbat' :
+           s === 'CANDIDATE_SHABBAT' ? 's-candidate' :
+           s === 'CANDIDATE_EXIT' ? 's-exit' : 's-normal';
+}
+function statePillClass(s) {
+    return s === 'SHABBAT' ? 'shabbat' :
+           s === 'CANDIDATE_SHABBAT' ? 'candidate' :
+           s === 'CANDIDATE_EXIT' ? 'exit' : 'normal';
+}
+function overrideLabel(v) {
+    if (v && typeof v === 'object') v = v.value;
+    if (v === 'force_on') return '🟢 כפוי פעיל';
+    if (v === 'force_off') return '⚪ כפוי כבוי';
+    return '🤖 אוטומטי';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD
+   ═══════════════════════════════════════════════════════════════ */
+function renderDashboard() {
+    const ids = Object.keys(state.configs);
+    const states = ids.map(id => state.configs[id].SHABBAT_DETECTOR?.state || 'NORMAL');
+    const shabbat = states.filter(s => s === 'SHABBAT').length;
+    const candidates = states.filter(s => s.startsWith('CANDIDATE_')).length;
+    const overrides = ids.filter(id => {
+        const v = state.configs[id].SHABBAT_OVERRIDE;
+        return v && (typeof v === 'string' ? v !== 'auto' : v.value && v.value !== 'auto');
+    }).length;
+
+    const stats = [
+        { k: 'מעליות במערכת', v: ids.length, icon: '<span class="ic" data-icon="elevator"></span>', cls: 'b', meta: '' },
+        { k: 'במצב שבת',      v: shabbat, icon: '🟢', cls: 'g', meta: shabbat ? 'פעיל' : 'אין כעת' },
+        { k: 'בבדיקה',        v: candidates, icon: '🟡', cls: 'y', meta: candidates ? 'בודק' : '—' },
+        { k: 'דריסה ידנית',   v: overrides, icon: '✋', cls: 'o', meta: overrides ? 'מופעל' : 'אין' },
+    ];
+
+    $('#dashStats').innerHTML = stats.map(s => `
+        <div class="stat-card">
+            <div class="sc-icon ${s.cls}">${s.icon}</div>
+            <div class="sc-label">${s.k}</div>
+            <div class="sc-value">${s.v}</div>
+            ${s.meta ? `<div class="sc-meta">${s.meta}</div>` : ''}
+        </div>
+    `).join('');
+    hydrateIcons($('#dashStats'));
+
+    if (candidates > 0) {
+        $('#navElevBadge').textContent = candidates;
+        $('#navElevBadge').classList.remove('hide');
+    } else {
+        $('#navElevBadge').classList.add('hide');
+    }
+
+    $('#dashElevs').innerHTML = ids.length
+        ? ids.sort().slice(0, 4).map(id => elevCardHtml(id)).join('')
+        : '<div class="empty-state"><div class="es-icon ic" data-icon="elevator"></div><div class="es-title">אין מעליות מוגדרות</div></div>';
+    hydrateIcons($('#dashElevs'));
+    $$('#dashElevs .elev-card').forEach(card => {
+        card.addEventListener('click', () => openElevatorDialog(card.dataset.elevId));
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ELEVATOR CARDS
+   ═══════════════════════════════════════════════════════════════ */
+function elevCardHtml(id) {
+    const cfg = state.configs[id] || {};
+    const det = cfg.SHABBAT_DETECTOR || {};
+    const s = det.state || 'NORMAL';
+    return `
+        <div class="elev-card ${stateClass(s)}" data-elev-id="${id}" tabindex="0" role="button">
+            <div class="ec-top">
+                <div class="ec-icon ic" data-icon="elevator"></div>
+                <div>
+                    <div class="ec-name">${elevatorName(id)}</div>
+                    <div class="ec-sub">ID: ${id}</div>
+                </div>
+                <div class="ec-state-pill ${statePillClass(s)}">${stateEmoji(s)} ${stateLabel(s)}</div>
+            </div>
+            <div class="ec-stats">
+                <div class="ec-stat"><div class="es-k">טווח</div><div class="es-v">${cfg.BOTTOM_FLOOR ?? '?'} ↔ ${cfg.TOP_FLOOR ?? '?'}</div></div>
+                <div class="ec-stat"><div class="es-k">זמן/תחנה</div><div class="es-v">${cfg.TIME_PER_FLOOR ?? '—'}<small>s</small></div></div>
+                <div class="ec-stat"><div class="es-k">מקור</div><div class="es-v" style="font-size:.78em">${overrideLabel(cfg.SHABBAT_OVERRIDE)}</div></div>
+                <div class="ec-stat"><div class="es-k">למידה</div><div class="es-v" style="font-size:.78em">${cfg.AUTO_LEARN_CONFIG || 'off'}</div></div>
+            </div>
+            ${det.last_transition_reason ? `<div class="ec-reason">📝 ${det.last_transition_reason}</div>` : ''}
+            <div class="ec-cta">
+                <span class="ec-link">פתח להגדרה</span>
+                <span class="text-tertiary" style="font-size:.7em">${det.last_transition_ts ? new Date(det.last_transition_ts).toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}) : ''}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderElevators() {
+    const grid = $('#elevGrid');
+    const ids = Object.keys(state.configs).sort();
+    if (!ids.length) {
+        grid.innerHTML = '<div class="empty-state"><div class="es-icon ic" data-icon="elevator"></div><div class="es-title">אין מעליות במערכת</div><div class="es-desc">הוסף מעלית דרך מסך הניהול המלא</div></div>';
+        hydrateIcons(grid);
+        return;
+    }
+    grid.innerHTML = ids.map(id => elevCardHtml(id)).join('');
+    hydrateIcons(grid);
+    $$('#elevGrid .elev-card').forEach(card => {
+        card.addEventListener('click', () => openElevatorDialog(card.dataset.elevId));
+        card.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openElevatorDialog(card.dataset.elevId); }
+        });
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SYSTEM SETTINGS
+   ═══════════════════════════════════════════════════════════════ */
+function renderSystem() {
+    const s = state.settings;
+    $('#yomtovSheniToggle').checked = s.YOM_TOV_SHENI !== false;
+    const hebOn = s.HEBCAL_GATE_ENABLED !== false;
+    $('#hebcalGateToggle').checked = hebOn;
+    $('#hebcalBefore').value = s.HEBCAL_GATE_WINDOW_BEFORE_MINUTES ?? 240;
+    $('#hebcalAfter').value  = s.HEBCAL_GATE_WINDOW_AFTER_MINUTES  ?? 120;
+    $('#hebcalFields').style.display = hebOn ? 'block' : 'none';
+
+    // Detection tunables
+    const sd = s.SHABBAT_DETECTION || {};
+    const map = {
+        'sd-required-cycles':        'REQUIRED_MATCHING_CYCLES',
+        'sd-timing-tol-pct':         'TIMING_TOLERANCE_PCT',
+        'sd-max-timing-exc':         'MAX_TIMING_EXCEPTIONS',
+        'sd-allow-illegal':          'ALLOWED_ILLEGAL_STOPS_PER_LEG',
+        'sd-allow-missing':          'ALLOWED_MISSING_STOPS_PER_LEG',
+        'sd-stickiness-min':         'STICKINESS_MINUTES',
+        'sd-violations-for-exit':    'VIOLATIONS_FOR_EXIT',
+        'sd-violation-window-min':   'VIOLATION_WINDOW_MINUTES',
+        'sd-candidate-exit-timeout': 'CANDIDATE_EXIT_TIMEOUT_MIN',
+        'sd-inactivity-min':         'INACTIVITY_AT_INVALID_FLOOR_MIN',
+        'sd-no-report-min':          'NO_REPORT_TIMEOUT_MIN',
+    };
+    for (const [id, key] of Object.entries(map)) {
+        const el = $('#' + id);
+        if (el) el.value = sd[key] ?? '';
+    }
+
+    // Aliases
+    const aliases = s.FLOOR_ALIASES || {};
+    let gMin = Infinity, gMax = -Infinity;
+    Object.values(state.configs).forEach(c => {
+        const b = parseInt(c.BOTTOM_FLOOR), t = parseInt(c.TOP_FLOOR);
+        if (!isNaN(b) && b < gMin) gMin = b;
+        if (!isNaN(t) && t > gMax) gMax = t;
+    });
+    if (!isFinite(gMin)) gMin = -5;
+    if (!isFinite(gMax)) gMax = 40;
+    const grid = $('#aliasGrid');
+    grid.innerHTML = '';
+    for (let i = gMin; i <= gMax; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'alias-cell';
+        cell.innerHTML = `
+            <span class="ac-num">תחנה ${i}</span>
+            <input type="text" class="alias-input" data-physical="${i}"
+                   value="${aliases[String(i)] || ''}" placeholder="${i}">
+        `;
+        grid.appendChild(cell);
+    }
+}
+
+$('#hebcalGateToggle').addEventListener('change', e => {
+    $('#hebcalFields').style.display = e.target.checked ? 'block' : 'none';
+});
+
+$('#saveSystemBtn').addEventListener('click', () => {
+    const aliases = {};
+    $$('.alias-input').forEach(inp => {
+        const v = inp.value.trim();
+        if (v && v !== inp.dataset.physical) aliases[inp.dataset.physical] = v;
+    });
+
+    const sdNew = {};
+    // Parity with the previous setup (setup_OLDV.html): all SHABBAT_DETECTION tunables are written as integers.
+    const sdGet = (id, key) => {
+        const v = $('#' + id).value.trim();
+        if (v === '') return;
+        const n = parseInt(v, 10);
+        if (!isNaN(n)) sdNew[key] = n;
+    };
+    sdGet('sd-required-cycles',        'REQUIRED_MATCHING_CYCLES');
+    sdGet('sd-timing-tol-pct',         'TIMING_TOLERANCE_PCT');
+    sdGet('sd-max-timing-exc',         'MAX_TIMING_EXCEPTIONS');
+    sdGet('sd-allow-illegal',          'ALLOWED_ILLEGAL_STOPS_PER_LEG');
+    sdGet('sd-allow-missing',          'ALLOWED_MISSING_STOPS_PER_LEG');
+    sdGet('sd-stickiness-min',         'STICKINESS_MINUTES');
+    sdGet('sd-violations-for-exit',    'VIOLATIONS_FOR_EXIT');
+    sdGet('sd-violation-window-min',   'VIOLATION_WINDOW_MINUTES');
+    sdGet('sd-candidate-exit-timeout', 'CANDIDATE_EXIT_TIMEOUT_MIN');
+    sdGet('sd-inactivity-min',         'INACTIVITY_AT_INVALID_FLOOR_MIN');
+    sdGet('sd-no-report-min',          'NO_REPORT_TIMEOUT_MIN');
+
+    database.ref('settings').update({
+        YOM_TOV_SHENI: $('#yomtovSheniToggle').checked,
+        HEBCAL_GATE_ENABLED: $('#hebcalGateToggle').checked,
+        HEBCAL_GATE_WINDOW_BEFORE_MINUTES: parseInt($('#hebcalBefore').value) || 240,
+        HEBCAL_GATE_WINDOW_AFTER_MINUTES:  parseInt($('#hebcalAfter').value)  || 120,
+        FLOOR_ALIASES: aliases,
+        SHABBAT_DETECTION: sdNew,
+    }).then(() => {
+        Object.assign(state.settings, {
+            YOM_TOV_SHENI: $('#yomtovSheniToggle').checked,
+            HEBCAL_GATE_ENABLED: $('#hebcalGateToggle').checked,
+            FLOOR_ALIASES: aliases,
+            SHABBAT_DETECTION: sdNew,
+        });
+        toast('הגדרות מערכת נשמרו ✓', 'success');
+    }).catch(e => toast(e.message, 'error'));
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   BANNERS
+   ═══════════════════════════════════════════════════════════════ */
+const BANNER_PAGES = [
+    { key: 'public',  label: 'PUBLIC' },
+    { key: 'kiosk',   label: 'KIOSK' },
+    { key: 'display', label: 'DISPLAY' },
+    { key: 'index',   label: 'INDEX' },
+];
+
+function escAttr(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+function bannerHtml(id, b) {
+    const pages = b.pages || {};
+    return `
+        <div class="banner-item" data-banner-id="${escAttr(id)}">
+            <div class="banner-preview" style="background:${escAttr(b.color || '#c5a47e')}">
+                ${escAttr(b.text || 'תצוגה מקדימה של הבאנר')}
+            </div>
+            <div class="banner-controls">
+                <input type="text" class="b-text" placeholder="טקסט הבאנר" value="${escAttr(b.text || '')}">
+                <input type="color" class="b-color" value="${escAttr(b.color || '#c5a47e')}" title="צבע רקע">
+                <label class="switch" title="פעיל"><input type="checkbox" class="b-active" ${b.active !== false ? 'checked' : ''}><span class="slider"></span></label>
+                <button class="btn btn-ghost btn-sm b-remove" type="button">🗑 מחק</button>
+            </div>
+            <div class="b-pages-wrap">
+                ${BANNER_PAGES.map(p =>
+                    `<label class="b-page-chip"><input type="checkbox" class="b-page" data-page="${p.key}" ${pages[p.key] ? 'checked' : ''}>${p.label}</label>`
+                ).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderBanners() {
+    const list = $('#bannerList');
+    const banners = state.settings.banners || {};
+    const ids = Object.keys(banners);
+    list.innerHTML = ids.length
+        ? ids.map(id => bannerHtml(id, banners[id])).join('')
+        : '<div class="empty-state"><div class="es-icon">📢</div><div class="es-title">אין באנרים פעילים</div><div class="es-desc">לחץ "+ הוסף באנר חדש" כדי ליצור אחד</div></div>';
+
+    // Bind live preview update
+    $$('#bannerList .banner-item').forEach(item => {
+        const txt = item.querySelector('.b-text');
+        const clr = item.querySelector('.b-color');
+        const prev = item.querySelector('.banner-preview');
+        const upd = () => {
+            prev.textContent = txt.value || 'תצוגה מקדימה של הבאנר';
+            prev.style.background = clr.value;
+        };
+        txt.addEventListener('input', upd);
+        clr.addEventListener('input', upd);
+    });
+}
+
+$('#addBannerBtn').addEventListener('click', () => {
+    const tempId = 'new_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const list = $('#bannerList');
+    if (!list.querySelector('.banner-item')) list.innerHTML = '';
+    list.insertAdjacentHTML('beforeend', bannerHtml(tempId, {
+        text: '', color: '#c5a47e', active: true,
+        pages: { public: true, kiosk: true, display: true, index: true }
+    }));
+    // Bind preview for new row
+    const newItem = list.lastElementChild;
+    const txt = newItem.querySelector('.b-text');
+    const clr = newItem.querySelector('.b-color');
+    const prev = newItem.querySelector('.banner-preview');
+    const upd = () => {
+        prev.textContent = txt.value || 'תצוגה מקדימה של הבאנר';
+        prev.style.background = clr.value;
+    };
+    txt.addEventListener('input', upd);
+    clr.addEventListener('input', upd);
+    txt.focus();
+});
+
+$('#bannerList').addEventListener('click', async (e) => {
+    const rm = e.target.closest('.b-remove');
+    if (!rm) return;
+    const ok = await confirm2({ title: 'מחיקת באנר', msg: 'למחוק את הבאנר?', okLabel: 'מחק' });
+    if (!ok) return;
+    rm.closest('.banner-item').remove();
+    if (!$('#bannerList').querySelector('.banner-item')) {
+        $('#bannerList').innerHTML = '<div class="empty-state"><div class="es-icon">📢</div><div class="es-title">אין באנרים פעילים</div></div>';
+    }
+});
+
+$('#saveBannersBtn').addEventListener('click', () => {
+    const out = {};
+    $$('#bannerList .banner-item').forEach(row => {
+        const text = row.querySelector('.b-text').value.trim();
+        if (!text) return;
+        const color = row.querySelector('.b-color').value || '#c5a47e';
+        const active = !!row.querySelector('.b-active').checked;
+        const pages = {};
+        row.querySelectorAll('.b-page').forEach(cb => { pages[cb.dataset.page] = cb.checked; });
+        let id = row.dataset.bannerId;
+        if (!id || id.startsWith('new_')) id = database.ref('settings/banners').push().key;
+        out[id] = { text, color, active, pages };
+    });
+    database.ref('settings/banners').set(out)
+        .then(() => {
+            state.settings.banners = out;
+            renderBanners();
+            toast('באנרים נשמרו ✓', 'success');
+        })
+        .catch(e => toast(e.message, 'error'));
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   QR CODES
+   ═══════════════════════════════════════════════════════════════ */
+const QR_KEYS = ['whatsapp', 'website'];
+const QR_DEFAULT_LINKS = {
+    whatsapp: 'https://wa.me/972525705289',
+    website:  'https://ramada.econtrol.co.il/'
+};
+const QR_SOURCE_LABELS = {
+    kiosk: 'קיוסק', display: 'תצוגה', index: 'אפליקציה',
+    public: 'מסך ציבורי', unknown: 'לא ידוע',
+    // public1 ('ציבורי 2') הוסר — מתנהלים רק עם המסך הציבורי הראשי (public).
+};
+
+function renderQrLinks() {
+    const links = state.settings.qrLinks || {};
+    $('#qrLinkWhatsapp').value = links.whatsapp || QR_DEFAULT_LINKS.whatsapp;
+    $('#qrLinkWebsite').value  = links.website  || QR_DEFAULT_LINKS.website;
+}
+
+function renderQrStats(stats) {
+    QR_KEYS.forEach(key => {
+        const slot = stats[key] || {};
+        const total = typeof slot.total === 'number' ? slot.total : 0;
+        const totalEl = $('#qrTotal' + key.charAt(0).toUpperCase() + key.slice(1));
+        if (totalEl) totalEl.textContent = total.toLocaleString('he-IL');
+
+        const byEl = $('#qrBySource' + key.charAt(0).toUpperCase() + key.slice(1));
+        if (!byEl) return;
+        const by = slot.bySource || {};
+        const entries = Object.entries(by).filter(([, v]) => typeof v === 'number');
+        if (!entries.length) {
+            byEl.innerHTML = '<div class="qr-src-row text-tertiary">— אין סריקות —</div>';
+            return;
+        }
+        entries.sort((a, b) => b[1] - a[1]);
+        byEl.innerHTML = entries.map(([src, n]) =>
+            `<div class="qr-src-row"><span>${QR_SOURCE_LABELS[src] || src}</span><span class="src-v">${n.toLocaleString('he-IL')}</span></div>`
+        ).join('');
+    });
+}
+
+let qrBound = false;
+function bindQrStats() {
+    if (qrBound) return; qrBound = true;
+    database.ref('qrStats').on('value', snap => renderQrStats(snap.val() || {}));
+}
+
+function isHttpsUrl(s) { return /^https?:\/\/\S+/i.test((s || '').trim()); }
+
+$('#saveQrLinksBtn').addEventListener('click', () => {
+    const wa = $('#qrLinkWhatsapp').value.trim();
+    const we = $('#qrLinkWebsite').value.trim();
+    if (wa && !isHttpsUrl(wa)) return toast('קישור WhatsApp לא תקין', 'error');
+    if (we && !isHttpsUrl(we)) return toast('קישור אתר לא תקין', 'error');
+    const out = { whatsapp: wa || QR_DEFAULT_LINKS.whatsapp, website: we || QR_DEFAULT_LINKS.website };
+    database.ref('settings/qrLinks').set(out)
+        .then(() => { state.settings.qrLinks = out; toast('קישורי QR נשמרו ✓', 'success'); })
+        .catch(e => toast(e.message, 'error'));
+});
+
+$$('[data-reset-key]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const key = btn.dataset.resetKey;
+        const labelHe = key === 'whatsapp' ? 'WhatsApp' : 'האתר';
+        const ok = await confirm2({
+            title: `איפוס מונה ${labelHe}`,
+            msg: `כל סטטיסטיקות הסריקה של ${labelHe} יימחקו. פעולה זו אינה הפיכה.`,
+            okLabel: 'אפס',
+        });
+        if (!ok) return;
+        database.ref('qrStats/' + key).remove()
+            .then(() => toast(`מונה ${labelHe} אופס ✓`, 'success'))
+            .catch(e => toast(e.message, 'error'));
+    });
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   REMOTE RELOAD
+   ═══════════════════════════════════════════════════════════════ */
+const RELOAD_COOLDOWN_MS = 5000;
+const lastReloadClick = {};
+
+$$('.reload-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const scope = btn.dataset.reloadScope;
+        const now = Date.now();
+        if (lastReloadClick[scope] && (now - lastReloadClick[scope]) < RELOAD_COOLDOWN_MS) {
+            return toast('המתן מעט לפני שליחה חוזרת', 'info');
+        }
+        if (scope === 'all') {
+            const ok = await confirm2({
+                title: 'רענון כל המסכים',
+                msg: 'כל הדפים בכל המסכים יטענו מחדש. ייתכן הבזק קצר. להמשיך?',
+                okLabel: 'רענן את כולם',
+            });
+            if (!ok) return;
+        }
+        lastReloadClick[scope] = now;
+        btn.disabled = true;
+        const orig = btn.querySelector('.rb-name').textContent;
+        btn.querySelector('.rb-name').textContent = '⏳ שולח...';
+        try {
+            await database.ref(`settings/commands/reload/${scope}`).set(firebase.database.ServerValue.TIMESTAMP);
+            toast(`פקודת רענון נשלחה (${scope}) ✓`, 'success');
+        } catch (e) {
+            toast('שגיאה: ' + e.message, 'error');
+        } finally {
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.querySelector('.rb-name').textContent = orig;
+            }, RELOAD_COOLDOWN_MS);
+        }
+    });
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   ELEVATOR DIALOG
+   ═══════════════════════════════════════════════════════════════ */
+$$('#elDialogTabs .modal-tab').forEach(t => {
+    t.addEventListener('click', () => {
+        $$('#elDialogTabs .modal-tab').forEach(b => b.classList.remove('active'));
+        $$('#elevatorDialog .modal-panel').forEach(p => p.classList.remove('active'));
+        t.classList.add('active');
+        $('#pan-' + t.dataset.tab).classList.add('active');
+    });
+});
+
+function openElevatorDialog(id) {
+    state.editingId = id;
+    const cfg = state.configs[id] || {};
+    $('#elDialogTitle').textContent = `${elevatorName(id)} — הגדרות`;
+    $('#elDialogSub').textContent = `ID: ${id}`;
+
+    // Reset tabs
+    $$('#elDialogTabs .modal-tab').forEach((b, i) => b.classList.toggle('active', i === 0));
+    $$('#elevatorDialog .modal-panel').forEach((p, i) => p.classList.toggle('active', i === 0));
+
+    // Overview
+    $('#m-top').value = cfg.TOP_FLOOR ?? '';
+    $('#m-bottom').value = cfg.BOTTOM_FLOOR ?? '';
+    let ov = cfg.SHABBAT_OVERRIDE;
+    if (ov && typeof ov === 'object') ov = ov.value;
+    const ovVal = ov === 'force_on' ? 'force_on' : ov === 'force_off' ? 'force_off' : 'auto';
+    const ovRadio = document.querySelector(`input[name="m-override"][value="${ovVal}"]`);
+    if (ovRadio) ovRadio.checked = true;
+
+    // Floors
+    const top = cfg.TOP_FLOOR ?? '12', bot = cfg.BOTTOM_FLOOR ?? '-3';
+    let stopsUp   = cfg.STOPPING_FLOORS_UP   ? cfg.STOPPING_FLOORS_UP.join(', ')   : '';
+    let stopsDown = cfg.STOPPING_FLOORS_DOWN ? cfg.STOPPING_FLOORS_DOWN.join(', ') : '';
+    if (!stopsUp && !stopsDown && cfg.STOPPING_FLOORS) {
+        const mode = cfg.SHABBAT_MODE || 'full', all = cfg.STOPPING_FLOORS.join(', ');
+        if (mode === 'express_up') stopsDown = all;
+        else if (mode === 'stops_up') stopsUp = all;
+        else { stopsUp = all; stopsDown = all; }
+    }
+    const visibleVal = (cfg.VISIBLE_FLOORS || cfg.STOPPING_FLOORS || []).join(', ');
+    $('#m-stopsUp').value = stopsUp;
+    $('#m-stopsDown').value = stopsDown;
+    $('#m-visible').value = visibleVal;
+    renderFloorMatrix(parseInt(bot) || 0, parseInt(top) || 0);
+
+    // React to top/bottom changes — rebuild matrix
+    ['m-top', 'm-bottom'].forEach(eid => {
+        $('#' + eid).onchange = () => {
+            const t = parseInt($('#m-top').value) || 0;
+            const b = parseInt($('#m-bottom').value) || 0;
+            renderFloorMatrix(b, t);
+        };
+    });
+
+    // Timing
+    $('#m-stopTime').value = cfg.TIME_PER_FLOOR  ?? '';
+    $('#m-passTime').value = cfg.TIME_PASS_FLOOR ?? '';
+    const waitsEl = $('#m-floorWaits');
+    waitsEl.innerHTML = '';
+    const fw = Object.assign({}, cfg.FLOOR_WAITS || {});
+    if (cfg.ZERO_FLOOR_WAIT_ACTIVE && parseFloat(cfg.ZERO_FLOOR_WAIT_SECONDS) > 0 && !('0' in fw))
+        fw['0'] = parseFloat(cfg.ZERO_FLOOR_WAIT_SECONDS);
+    Object.keys(fw).sort((a,b) => parseInt(a)-parseInt(b))
+        .forEach(fl => addWaitRow(fl, fw[fl]));
+
+    // Shabbat
+    $('#m-breakActive').checked = cfg.SHABBAT_BREAK_ACTIVE || false;
+    const breaksEl = $('#m-breaks');
+    breaksEl.innerHTML = '';
+    let breaks = cfg.SHABBAT_BREAKS || [];
+    if (!breaks.length && cfg.SHABBAT_BREAK_START && cfg.SHABBAT_BREAK_END)
+        breaks = [{ start: cfg.SHABBAT_BREAK_START, end: cfg.SHABBAT_BREAK_END }];
+    breaks.forEach(b => addBreakRow(b.start, b.end));
+
+    // Auto-learn
+    const alVal = cfg.AUTO_LEARN_CONFIG || 'off';
+    const alRadio = document.querySelector(`input[name="m-autoLearn"][value="${alVal}"]`);
+    if (alRadio) alRadio.checked = true;
+
+    const suggPanel = $('#m-suggestedConfig');
+    const sugg = cfg.SHABBAT_DETECTOR?.suggested_config;
+    if (sugg) {
+        suggPanel.innerHTML = `
+            <div class="card-section-title">💡 הצעת למידה</div>
+            <div class="status-list">
+                <div class="s-row"><span class="s-k">עצירות עלייה</span><span class="s-v">${(sugg.STOPPING_FLOORS_UP||[]).join(', ')||'—'}</span></div>
+                <div class="s-row"><span class="s-k">עצירות ירידה</span><span class="s-v">${(sugg.STOPPING_FLOORS_DOWN||[]).join(', ')||'—'}</span></div>
+                <div class="s-row"><span class="s-k">TIME_PER_FLOOR</span><span class="s-v">${sugg.TIME_PER_FLOOR??'—'}s</span></div>
+                <div class="s-row"><span class="s-k">מחזורים שנצפו</span><span class="s-v">${sugg.based_on_cycles??'—'}</span></div>
+                <div class="s-row"><span class="s-k">עקביות</span><span class="s-v">${sugg.consistency_score!=null?(sugg.consistency_score*100).toFixed(0)+'%':'—'}</span></div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="applySuggBtn" style="margin-top: var(--s-3);">✓ החל הצעה זו</button>
+        `;
+        $('#applySuggBtn').addEventListener('click', () => applySuggested(id, sugg));
+    } else {
+        suggPanel.innerHTML = '<p class="field-hint" style="margin-top: var(--s-3); padding: var(--s-3); background: var(--bg-input); border-radius: var(--r-md); text-align: center;">אין הצעת למידה זמינה כרגע. המערכת זקוקה למחזורים תואמים כדי לגבש הצעה.</p>';
+    }
+
+    // Live status
+    renderLiveStatus(cfg);
+
+    $('#elevatorDialog').showModal();
+}
+
+function renderLiveStatus(cfg) {
+    const det = cfg.SHABBAT_DETECTOR || {};
+    const ts = det.last_transition_ts;
+    const tsStr = ts ? new Date(ts).toLocaleString('he-IL') : '—';
+    const cs = det.last_cycle_summary;
+    const viols = det.violations_window || [];
+
+    let html = `
+        <div class="status-list">
+            <div class="s-row"><span class="s-k">מצב נוכחי</span><span class="s-v">${stateEmoji(det.state||'NORMAL')} ${stateLabel(det.state||'NORMAL')}</span></div>
+            <div class="s-row"><span class="s-k">מעבר אחרון</span><span class="s-v">${tsStr}</span></div>
+            <div class="s-row"><span class="s-k">סיבה</span><span class="s-v">${det.last_transition_reason||'—'}</span></div>
+            ${cs ? `
+            <div class="s-row"><span class="s-k">מחזור תאם?</span><span class="s-v">${cs.matched?'✅ כן':'❌ לא'}</span></div>
+            <div class="s-row"><span class="s-k">עצירות עלייה</span><span class="s-v">${(cs.up_stops||[]).join(', ')||'—'}</span></div>
+            <div class="s-row"><span class="s-k">עצירות ירידה</span><span class="s-v">${(cs.down_stops||[]).join(', ')||'—'}</span></div>
+            ` : ''}
+        </div>
+    `;
+    if (viols.length) {
+        html += `<div class="card-section-title" style="margin-top: var(--s-5);">⚠️ הפרות אחרונות</div>
+            <ul class="viol-list">${viols.map(v =>
+                `<li><span class="vt">${new Date(v.ts * 1000).toLocaleTimeString('he-IL')}</span><span>תחנה ${v.floor} — ${v.reason}</span></li>`
+            ).join('')}</ul>`;
+    }
+    $('#m-statusPanel').innerHTML = html;
+}
+
+/* Floor matrix — unified up/down/visible toggles */
+function renderFloorMatrix(min, max) {
+    const tbody = $('#floorMatrixBody');
+    tbody.innerHTML = '';
+    const stopsUp   = new Set(($('#m-stopsUp').value   || '').split(',').map(s => s.trim()).filter(Boolean));
+    const stopsDown = new Set(($('#m-stopsDown').value || '').split(',').map(s => s.trim()).filter(Boolean));
+    const visible   = new Set(($('#m-visible').value   || '').split(',').map(s => s.trim()).filter(Boolean));
+
+    const sync = (set, inputId) => {
+        const arr = [...set].sort((a, b) => parseInt(a) - parseInt(b));
+        $('#' + inputId).value = arr.join(', ');
+    };
+
+    for (let i = max; i >= min; i--) {
+        const f = String(i);
+        const tr = document.createElement('tr');
+        const isVis = visible.has(f) || (!visible.size && (stopsUp.has(f) || stopsDown.has(f)));
+        tr.innerHTML = `
+            <td class="fm-floor">${i}</td>
+            <td><button type="button" class="fm-cell-toggle ${isVis ? 'active' : ''}" data-set="visible" data-floor="${f}"></button></td>
+            <td><button type="button" class="fm-cell-toggle ${stopsUp.has(f) ? 'active' : ''}" data-set="up" data-floor="${f}"></button></td>
+            <td><button type="button" class="fm-cell-toggle ${stopsDown.has(f) ? 'active' : ''}" data-set="down" data-floor="${f}"></button></td>
+        `;
+        if (i === max || i === min) tr.style.background = 'rgba(197,164,126,0.05)';
+        tbody.appendChild(tr);
+    }
+
+    // Bind cell clicks
+    tbody.querySelectorAll('.fm-cell-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const set = btn.dataset.set, floor = btn.dataset.floor;
+            const sets = { visible, up: stopsUp, down: stopsDown };
+            const fields = { visible: 'm-visible', up: 'm-stopsUp', down: 'm-stopsDown' };
+            const s = sets[set];
+            if (s.has(floor)) s.delete(floor); else s.add(floor);
+            btn.classList.toggle('active');
+            sync(s, fields[set]);
+        });
+    });
+    // Ensure hidden inputs reflect current sets
+    sync(stopsUp, 'm-stopsUp');
+    sync(stopsDown, 'm-stopsDown');
+    sync(visible, 'm-visible');
+}
+
+function addWaitRow(floorVal = '', secVal = '') {
+    const c = $('#m-floorWaits');
+    const row = document.createElement('div');
+    row.className = 'rep-row fw-row';
+    row.innerHTML = `
+        <div class="field"><label class="field-label">תחנה</label><input type="number" class="fw-floor" value="${floorVal}" step="1"></div>
+        <div class="field"><label class="field-label">שניות</label><input type="number" class="fw-seconds" value="${secVal}" min="0"></div>
+        <button type="button" class="rm-btn" title="הסר">×</button>
+    `;
+    row.querySelector('.rm-btn').addEventListener('click', () => row.remove());
+    c.appendChild(row);
+}
+$('#m-addWaitBtn').addEventListener('click', () => addWaitRow());
+
+function addBreakRow(startVal = '', endVal = '') {
+    const c = $('#m-breaks');
+    const row = document.createElement('div');
+    row.className = 'rep-row';
+    row.innerHTML = `
+        <div class="field"><label class="field-label">התחלה</label><input type="time" class="break-start" value="${startVal}"></div>
+        <div class="field"><label class="field-label">סיום</label><input type="time" class="break-end" value="${endVal}"></div>
+        <button type="button" class="rm-btn" title="הסר">×</button>
+    `;
+    row.querySelector('.rm-btn').addEventListener('click', () => row.remove());
+    c.appendChild(row);
+}
+$('#m-addBreakBtn').addEventListener('click', () => addBreakRow());
+
+$('#elDialogClose').addEventListener('click', () => closeDialog($('#elevatorDialog')));
+$('#elDialogCancel').addEventListener('click', () => closeDialog($('#elevatorDialog')));
+
+$('#elDialogSave').addEventListener('click', () => {
+    const id = state.editingId;
+    if (!id) return;
+
+    const upList      = $('#m-stopsUp').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const downList    = $('#m-stopsDown').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const visibleList = $('#m-visible').value.split(',').map(s=>s.trim()).filter(Boolean);
+
+    const ovVal = document.querySelector('input[name="m-override"]:checked')?.value;
+    const shabbatOverride = ovVal === 'force_on' ? 'force_on' : ovVal === 'force_off' ? 'force_off' : null;
+    const alVal = document.querySelector('input[name="m-autoLearn"]:checked')?.value || 'off';
+
+    const breaks = [];
+    $$('#m-breaks .rep-row').forEach(row => {
+        const start = row.querySelector('.break-start')?.value;
+        const end   = row.querySelector('.break-end')?.value;
+        if (start && end) breaks.push({ start, end });
+    });
+
+    const floorWaits = {};
+    $$('#m-floorWaits .fw-row').forEach(row => {
+        const fl  = row.querySelector('.fw-floor')?.value?.trim();
+        const sec = parseFloat(row.querySelector('.fw-seconds')?.value);
+        if (fl != null && fl !== '' && !isNaN(sec) && sec > 0)
+            floorWaits[String(parseInt(fl, 10))] = sec;
+    });
+
+    const patch = {
+        TOP_FLOOR:    $('#m-top').value,
+        BOTTOM_FLOOR: $('#m-bottom').value,
+        STOPPING_FLOORS:     [...new Set([...upList, ...downList])],
+        STOPPING_FLOORS_UP:   upList,
+        STOPPING_FLOORS_DOWN: downList,
+        VISIBLE_FLOORS:  visibleList,
+        TIME_PER_FLOOR:  parseFloat($('#m-stopTime').value) || 0,
+        TIME_PASS_FLOOR: parseFloat($('#m-passTime').value) || 0,
+        SHABBAT_MODE:    'automatic_split',
+        FLOOR_WAITS:     floorWaits,
+        SHABBAT_BREAK_ACTIVE: $('#m-breakActive').checked,
+        SHABBAT_BREAKS:  breaks,
+        SHABBAT_OVERRIDE: shabbatOverride,
+        AUTO_LEARN_CONFIG: alVal,
+        ZERO_FLOOR_WAIT_ACTIVE: null,
+        ZERO_FLOOR_WAIT_SECONDS: null,
+    };
+
+    database.ref(`elevator_configs/${id}`).update(patch)
+        .then(() => {
+            state.configs[id] = Object.assign({}, state.configs[id], patch);
+            renderElevators();
+            renderDashboard();
+            closeDialog($('#elevatorDialog'));
+            toast(`${elevatorName(id)} — נשמר ✓`, 'success');
+        })
+        .catch(e => toast(e.message, 'error'));
+});
+
+async function applySuggested(id, sugg) {
+    const ok = await confirm2({
+        title: 'החלת הצעת למידה',
+        msg: `ההגדרות המוצעות יוחלו על ${elevatorName(id)} ויחליפו את הקיימות.`,
+        okLabel: 'החל הצעה',
+        okClass: 'btn-primary',
+        danger: false,
+    });
+    if (!ok) return;
+    const patch = {};
+    if (sugg.STOPPING_FLOORS_UP)    patch.STOPPING_FLOORS_UP   = sugg.STOPPING_FLOORS_UP;
+    if (sugg.STOPPING_FLOORS_DOWN)  patch.STOPPING_FLOORS_DOWN = sugg.STOPPING_FLOORS_DOWN;
+    if (sugg.TIME_PER_FLOOR   != null) patch.TIME_PER_FLOOR    = sugg.TIME_PER_FLOOR;
+    if (sugg.TIME_PASS_FLOOR  != null) patch.TIME_PASS_FLOOR   = sugg.TIME_PASS_FLOOR;
+    if (sugg.FLOOR_WAITS)            patch.FLOOR_WAITS         = sugg.FLOOR_WAITS;
+    patch.STOPPING_FLOORS = [...new Set([...(sugg.STOPPING_FLOORS_UP||[]), ...(sugg.STOPPING_FLOORS_DOWN||[])])];
+    database.ref(`elevator_configs/${id}`).update(patch)
+        .then(() => {
+            state.configs[id] = Object.assign({}, state.configs[id], patch);
+            openElevatorDialog(id);
+            toast('הצעה הוחלה ✓', 'success');
+        })
+        .catch(e => toast(e.message, 'error'));
+}
+
+/* Esc to close dialogs */
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        const open = $$('dialog[open]');
+        if (open.length) { e.preventDefault(); closeDialog(open[open.length - 1]); }
+    }
+});
+
+/* Realtime listener for configs */
+auth.onAuthStateChanged(u => {
+    if (!u) return;
+    database.ref('elevator_configs').on('value', snap => {
+        state.configs = snap.val() || {};
+        renderDashboard();
+        renderElevators();
+    });
+});
+
+/* Hydrate static-markup SVG icons (auth logo, nav, modal header, logout…) */
+hydrateIcons();
+</script>
+</body>
+</html>

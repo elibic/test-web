@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעלית שבת - תצוגת קיוסק</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="stylesheet" href="kiosk-style.css">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    
+    <!-- Firebase SDK (Compat v8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Configuration & Logic -->
+    <script src="/firebase-config.js"></script>
+
+    <!-- Internal Overrides for Public Kiosk Specifics -->
+    <style>
+        /* --- UPDATED: Bottom Logo Styles --- */
+        .bottom-logo {
+            bottom: 130px; /* הועלה למעלה כדי לפנות מקום לבאנר הגדול */
+            left: 50%;     /* מירכוז אופקי */
+            transform: translateX(-50%); /* מירכוז מדויק */
+            max-height: 120px; /* מוגדל */
+            opacity: 0.8; 
+            transition: all 0.3s ease;
+        }
+
+        /* --- UPDATED: Bottom Status Bar --- */
+        .bottom-status-bar {
+            /* HUGE SIZE UPDATE */
+            padding: 15px 20px;
+            font-size: 2.2em; /* x2.5 Bigger */
+            display: block !important; /* Always Visible */
+        }
+
+        /* --- NEW: Push panel down in Portrait Mode (Smart Logic) --- */
+        @media (orientation: portrait) {
+            .dashboard-container {
+                /* Reset container margin so we can control per panel */
+                margin-top: 0;
+                /* Add padding bottom so content can scroll above the fixed footer/logo */
+                padding-bottom: 280px; 
+            }
+
+            /* Only push down if it's a SINGLE elevator */
+            .elevator-panel:only-child {
+                margin-top: 15vh;
+            }
+
+            /* If multiple elevators, keep them higher to avoid collision */
+            .elevator-panel:not(:only-child) {
+                margin-top: 2vh;
+            }
+        }
+        
+        /* Landscape Override specific to Public Kiosk layout */
+        @media (orientation: landscape) and (max-height: 640px) {
+            #displayContainer {
+                padding-bottom: 90px; /* Increased for bigger footer */
+            }
+            /* Adjust logo for landscape short */
+            .bottom-logo { max-height: 80px; bottom: 85px; left: 50%; transform: translateX(-50%); }
+            
+            /* Adjust bottom status bar font for landscape */
+            .bottom-status-bar { font-size: 1.5em; padding: 8px; }
+        }
+
+        /* Portrait Mobile Override specific to Public Kiosk layout */
+        @media (max-width: 480px) and (orientation: portrait) {
+             /* Adjust logo/footer for portrait */
+             .bottom-status-bar { font-size: 1.5em; }
+             .bottom-logo { bottom: 80px; max-height: 80px; }
+        }
+    </style>
+</head>
+
+<body class="weekday-mode"> <!-- Default to weekday mode to force show layout -->
+    
+    <!-- Error Screen (Shown if no floor in URL) -->
+    <div id="errorScreen">
+        <i class="fas fa-exclamation-triangle" style="font-size: 4em; margin-bottom: 20px;"></i>
+        <h2>שגיאת קונפיגורציה</h2>
+        <p>לא הוגדרה קומה עבור מסך זה.</p>
+        <p style="direction: ltr; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+            Add <b>?floor=X</b> to the URL.<br>Example: <i>kiosk.html?floor=5</i>
+        </p>
+    </div>
+
+    <!-- ADDED: Top Logo (Dynamic Src) -->
+    <img id="mainLogo" class="top-logo" src="" alt="Main Logo">
+
+    <div id="displayContainer">
+        
+        <div id="main-shabbat-indicator">
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="flameGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#C0C0C0" /><stop offset="50%" style="stop-color:#FFFFFF" /><stop offset="100%" style="stop-color:#B0B0B0" />
+                    </linearGradient>
+                </defs>
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="44" y="120" width="12" height="65" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M38 150 C 35 145, 65 145, 62 150 L 38 150 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M35 120 C 40 110, 60 110, 65 120 L 35 120 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="42" y="50" width="16" height="70" fill="#f0f0f0" stroke="#ccc" stroke-width="0"/>
+                <path d="M49 50 L 51 42" stroke="#333" stroke-width="2"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347" filter="url(#flameGlow)">
+                    <animate attributeName="ry" values="12;14;12" dur="1.2s" repeatCount="indefinite" />
+                    <animate attributeName="rx" values="7;6;7" dur="1s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="50" cy="33" rx="3" ry="6" fill="#FFEEA0" />
+            </svg>
+            
+            <span>שבת שלום</span>
+            
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="44" y="120" width="12" height="65" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M38 150 C 35 145, 65 145, 62 150 L 38 150 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <path d="M35 120 C 40 110, 60 110, 65 120 L 35 120 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="0"/>
+                <rect x="42" y="50" width="16" height="70" fill="#f0f0f0" stroke="#ccc" stroke-width="0"/>
+                <path d="M49 50 L 51 42" stroke="#333" stroke-width="2"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347" filter="url(#flameGlow)">
+                    <animate attributeName="ry" values="12;14;12" dur="1.2s" repeatCount="indefinite" />
+                    <animate attributeName="rx" values="7;6;7" dur="1s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="50" cy="33" rx="3" ry="6" fill="#FFEEA0" />
+            </svg>
+        </div>
+        
+        <!-- REMOVED CLOCK CONTAINER COMPLETELY -->
+        
+        <div class="dashboard-container"></div>
+        
+    </div>
+    
+    <!-- Dynamic Logo from Config -->
+    <img id="poweredByLogo" src="" alt="Powered By Logo" class="bottom-logo">
+    
+    <div class="notification" id="notificationPopup"></div>
+    
+    <div class="bottom-status-bar" id="bottomStatusBar">
+        <span class="status-time" id="statusTime" style="font-weight:bold; color: var(--gold-primary);">00:00:00</span> | 
+        <span id="statusDate"></span> | 
+        <span id="statusHebrewDate" style="margin-right: 8px;"></span>
+    </div>
+
+    <!-- Main Logic -->
+    <script src="kiosk-logic.js"></script>
+</body>
+</html>

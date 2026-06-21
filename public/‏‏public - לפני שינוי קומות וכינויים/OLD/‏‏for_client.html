@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעלית שבת</title>
+    <link href="https://fonts.googleapis.com/css?family=Heebo:wght@400;700&display.swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <!-- ספריית QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    <style>
+        body { margin: 0; padding: 10px; font-family: 'Heebo', Arial, sans-serif; background: linear-gradient(120deg, #141E30 0%, #243B55 100%); color: #ecd08f; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; box-sizing: border-box; }
+        
+        #displayContainer { display: flex; width: 100%; flex-direction: column; align-items: center; position: relative; padding-bottom: 80px; }
+        
+        /* -- עיצוב כותרת שבת שלום -- */
+        #main-shabbat-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 20px; /* רווח בין הנרות לכיתוב */
+            color: #ffe37c;
+            font-size: 3.5em; /* גודל ברירת מחדל */
+            font-weight: bold;
+            margin-top: 20px; /* הוספנו רווח עליון */
+            margin-bottom: 80px; /* הגדלנו עוד רווח תחתון (היה 60px) */
+            text-shadow: 0 0 10px #ffe37c, 0 0 20px #ffe37c; /* אפקט זוהר */
+        }
+        .shabbat-candle-svg {
+            width: 40px; /* גודל הנר */
+            height: auto;
+            filter: drop-shadow(0 0 8px #ffe37c); /* אפקט זוהר לנר */
+        }
+        /* -- סוף עיצוב כותרת -- */
+
+        .dashboard-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; max-width: 1200px; }
+        .elevator-panel { background: rgba(20, 30, 48, 0.97); border-radius: 28px; box-shadow: 0 6px 48px #0007, 0 1.5px 3px #ecd08f40 inset; padding: 1.5em; width: 380px; text-align: center; border: 2px solid #ecd08f; position: relative; box-sizing: border-box; }
+        .floor-label { font-size: 1.1em; font-weight: 600; margin: 0; color: #ecd08f; }
+        .elevator-id { font-size: 1.5em; font-weight: 800; margin-bottom: 0.5em; }
+        .floor-indicator { font-size: 5.5em; font-weight: 800; color: #ecd08f; margin: 0.2em 0; text-shadow: 0 0 12px #243b5599; }
+        .eta-display { display: none; margin-top: 1.5em; border-top: 1px solid rgba(236, 208, 143, 0.2); padding-top: 1.5em; }
+        .eta-result { font-size: 1.8em; font-weight: bold; min-height: 40px; }
+        body.shabbat-mode-active #main-shabbat-indicator { display: flex; }
+        body.shabbat-mode-active .eta-display { display: block; }
+        body.shabbat-mode-active .dashboard-container { display: flex; }
+        body:not(.shabbat-mode-active) .dashboard-container { display: none !important; }
+        body:not(.shabbat-mode-active) #clockContainer { display: block !important; }
+        .direction-status { display: flex; align-items: center; justify-content: center; gap: 0.5em; margin: 0.8em 0; font-size: 1.1em; font-weight: 500; }
+        .direction-icon { font-size: 2em; animation: bounce 1.4s infinite; filter: drop-shadow(0 0 10px #ecd08f70); }
+        .direction-up, .direction-down { color: #ffe37c; }
+        .direction-neutral { color: #ecd08f; animation: none; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } 60% { transform: translateY(-2px); } }
+        #userInfo { display: none; } /* מוסתר לצמיתות */
+
+        .container { background: rgba(20, 30, 48, 0.97); border-radius: 28px; box-shadow: 0 6px 48px #0007, 0 1.5px 3px #ecd08f40 inset; padding: 30px; width: 90%; max-width: 600px; border: 2px solid #ecd08f; }
+        h2 { color: #ecd08f; margin-bottom: 20px; }
+
+        .notification { visibility: hidden; opacity: 0; min-width: 200px; background: #ecd08f; color: #243B55; text-align: center; border-radius: 12px; padding: 15px 25px; position: fixed; z-index: 3001; left: 50%; top: 20px; font-size: 1em; transform: translateX(-50%); box-shadow: 0 2px 18px #0007; transition: opacity 0.3s, visibility 0.3s; font-weight: bold; }
+        .notification.show { visibility: visible; opacity: 1; }
+        
+        .control-btn {
+            background: rgba(20, 30, 48, 0.9);
+            border: 1px solid #ecd08f;
+            color: #ecd08f;
+            border-radius: 50px;
+            width: auto;
+            margin-top: 0;
+            padding: 8px 16px;
+            font-size: 1em;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .control-btn:hover {
+            background: rgba(36, 59, 85, 0.9);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            color: #fff;
+        }
+        /* -- FIX: Button Active State -- */
+        .control-btn:active {
+            background: rgba(46, 70, 95, 0.9); /* מעט כהה יותר */
+            transform: scale(0.95); /* הקטנה קלה */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        /* -- NEW FIX: Button Focus State -- */
+        .control-btn:focus {
+            background: rgba(20, 30, 48, 0.9); /* חזרה למצב הרגיל */
+            border: 1px solid #ecd08f;
+            color: #ecd08f;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            outline: none; /* הסרת קו מתאר של הדפדפן */
+        }
+        .settings-btn { padding: 10px; line-height: 1; font-size: 1.4em; }
+
+        .footer-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: center; /* מרכוז הכפתורים */
+            align-items: center;
+            box-sizing: border-box;
+            z-index: 100;
+            gap: 20px; /* רווח בין הכפתורים */
+        }
+        
+        body.shabbat-mode-active .footer-controls {
+            justify-content: flex-start;
+            padding: 10px;
+        }
+
+        /* --- Clock Container --- */
+        #clockContainer {
+            display: none; /* מוסתר ומוצג ע"י JS */
+            width: 90%;
+            max-width: 700px;
+            margin: 0 auto 20px auto;
+        }
+
+        /* --- Digital Clock Panel Styles --- */
+        .clock-panel {
+            background: linear-gradient(135deg, rgba(20, 30, 48, 0.98) 0%, rgba(36, 59, 85, 0.95) 100%);
+            border-radius: 35px;
+            box-shadow: 0 8px 60px rgba(0,0,0,0.5), 0 2px 8px rgba(236, 208, 143, 0.3) inset;
+            padding: 3em 2.5em;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            text-align: center;
+            border: 3px solid #ecd08f;
+            position: relative;
+            box-sizing: border-box;
+        }
+        .clock-panel::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ecd08f, #ffe37c, #ecd08f);
+            border-radius: 35px;
+            z-index: -1;
+            opacity: 0.3;
+        }
+        .clock-time {
+            font-size: 7.5em;
+            font-weight: 900;
+            color: #ecd08f;
+            margin: 0.1em 0 0.2em 0;
+            text-shadow: 0 0 20px rgba(236, 208, 143, 0.6), 0 0 40px rgba(255, 227, 124, 0.3);
+            letter-spacing: 0.05em;
+            font-variant-numeric: tabular-nums;
+        }
+        .clock-date {
+            font-size: 2.2em;
+            font-weight: 600;
+            color: #ffe37c;
+            margin: 0.6em 0 0.4em 0;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            letter-spacing: 0.02em;
+        }
+        .clock-hebrew-date {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #d4b87a;
+            margin: 0.3em 0 0.2em 0;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            letter-spacing: 0.03em;
+        }
+
+        /* --- Analog Clock Panel Styles --- */
+        .analog-clock-panel {
+            /* display: none;  <-- הוסר מפה */
+            width: 100%;
+            padding-top: 100%; /* שומר על יחס 1:1 */
+            position: relative;
+            background: #141E30;
+            border: 10px solid #ecd08f;
+            border-radius: 50%;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.6), 
+                        0 0 10px rgba(236, 208, 143, 0.5) inset,
+                        0 0 5px #fff;
+        }
+        .analog-clock-panel .clock-face {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        .analog-clock-panel .hand {
+            width: 50%;
+            height: 4px; /* עובי מחוג */
+            background: #ecd08f;
+            position: absolute;
+            top: 50%;
+            transform-origin: 100%;
+            transform: rotate(90deg);
+            transition: transform 0.2s cubic-bezier(0.4, 1.9, 0.5, 1);
+            border-radius: 2px 0 0 2px;
+            box-shadow: 0 0 5px rgba(236, 208, 143, 0.8);
+        }
+        .analog-clock-panel .hour-hand {
+            width: 35%; /* אורך מחוג שעות */
+            left: 15%;
+            height: 6px;
+            background: #ffe37c;
+        }
+        .analog-clock-panel .minute-hand {
+            width: 45%; /* אורך מחוג דקות */
+            left: 5%;
+            height: 4px;
+        }
+        .analog-clock-panel .second-hand {
+            width: 48%; /* אורך מחוג שניות */
+            left: 2%;
+            height: 2px;
+            background: #d32f2f;
+            box-shadow: 0 0 5px rgba(211, 47, 47, 0.8);
+            transition: transform 0.05s linear;
+        }
+        .analog-clock-panel .center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            background: #d32f2f;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        
+        /* -- FIX: Analog Clock Numbers Position -- */
+        .analog-clock-panel .number {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #ecd08f;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+            transform: translate(-50%, -50%); /* ממכרז את כל המספרים */
+        }
+        
+        /* מיקום מדויק על בסיס מעגל - רדיוס 42% מהמרכז (50% - 42% = 8%, 50% + 42% = 92%) */
+        /* ערכים סימטריים למיקום נכון */
+        .analog-clock-panel .number-12 { top: 8%; left: 50%; }
+        .analog-clock-panel .number-1  { top: 13.4%; left: 71.7%; }
+        .analog-clock-panel .number-2  { top: 28.3%; left: 86.6%; }
+        .analog-clock-panel .number-3  { top: 50%; left: 92%; }
+        .analog-clock-panel .number-4  { top: 71.7%; left: 86.6%; }
+        .analog-clock-panel .number-5  { top: 86.6%; left: 71.7%; }
+        .analog-clock-panel .number-6  { top: 92%; left: 50%; }
+        .analog-clock-panel .number-7  { top: 86.6%; left: 28.3%; }
+        .analog-clock-panel .number-8  { top: 71.7%; left: 13.4%; }
+        .analog-clock-panel .number-9  { top: 50%; left: 8%; }
+        .analog-clock-panel .number-10 { top: 28.3%; left: 13.4%; }
+        .analog-clock-panel .number-11 { top: 13.4%; left: 28.3%; }
+        /* -- END FIX: Analog Clock Numbers -- */
+        
+        
+        /* -- NEW: Analog Clock Date Display -- */
+        .analog-clock-date-container {
+            text-align: center;
+            margin-top: 2.5em; /* הגדלנו רווח (היה 1.5em) */
+        }
+        .analog-clock-date {
+            font-size: 2.2em;
+            font-weight: 600;
+            color: #ffe37c;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .analog-clock-hebrew-date {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #d4b87a;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        /* -- END NEW -- */
+
+
+        /* Modal (Contact) Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: rgba(36, 59, 85, 0.98);
+            margin: auto;
+            padding: 30px;
+            border: 2px solid #ecd08f;
+            border-radius: 28px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 8px 60px rgba(0,0,0,0.5);
+            position: relative; /* Required for spinner */
+        }
+        .modal-close {
+            color: #ecd08f;
+            float: left; /* יישור לשמאל (ימין חזותי ב-RTL) */
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-close:hover,
+        .modal-close:focus {
+            color: #fff;
+            text-decoration: none;
+        }
+        .modal-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .modal-text {
+            font-size: 1.2em;
+            color: #ecd08f;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        .qr-container {
+            margin: 20px auto;
+            padding: 15px;
+            background: #fff;
+            border-radius: 12px;
+            display: inline-block;
+            position: relative;
+        }
+        /* -- CSS TWEAK HERE -- */
+        #whatsappQRContainer {
+            width: 200px !important; /* !important to override inline style */
+            height: 200px !important;
+        }
+        /* -- END CSS TWEAK -- */
+        .qr-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            background: #fff;
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+
+        /* --- REMOVED: Gemini Modal Styles --- */
+
+
+        /* Bottom Status Bar */
+        .bottom-status-bar {
+            position: fixed;
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            background: rgba(20, 30, 48, 0.95);
+            border-top: 1px solid rgba(236, 208, 143, 0.3);
+            padding: 8px 15px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #d4b87a;
+            z-index: 50;
+            display: none; /* מוסתר כברירת מחדל */
+        }
+        /* body.show-bottom-status .bottom-status-bar { display: block; } <-- הוסר */
+        body.shabbat-mode-active .bottom-status-bar {
+            display: block; /* מוצג רק בשבת */
+        }
+        .bottom-status-bar .status-time {
+            font-weight: 600;
+            margin: 0 8px;
+        }
+
+        /* --- Mobile Responsive --- */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { width: 95%; padding: 20px 15px; }
+            .clock-panel { width: 100%; padding: 1.5em 1em; box-sizing: border-box; }
+            .clock-time { font-size: 4em; }
+            .clock-date { font-size: 1.4em; }
+            .clock-hebrew-date { font-size: 1.1em; }
+            .analog-clock-panel { border-width: 6px; }
+            .analog-clock-panel .number { font-size: 1.4em; }
+
+            .elevator-panel { width: 95%; padding: 1em; }
+            .floor-indicator { font-size: 3.5em; }
+            #main-shabbat-indicator { font-size: 2.2em; gap: 15px; } /* הקטנה למובייל */
+            .shabbat-candle-svg { width: 30px; } /* הקטנת נרות */
+
+            .footer-controls { padding: 8px; gap: 10px; } /* Reduced gap */
+            .control-btn { padding: 6px 12px; font-size: 0.9em; }
+            
+            .notification { min-width: 150px; font-size: 0.85em; padding: 10px 15px; top: 10px; }
+            .bottom-status-bar { font-size: 0.7em; padding: 5px 8px; }
+            h2 { font-size: 1.3em; }
+            
+            .modal-content { width: 95%; padding: 20px; }
+            .modal-title { font-size: 1.5em; }
+            .modal-text { font-size: 1.1em; }
+            #whatsappQRContainer { width: 150px !important; height: 150px !important; }
+            .qr-logo { width: 35px; height: 35px; }
+            
+            /* -- NEW: Analog Clock Date Responsive -- */
+            .analog-clock-date { font-size: 1.4em; }
+            .analog-clock-hebrew-date { font-size: 1.1em; }
+        }
+
+        /* --- Target 800x480 landscape screens --- */
+        @media (orientation: landscape) and (max-height: 500px) {
+            body { 
+                padding: 0;
+                overflow: hidden;
+            }
+
+            #displayContainer {
+                padding-bottom: 45px;
+            }
+
+            /* Scaling down panels for landscape */
+            .clock-panel {
+                padding: 0.7em 1em;
+                margin-bottom: 5px;
+                max-width: 520px;
+            }
+            .clock-time { font-size: 4.2em; }
+            .clock-date { font-size: 1.35em; }
+            .clock-hebrew-date { font-size: 1.15em; }
+
+            /* שעון אנלוגי למצב מאוזן */
+            #analogClockWrapper {
+                display: none;
+            }
+            .analog-clock-panel {
+                max-width: 270px;
+                padding-top: 270px;
+                margin: 0 auto 8px auto;
+            }
+            .analog-clock-panel .number { font-size: 1.2em; }
+            
+            .analog-clock-date-container { margin-top: 1em; /* הגדלנו רווח (היה 0.6em) */ }
+            .analog-clock-date { font-size: 1.25em; }
+            .analog-clock-hebrew-date { font-size: 1.05em; }
+
+            #main-shabbat-indicator {
+                font-size: 1.7em;
+                margin-top: 5px; /* הוספנו רווח עליון */
+                margin-bottom: 25px; /* הגדלנו רווח (היה 20px) */
+            }
+            .shabbat-candle-svg { width: 26px; }
+
+            .dashboard-container {
+                gap: 8px;
+                width: 100%;
+                justify-content: center;
+                padding-bottom: 35px;
+            }
+            .elevator-panel {
+                width: 47%;
+                max-width: 270px;
+                padding: 0.6em;
+                box-sizing: border-box;
+            }
+            .floor-indicator { font-size: 2.6em; }
+            .eta-result { font-size: 1.15em; }
+            .floor-label { font-size: 0.85em; }
+            .elevator-id { font-size: 1.15em; }
+        }
+
+        /* --- Target 480x800 portrait screens (כמו בתמונה) --- */
+        @media (max-width: 480px) {
+            body { padding: 5px; }
+            .container { padding: 15px 10px; }
+            /* -- FIX: Digital Clock Size -- */
+            .clock-panel { 
+                padding: 1.5em 1em; 
+                text-align: center; /* וידוא מרכוז */
+            }
+            .clock-time { font-size: 3.2em; } /* הקטנה נוספת */
+            .clock-date { font-size: 1.2em; }
+            .clock-hebrew-date { font-size: 1.05em; }
+            /* -- END FIX -- */
+
+            /* -- FIX: Analog Clock Size & Numbers -- */
+            #analogClockWrapper {
+                display: none; /* חייב להיות מוסתר כברירת מחדל */
+            }
+            .analog-clock-panel {
+                border-width: 8px;
+            }
+            .analog-clock-panel .number {
+                font-size: 1.2em; /* הקטנת מספרי שעון */
+                width: 30px;
+                height: 30px;
+                /* margin-top: -15px; <-- הוסר, מטופל ע"י transform */
+                 /* margin-left: -15px; <-- הוסר, מטופל ע"י transform */
+            }
+            
+            .analog-clock-date-container { margin-top: 1.8em; /* הגדלנו רווח (היה 1em) */ }
+            .analog-clock-date { font-size: 1.2em; }
+            .analog-clock-hebrew-date { font-size: 1.05em; }
+            /* -- END FIX -- */
+            
+            .dashboard-container {
+                gap: 10px;
+                justify-content: center;
+            }
+            .elevator-panel {
+                width: 45%; /* שני פאנלים בשורה */
+                padding: 0.8em;
+                box-sizing: border-box;
+            }
+            /* -- FIX: Shabbat Panel Font Size -- */
+            .floor-indicator { font-size: 2.8em; } /* הקטנה נוספת */
+            .eta-result { font-size: 1em; } /* הקטנה נוספת */
+            .floor-label { font-size: 0.8em; } /* הקטנה נוספת */
+            /* -- END FIX -- */
+
+
+            #main-shabbat-indicator {
+                font-size: 2em; /* הקטנה נוספת */
+                gap: 10px;
+                margin-top: 10px; /* הוספנו רווח עליון */
+                margin-bottom: 45px; /* הגדלנו רווח (היה 35px) */
+            }
+            .shabbat-candle-svg { width: 25px; }
+            
+            h2 { font-size: 1.1em; }
+            .notification { font-size: 0.8em; padding: 8px 12px; }
+            .bottom-status-bar { font-size: 0.65em; padding: 4px 6px; }
+            
+            .modal-title { font-size: 1.3em; }
+            .modal-text { font-size: 1.1em; }
+        }
+        
+        /* -- FIX: Media query for small portrait screens (like 480x800) -- */
+        @media (max-width: 480px) and (orientation: portrait) {
+            .elevator-panel {
+                width: 90%; /* פאנל אחד בשורה, רחב יותר */
+            }
+            
+            .floor-indicator { font-size: 3.2em; }
+            .eta-result { font-size: 1.1em; }
+            .floor-label { font-size: 0.9em; }
+            
+            .analog-clock-panel .number {
+                font-size: 1.1em; /* הקטנה נוספת אם צריך */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    
+    <div id="displayContainer">
+        
+        <!-- כותרת שבת שלום עם נרות -->
+        <div id="main-shabbat-indicator">
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="flameGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                    <!-- NEW: Silver Gradient -->
+                    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#C0C0C0" />
+                        <stop offset="50%" style="stop-color:#FFFFFF" />
+                        <stop offset="100%" style="stop-color:#B0B0B0" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- NEW: Candlestick Body (Silver) -->
+                <!-- Base -->
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="1"/>
+                <!-- Stem -->
+                <rect x="44" y="120" width="12" height="65" fill="url(#silverGradient)" stroke="#909090" stroke-width="1"/>
+                <!-- Knob -->
+                <path d="M38 150 C 35 145, 65 145, 62 150 L 38 150 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="1"/>
+                <!-- Cup -->
+                <path d="M35 120 C 40 110, 60 110, 65 120 L 35 120 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="1"/>
+        
+                <!-- NEW: White Candle -->
+                <rect x="42" y="50" width="16" height="70" fill="#FFFFFF" stroke="#D0D0D0" stroke-width="1"/>
+        
+                <!-- Flame (Adapted) -->
+                <!-- Wick -->
+                <path d="M49 50 L 51 42" stroke="#303030" stroke-width="2"/>
+                <!-- Flame Body -->
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347" filter="url(#flameGlow)">
+                    <animate attributeName="ry" values="12;14;12" dur="1.2s" repeatCount="indefinite" />
+                    <animate attributeName="rx" values="7;6;7" dur="1s" repeatCount="indefinite" />
+                </ellipse>
+                <!-- Flame Core -->
+                <ellipse cx="50" cy="33" rx="3" ry="6" fill="#FFEEA0" />
+            </svg>
+            
+            <span>שבת שלום</span>
+            
+            <svg class="shabbat-candle-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="flameGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#C0C0C0" />
+                        <stop offset="50%" style="stop-color:#FFFFFF" />
+                        <stop offset="100%" style="stop-color:#B0B0B0" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- NEW: Candlestick Body (Silver) -->
+                <path d="M30 200 C 40 185, 60 185, 70 200 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="1"/>
+                <rect x="44" y="120" width="12" height="65" fill="url(#silverGradient)" stroke="#909090" stroke-width="1"/>
+                <path d="M38 150 C 35 145, 65 145, 62 150 L 38 150 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="1"/>
+                <path d="M35 120 C 40 110, 60 110, 65 120 L 35 120 Z" fill="url(#silverGradient)" stroke="#909090" stroke-width="1"/>
+                
+                <!-- NEW: White Candle -->
+                <rect x="42" y="50" width="16" height="70" fill="#FFFFFF" stroke="#D0D0D0" stroke-width="1"/>
+                
+                <!-- Flame (Adapted) -->
+                <path d="M49 50 L 51 42" stroke="#303030" stroke-width="2"/>
+                <ellipse cx="50" cy="30" rx="7" ry="12" fill="#FFB347" filter="url(#flameGlow)">
+                    <animate attributeName="ry" values="12;14;12" dur="1.2s" repeatCount="indefinite" />
+                    <animate attributeName="rx" values="7;6;7" dur="1s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="50" cy="33" rx="3" ry="6" fill="#FFEEA0" />
+            </svg>
+        </div>
+        
+        <!-- מיכל לשעונים (אנלוגי ודיגיטלי) -->
+        <div id="clockContainer">
+            <!-- שעון דיגיטלי -->
+            <div id="digitalClockPanel" class="clock-panel">
+                <div class="clock-time" id="clockTime">00:00:00</div>
+                <div class="clock-date" id="clockDate">טוען תאריך...</div>
+                <div class="clock-hebrew-date" id="clockHebrewDate">טוען תאריך עברי...</div>
+            </div>
+            
+            <!-- שעון אנלוגי (מוסתר) -->
+            <!-- *** FIX: Added display:none to the wrapper *** -->
+            <div id="analogClockWrapper" style="text-align: center; display: none;">
+                <div id="analogClockPanel" class="analog-clock-panel">
+                    <div class="clock-face">
+                        <div class="number number-12">12</div>
+                        <div class="number number-1">1</div>
+                        <div class="number number-2">2</div>
+                        <div class="number number-3">3</div>
+                        <div class="number number-4">4</div>
+                        <div class="number number-5">5</div>
+                        <div class="number number-6">6</div>
+                        <div class="number number-7">7</div>
+                        <div class="number number-8">8</div>
+                        <div class="number number-9">9</div>
+                        <div class="number number-10">10</div>
+                        <div class="number number-11">11</div>
+
+                        <div class="hand hour-hand" id="hourHand"></div>
+                        <div class="hand minute-hand" id="minuteHand"></div>
+                        <div class="hand second-hand" id="secondHand"></div>
+                        <div class="center-dot"></div>
+                    </div>
+                </div>
+                <!-- תאריכים לשעון אנלוגי -->
+                <div class="analog-clock-date-container" id="analogDateContainer">
+                    <div class="analog-clock-date" id="analogClockDate">טוען תאריך...</div>
+                    <div class="analog-clock-hebrew-date" id="analogClockHebrewDate">טוען תאריך עברי...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-container"></div>
+        
+        <div class="footer-controls">
+            <!-- כפתור יצירת קשר (תמיד גלוי) -->
+            <button id="contactBtn" class="control-btn settings-btn"><i class="fas fa-phone"></i></button>
+            
+            <!-- כפתור החלפת שעון (מוסתר אוטומטית בשבת) -->
+            <button id="toggleClockBtn" class="control-btn settings-btn"><i class="fas fa-clock"></i></button>
+
+            <!-- NEW: כפתור הפעלת מצב שבת ידני -->
+            <button id="manualShabbatBtn" class="control-btn settings-btn"><i class="fas fa-star-of-david"></i></button>
+
+            <!-- REMOVED: כפתור מחשבה יומית (Gemini) -->
+        </div>
+    </div>
+    
+    <div class="notification" id="notificationPopup"></div>
+    
+    <!-- Bottom Status Bar -->
+    <div class="bottom-status-bar" id="bottomStatusBar">
+        <span class="status-time" id="statusTime">00:00:00</span>
+        <span id="statusDate"></span>
+        <span id="statusHebrewDate" style="margin-right: 8px;"></span>
+    </div>
+
+    <!-- Modal for Contact Info -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modalCloseBtn">&times;</span>
+            <h2 class="modal-title">ECONTROL פתרונות חכמים</h2>
+            <p class="modal-text">טלפון ליצירת קשר: 052-5705289</p>
+            <div class="qr-container">
+                <canvas id="whatsappQRContainer"></canvas>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="qr-logo" alt="WhatsApp Logo">
+            </div>
+        </div>
+    </div>
+
+    <!-- REMOVED: Modal for Gemini -->
+
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        // --- הגדרה ראשית ---
+        // שנה את הקומה כאן עבור כל לקוח חדש
+        const HARDCODED_FLOOR = "6"; 
+        
+        let THIS_SCREEN_FLOOR = HARDCODED_FLOOR;
+        const TEST_SHABBAT_MODE = false; 
+        const STALE_TIMEOUT = 30000;
+        const INTERPOLATION_DELAY = 500;
+        const WHATSAPP_LINK = "https://api.whatsapp.com/send?phone=9720525705289&text=%D7%94%D7%99%D7%99%2C%20%D7%91%D7%A7%D7%A9%D7%A8%20%D7%9C%D7%9E%D7%A2%D7%9C%D7%99%D7%AA%20%D7%A9%D7%91%D7%AA%20%D7%91%D7%96%D7%9E%D7%9F%20%D7%90%D7%9E%D7%AA%2C";
+
+        // --- הועברו לכאן ---
+        let elevatorStates = {}, latestElevatorsData = null, settings = null, elevatorConfigs = null;
+        let isShabbatOrHoliday = false, isInitialized = false;
+        let manualShabbatOverride = false; // <-- NEW: For manual shabbat mode
+        
+        let clockInitialized = false;
+        let serverTimeOffset = null; // *** CHANGED: Start as null to indicate "not synced" ***
+        let currentJerusalemTime = new Date();
+        let currentHebrewDateCache = "טוען..."; // מטמון לתאריך עברי
+        // --- סוף העברה ---
+
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+        apiKey: "AIzaSyABExU11JS2KsumwG5z6-X_Tnn_OJZkusg",
+        authDomain: "nitzaelev.firebaseapp.com",
+        databaseURL: "https://nitzaelev-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "nitzaelev",
+        storageBucket: "nitzaelev.firebasestorage.app",
+        messagingSenderId: "922911314024",
+        appId: "1:922911314024:web:560493db03aa477cd7ebdd",
+        measurementId: "G-6BQ4RTV03F"
+        };      
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        const ui = {
+            displayContainer: document.getElementById('displayContainer'),
+            notificationPopup: document.getElementById('notificationPopup'),
+            clockContainer: document.getElementById('clockContainer'),
+            digitalClockPanel: document.getElementById('digitalClockPanel'),
+            analogClockWrapper: document.getElementById('analogClockWrapper'), // -- NEW WRAPPER
+            analogClockPanel: document.getElementById('analogClockPanel'),
+            clockTime: document.getElementById('clockTime'),
+            clockDate: document.getElementById('clockDate'),
+            clockHebrewDate: document.getElementById('clockHebrewDate'),
+            // -- NEW ANALOG DATES --
+            analogClockDate: document.getElementById('analogClockDate'),
+            analogClockHebrewDate: document.getElementById('analogClockHebrewDate'),
+            // -- END NEW --
+            hourHand: document.getElementById('hourHand'),
+            minuteHand: document.getElementById('minuteHand'),
+            secondHand: document.getElementById('secondHand'),
+            toggleClockBtn: document.getElementById('toggleClockBtn'),
+            contactBtn: document.getElementById('contactBtn'),
+            contactModal: document.getElementById('contactModal'),
+            modalCloseBtn: document.getElementById('modalCloseBtn'), // <-- RENAMED
+            bottomStatusBar: document.getElementById('bottomStatusBar'), 
+            manualShabbatBtn: document.getElementById('manualShabbatBtn'),
+            // --- REMOVED Gemini UI Elements ---
+        };
+        
+        let isDigitalClock = true; // מצב שעון התחלתי
+
+        function showNotification(message, isError = false) {
+            ui.notificationPopup.textContent = message;
+            ui.notificationPopup.style.backgroundColor = isError ? '#d32f2f' : '#ecd08f';
+            ui.notificationPopup.style.color = isError ? '#fff' : '#243B55';
+            ui.notificationPopup.classList.add('show');
+            setTimeout(() => ui.notificationPopup.classList.remove('show'), 4000);
+        }
+        
+        // --- לוגיקת אפליקציה ראשית ---
+        ui.displayContainer.style.display = 'flex';
+        initializeAppLogic();
+        
+        // --- לוגיקת שעון (תומך DST) ---
+        
+        function updateJerusalemTime() {
+            // *** NEW: Safety check. If offset is null, sync failed. Don't run. ***
+            if (serverTimeOffset === null) {
+                console.warn("updateJerusalemTime called but serverTimeOffset is null.");
+                return null; // Return null to signal failure
+            }
+
+            const now = new Date(Date.now() + serverTimeOffset);
+            const options = {
+                timeZone: 'Asia/Jerusalem',
+                hour12: false,
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                weekday: 'long'
+            };
+            
+            const formatter = new Intl.DateTimeFormat('en-US', options);
+            const parts = formatter.formatToParts(now);
+            
+            const findPart = (type) => parts.find(p => p.type === type)?.value || '00';
+            
+            const year = parseInt(findPart('year'));
+            const month = parseInt(findPart('month')) - 1; 
+            const day = parseInt(findPart('day'));
+            const hour = parseInt(findPart('hour')) % 24; // 24 -> 0
+            const minute = parseInt(findPart('minute'));
+            const second = parseInt(findPart('second'));
+            
+            currentJerusalemTime = new Date(Date.UTC(year, month, day, hour, minute, second));
+            
+            const dayNameHe = new Intl.DateTimeFormat('he-IL', { timeZone: 'Asia/Jerusalem', weekday: 'long' }).format(now);
+            
+            return {
+                dateObj: currentJerusalemTime,
+                dayName: dayNameHe,
+                day: String(day).padStart(2, '0'),
+                month: String(month + 1).padStart(2, '0'),
+                year: String(year),
+                hour: String(hour).padStart(2, '0'),
+                minute: String(minute).padStart(2, '0'),
+                second: String(second).padStart(2, '0'),
+                rawHour: hour // שעה גולמית (0-23)
+            };
+        }
+
+        // *** UPDATED: FIREBASE-ONLY TIME SYNC ***
+        async function syncServerTime() {
+            try {
+                // 1. Try to fetch from Firebase
+                const offsetRef = database.ref('.info/serverTimeOffset');
+                const snapshot = await offsetRef.once('value');
+                const newOffset = snapshot.val(); // Can be 0 or any number
+                
+                if (newOffset === null || newOffset === undefined) {
+                     throw new Error("Firebase serverTimeOffset was null or undefined");
+                }
+                
+                // Check if this is a re-sync
+                if (serverTimeOffset !== null) {
+                    console.log(`🔄 סנכרון זמן מחודש בוצע. הפרש ישן: ${serverTimeOffset}ms, הפרש חדש: ${newOffset}ms`);
+                } else {
+                    console.log(`✅ סנכרון זמן מ-Firebase הצליח. הפרש: ${newOffset} ms`);
+                }
+                serverTimeOffset = newOffset; // Update the offset
+                
+            } catch (error) {
+                console.error("❌ שגיאה בסנכרון זמן מ-Firebase:", error);
+                // If it's the first sync (serverTimeOffset is still null), let it stay null.
+                // If it's a re-sync (serverTimeOffset has a value), just log the error
+                // and keep the old, valid offset. The clock will continue.
+                if (serverTimeOffset === null) {
+                    serverTimeOffset = null; // Keep it null (confirms it failed first time)
+                } else {
+                    console.warn("סנכרון מחודש נכשל. ממשיך עם ההפרש הישן.");
+                }
+            }
+        }
+        // *** END UPDATED TIME SYNC ***
+
+        async function initializeClock() {
+            if (clockInitialized) return;
+            
+            // Call the new robust sync function
+            await syncServerTime();
+            
+            // *** NEW: Check for total failure ***
+            if (serverTimeOffset === null) {
+                console.error("❌ סנכרון זמן נכשל קריטית. השעון לא יפעל.");
+                ui.clockTime.textContent = "--:--:--";
+                ui.clockDate.textContent = "שגיאת סנכרון זמן";
+                ui.clockHebrewDate.textContent = "רענן את הדף";
+                ui.analogClockDate.textContent = "שגיאת סנכרון זמן";
+                ui.analogClockHebrewDate.textContent = "רענן את הדף";
+                
+                // Update status bar as well
+                const statusTime = document.getElementById('statusTime');
+                const statusDate = document.getElementById('statusDate');
+                const statusHebrewDateEl = document.getElementById('statusHebrewDate');
+                if (statusTime) statusTime.textContent = "--:--:--";
+                if (statusDate) statusDate.textContent = "שגיאת סנכרון";
+                if (statusHebrewDateEl) statusHebrewDateEl.textContent = "";
+
+                clockInitialized = true; // Mark as "initialized" so it doesn't try again
+                return; // Stop here. The clock will not tick.
+            }
+            // *** END NEW CHECK ***
+
+            clockInitialized = true; // Mark as successful
+            
+            const timeData = updateJerusalemTime(); // Get initial time
+            if (timeData) { // Check if timeData is not null
+                await fetchHebrewDate(timeData.dateObj); // Get initial date
+                updateClockDisplay(); // First paint
+            }
+            
+            setInterval(updateClockDisplay, 1000); // Start ticking
+            
+            // Re-sync with server every hour to prevent clock drift
+            setInterval(syncServerTime, 3600000); // 3600000 ms = 1 hour
+            
+            console.log("✅ שעון מאותחל עם אזור זמן ירושלים (תומך DST)");
+        }
+        
+        function updateClockDisplay() {
+            const timeData = updateJerusalemTime();
+            
+            // *** NEW: Handle failure from updateJerusalemTime ***
+            if (timeData === null) {
+                // This shouldn't happen if initializeClock check worked, but it's a safety net.
+                return; 
+            }
+            // *** END NEW ***
+            
+            const timeString = `${timeData.hour}:${timeData.minute}:${timeData.second}`;
+            const dateString = `${timeData.dayName}, ${timeData.day}/${timeData.month}/${timeData.year}`;
+            
+            // עדכון שעון דיגיטלי
+            ui.clockTime.textContent = timeString;
+            ui.clockDate.textContent = dateString;
+            
+            // --- NEW: עדכון תאריכים בשעון אנלוגי ---
+            ui.analogClockDate.textContent = dateString;
+            // --- END NEW ---
+            
+            // עדכון שעון אנלוגי
+            updateAnalogClock(timeData.rawHour, parseInt(timeData.minute), parseInt(timeData.second));
+            
+            // עדכון שורת סטטוס תחתונה
+            const statusTime = document.getElementById('statusTime');
+            const statusDate = document.getElementById('statusDate');
+            if (statusTime && statusDate) {
+                statusTime.textContent = timeString;
+                statusDate.textContent = dateString;
+            }
+            
+            if (timeData.second === '00' || ui.clockHebrewDate.textContent === "טוען תאריך עברי...") {
+                 fetchHebrewDate(timeData.dateObj);
+            } else {
+                ui.clockHebrewDate.textContent = currentHebrewDateCache;
+                ui.analogClockHebrewDate.textContent = currentHebrewDateCache; // -- NEW
+                const statusHebrewDateEl = document.getElementById('statusHebrewDate');
+                if (statusHebrewDateEl) statusHebrewDateEl.textContent = currentHebrewDateCache;
+            }
+        }
+        
+        function updateAnalogClock(hours, minutes, seconds) {
+            const secondsDegrees = ((seconds / 60) * 360) + 90;
+            const minutesDegrees = ((minutes / 60) * 360) + ((seconds/60)*6) + 90;
+            
+            // -- FIX: חישוב שעה 12 --
+            const hour12 = hours % 12; // 0 (חצות) עד 11
+            const hoursDegrees = ((hour12 / 12) * 360) + ((minutes/60)*30) + 90;
+            // -- END FIX --
+            
+            if (ui.secondHand) ui.secondHand.style.transform = `rotate(${secondsDegrees}deg)`;
+            if (ui.minuteHand) ui.minuteHand.style.transform = `rotate(${minutesDegrees}deg)`;
+            if (ui.hourHand) ui.hourHand.style.transform = `rotate(${hoursDegrees}deg)`;
+        }
+
+        async function fetchHebrewDate(date) {
+            try {
+                const year = date.getUTCFullYear();
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                
+                const url = `https://www.hebcal.com/converter?cfg=json&gy=${year}&gm=${month}&gd=${day}&g2h=1`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.hebrew) {
+                    const hebrewWithoutNikud = data.hebrew.replace(/[\u0591-\u05C7]/g, '');
+                    currentHebrewDateCache = hebrewWithoutNikud;
+                    ui.clockHebrewDate.textContent = hebrewWithoutNikud;
+                    ui.analogClockHebrewDate.textContent = hebrewWithoutNikud; // -- NEW
+                    const statusHebrewDateEl = document.getElementById('statusHebrewDate');
+                    if (statusHebrewDateEl) statusHebrewDateEl.textContent = hebrewWithoutNikud;
+                }
+            } catch (error) {
+                console.error("Error fetching Hebrew date:", error);
+                currentHebrewDateCache = "שגיאת תאריך";
+                ui.clockHebrewDate.textContent = currentHebrewDateCache;
+                ui.analogClockHebrewDate.textContent = currentHebrewDateCache; // -- NEW
+            }
+        }
+        
+        // --- החלפת שעונים ---
+        ui.toggleClockBtn.addEventListener('click', () => {
+            isDigitalClock = !isDigitalClock;
+            if (isDigitalClock) {
+                ui.digitalClockPanel.style.display = 'block';
+                ui.analogClockWrapper.style.display = 'none'; // -- CHANGED
+            } else {
+                ui.digitalClockPanel.style.display = 'none';
+                ui.analogClockWrapper.style.display = 'block'; // -- CHANGED
+            }
+        });
+        
+        // --- לוגיקת מודל יצירת קשר ---
+        let qrCodeGenerated = false;
+        ui.contactBtn.addEventListener('click', () => {
+            ui.contactModal.classList.add('show');
+            
+            if (!qrCodeGenerated) {
+                const qrCanvas = document.getElementById('whatsappQRContainer');
+                if (!qrCanvas) {
+                    console.error("QR Canvas not found!");
+                    return;
+                }
+                QRCode.toCanvas(qrCanvas, WHATSAPP_LINK, {
+                    errorCorrectionLevel: 'H',
+                    width: 200,
+                    margin: 1
+                }, function (error) {
+                    if (error) console.error("QR Code Error:", error);
+                    else {
+                        console.log('QR Code Created!');
+                        qrCodeGenerated = true;
+                    }
+                });
+            }
+        });
+        
+        ui.modalCloseBtn.addEventListener('click', () => { // <-- RENAMED
+            ui.contactModal.classList.remove('show');
+        });
+        
+        window.addEventListener('click', (event) => {
+            if (event.target == ui.contactModal) {
+                ui.contactModal.classList.remove('show');
+            }
+            // --- REMOVED Gemini Modal Check ---
+        });
+
+        // --- NEW: Manual Shabbat Button Listener ---
+        ui.manualShabbatBtn.addEventListener('click', () => {
+            manualShabbatOverride = !manualShabbatOverride;
+            console.log(`Manual Shabbat Override Toggled: ${manualShabbatOverride}`);
+            
+            // Visually update the button
+            ui.manualShabbatBtn.style.color = manualShabbatOverride ? '#ffe37c' : '#ecd08f';
+            ui.manualShabbatBtn.style.borderColor = manualShabbatOverride ? '#ffe37c' : '#ecd08f';
+            
+            // Force a re-check and UI update
+            checkShabbatStatus(); 
+        });
+
+        // --- REMOVED: Gemini Button Listener ---
+        
+        // --- REMOVED: Gemini API Call Function ---
+
+        // --- NEW: Helper function to filter visible elevators ---
+        function shouldShowElevator(elevatorId) {
+            // בודקים מול THIS_SCREEN_FLOOR
+            const floorToCheck = THIS_SCREEN_FLOOR;
+            if (!floorToCheck) return true; // הגנה: אם אין קומה למסך, ברירת מחדל היא להציג
+
+            const config = elevatorConfigs[elevatorId];
+            if (!config) return true; // הגנה: אם אין קונפיגורציה, ברירת מחדל היא להציג
+
+            // עדיפות ראשונה: VISIBLE_FLOORS (ההגדרה החדשה)
+            if (config.VISIBLE_FLOORS && config.VISIBLE_FLOORS.length > 0) {
+                 // --- הוספת תמיכה בכוכבית (*) ---
+                if (config.VISIBLE_FLOORS.includes('*')) {
+                    return true; // תמיד להציג אם יש כוכבית
+                }
+                // בדיקה רגילה
+                // המרה לסטרינג כדי למנוע בעיות השוואה (למשל '0' מול 0)
+                return config.VISIBLE_FLOORS.map(String).includes(String(floorToCheck));
+            }
+            
+            // עדיפות שנייה (תמיכה לאחור): STOPPING_FLOORS
+            if (config.STOPPING_FLOORS) {
+                return config.STOPPING_FLOORS.map(String).includes(String(floorToCheck));
+            }
+            return true;
+        }
+        // --- END NEW ---
+
+        async function initializeAppLogic() {
+            if (isInitialized) {
+                renderFullDisplay();
+                return;
+            }
+            isInitialized = true;
+            
+            await initializeClock(); // This must run first
+            
+            try {
+                const [settingsSnapshot, configsSnapshot, elevatorsSnapshot] = await Promise.all([
+                    database.ref('settings').once('value'),
+                    database.ref('elevator_configs').once('value'),
+                    database.ref('elevators').once('value')
+                ]);
+
+                settings = settingsSnapshot.val() || {};
+                elevatorConfigs = configsSnapshot.val() || {};
+                latestElevatorsData = elevatorsSnapshot.val() || {};
+                
+                await checkShabbatStatus(); // יקרא ל-updateDisplayMode בסיום
+                
+                if (isShabbatOrHoliday) {
+                    renderFullDisplay();
+                }
+
+                database.ref('settings').on('value', (snapshot) => { 
+                    settings = snapshot.val() || {}; 
+                    if(isShabbatOrHoliday) renderFullDisplay(); 
+                });
+                database.ref('elevator_configs').on('value', (snapshot) => { 
+                    elevatorConfigs = configsSnapshot.val() || {}; 
+                    if(isShabbatOrHoliday) renderFullDisplay(); 
+                });
+                database.ref('elevators').on('value', (snapshot) => {
+                    latestElevatorsData = snapshot.val() || {};
+                    if(isShabbatOrHoliday) renderFullDisplay();
+                });
+
+                setInterval(checkShabbatStatus, 300000); // 5 דקות
+
+            } catch (error) {
+                console.error("Failed to initialize app data:", error);
+                const container = document.querySelector('.dashboard-container');
+                container.innerHTML = '<p style="font-size: 1.5em; color: #ff8a8a;">שגיאה בטעינת הנתונים.</p>';
+            }
+        }
+
+        function renderFullDisplay() { 
+            if (!THIS_SCREEN_FLOOR || !settings || !elevatorConfigs) {
+                console.warn("Missing data for rendering full display");
+                return;
+            }
+            
+            if (!isShabbatOrHoliday) {
+                console.log("Not Shabbat, skipping Shabbat display render.");
+                return;
+            }
+            
+            const elevatorIds = latestElevatorsData ? Object.keys(latestElevatorsData) : [];
+            
+            // --- שינוי: סינון המעליות לפני יצירת הפאנלים ---
+            const visibleElevators = elevatorIds.filter(id => shouldShowElevator(id));
+            // ---------------------------------------------
+
+            if (visibleElevators.length === 0 && document.querySelector('.dashboard-container').innerHTML === '') {
+                // אופציונלי: הודעה אם אין מעליות לקומה זו
+                return;
+            }
+
+            if (latestElevatorsData) {
+                // שולחים ל-createElevatorPanels רק את המעליות המסוננות
+                createElevatorPanels(visibleElevators); 
+                
+                // מעדכנים נתונים רק למה שקיים ומוצג
+                visibleElevators.forEach(id => {
+                    if (latestElevatorsData[id]) {
+                        processElevatorUpdate(id, latestElevatorsData[id]);
+                    }
+                });
+            }
+        }
+        
+        async function checkShabbatStatus() {
+            let wasShabbat = isShabbatOrHoliday;
+            
+            if (TEST_SHABBAT_MODE) {
+                isShabbatOrHoliday = true;
+            } else {
+                 isShabbatOrHoliday = false; // מתחיל כלא-שבת לפני הבדיקה
+            }
+            
+            
+            if (!settings || !settings.GEO_NAME_ID) {
+                console.warn("Missing GEO_NAME_ID for Shabbat check.");
+            } else {
+                try {
+                    const url = `https://www.hebcal.com/shabbat?cfg=json&geonameid=${settings.GEO_NAME_ID}&m=50&tzid=Asia/Jerusalem`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    let isCurrentlyShabbat = false;
+                    
+                    // *** Use the synced server time, not local device time ***
+                    // We can use (serverTimeOffset || 0) because if sync failed, it's null,
+                    // and this check will just use local time, which is fine for the Shabbat check
+                    // as it's less critical than the main clock display.
+                    const now = new Date(Date.now() + (serverTimeOffset || 0)); 
+                    
+                    if (data.items) {
+                        data.items.forEach(item => {
+                            const itemDate = new Date(item.date); // Hebcal מחזיר תאריכים ב-ISO 8601
+                            
+                            if (item.category === 'candles') {
+                                const shabbatStart = itemDate;
+                                const havdalahItem = data.items.find(i => i.category === 'havdalah' && new Date(i.date) > shabbatStart);
+                                if (havdalahItem) {
+                                    if (now >= shabbatStart && now <= new Date(havdalahItem.date)) {
+                                        isCurrentlyShabbat = true;
+                                    }
+                                }
+                            }
+                            
+                            if (item.category === 'holiday' && item.yomtov) {
+                                 // בדיקה אם היום הוא יום חג (בדיקה פשוטה לפי תאריך)
+                                 const itemLocalDate = new Date(itemDate.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+                                 const nowLocalDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+
+                                 if(nowLocalDate.getFullYear() === itemLocalDate.getFullYear() && 
+                                    nowLocalDate.getMonth() === itemLocalDate.getMonth() && 
+                                    nowLocalDate.getDate() === itemLocalDate.getDate()) {
+                                     isCurrentlyShabbat = true;
+                                 }
+                            }
+                        });
+                    }
+                    
+                    isShabbatOrHoliday = isCurrentlyShabbat || TEST_SHABBAT_MODE || manualShabbatOverride;
+
+                } catch (error) {
+                    console.error("Error fetching Shabbat times:", error);
+                    isShabbatOrHoliday = TEST_SHABBAT_MODE || manualShabbatOverride; // חוזר לברירת מחדל (+ override) במקרה שגיאה
+                }
+            }
+
+             if (isShabbatOrHoliday !== wasShabbat || !isInitialized) {
+                 updateDisplayMode();
+             }
+        }
+        
+        function updateDisplayMode() {
+            console.log(`Updating display mode. Is Shabbat? ${isShabbatOrHoliday}`);
+            document.body.classList.toggle('shabbat-mode-active', isShabbatOrHoliday);
+            
+            if (isShabbatOrHoliday) {
+                ui.clockContainer.style.display = 'none';
+                ui.toggleClockBtn.style.display = 'none';
+                ui.bottomStatusBar.style.display = 'block';
+                document.querySelector('.dashboard-container').style.display = 'flex';
+                
+                // *** FIX: Call renderFullDisplay() to populate the elevator panels ***
+                renderFullDisplay();
+
+            } else {
+                ui.clockContainer.style.display = 'block';
+                ui.toggleClockBtn.style.display = 'block';
+                ui.bottomStatusBar.style.display = 'none';
+                document.querySelector('.dashboard-container').style.display = 'none';
+            }
+            
+            // This is no longer needed as renderFullDisplay() handles it.
+            /*
+            if (isShabbatOrHoliday && latestElevatorsData) {
+                Object.keys(latestElevatorsData).forEach(id => {
+                    if (elevatorStates[id]) calculateAndShowETAFor(id, elevatorStates[id]);
+                });
+            }
+            */
+        }
+        
+        async function processElevatorUpdate(id, newData) {
+            const currentState = elevatorStates[id] || {};
+            const lastFloorNum = getNumericFloor(currentState.floor);
+            const currentFloorNum = getNumericFloor(newData.floor);
+
+            if (currentFloorNum === null) return;
+
+            // --- UPDATED: Get Per-Elevator Limits ---
+            const config = elevatorConfigs[id] || {};
+            const topFloorNum = getNumericFloor(config.TOP_FLOOR ?? settings.TOP_FLOOR);
+            const bottomFloorNum = getNumericFloor(config.BOTTOM_FLOOR ?? settings.BOTTOM_FLOOR);
+            // ----------------------------------------
+
+            if (currentState.timeoutId) {
+                clearTimeout(currentState.timeoutId);
+            }
+            
+            let newDirection = currentState.direction || 'stopped';
+
+            if (currentFloorNum === topFloorNum || currentFloorNum === bottomFloorNum) {
+                newDirection = 'stopped';
+            } 
+            else if (lastFloorNum !== null && currentFloorNum !== lastFloorNum) {
+                newDirection = (currentFloorNum > lastFloorNum) ? 'up' : 'down';
+            }
+
+            const newState = {
+                floor: newData.floor,
+                direction: newDirection,
+                timestamp: Date.now(),
+                timeoutId: setTimeout(() => {
+                    const timedOutState = elevatorStates[id];
+                    if (timedOutState && (Date.now() - timedOutState.timestamp >= STALE_TIMEOUT)) {
+                       timedOutState.direction = 'stopped';
+                       updateElevatorDisplay(id, timedOutState);
+                    }
+                }, STALE_TIMEOUT)
+            };
+            
+            elevatorStates[id] = newState;
+
+            if (lastFloorNum !== null && Math.abs(currentFloorNum - lastFloorNum) > 1) {
+                await interpolateAndDisplay(id, lastFloorNum, currentFloorNum, newState);
+            } else {
+                updateElevatorDisplay(id, newState);
+            }
+            
+            if (typeof calculateAndShowETAFor === 'function') {
+                calculateAndShowETAFor(id, newState);
+            }
+        }
+
+        async function interpolateAndDisplay(elevatorId, startNum, endNum, finalState) {
+            const step = (endNum > startNum) ? 1 : -1;
+            const direction = (step > 0) ? 'up' : 'down';
+            const allFloorsMap = new Map();
+            if (elevatorConfigs) {
+                Object.values(elevatorConfigs).forEach(config => {
+                    if(config && config.STOPPING_FLOORS) {
+                        config.STOPPING_FLOORS.forEach(floor => allFloorsMap.set(getNumericFloor(floor), floor));
+                    }
+                });
+            }
+            for (let floor = startNum + step; floor !== endNum; floor += step) {
+                const displayFloor = allFloorsMap.get(floor) || floor.toString();
+                const intermediateState = { floor: displayFloor, direction: direction };
+                updateElevatorDisplay(elevatorId, intermediateState);
+                await new Promise(resolve => setTimeout(resolve, INTERPOLATION_DELAY));
+            }
+            updateElevatorDisplay(elevatorId, finalState);
+        }
+
+        // --- שינוי: כעת מקבלת רק את המעליות המסוננות (שצריך להציג) ---
+        function createElevatorPanels(elevatorIds) {
+            const container = document.querySelector('.dashboard-container');
+            const currentPanels = new Set(Array.from(container.children).map(child => child.id));
+            const newPanelIds = new Set(elevatorIds.map(id => `panel-${id}`));
+
+            // בדיקה האם הסט של המעליות שצריך להציג זהה למה שכבר מוצג
+            if (new Set([...currentPanels, ...newPanelIds]).size === currentPanels.size && currentPanels.size === newPanelIds.size) {
+                 return;
+            }
+
+            container.innerHTML = ''; // מנקה ובונה מחדש אם יש שינוי (למשל מעלית אחת ירדה מהתצוגה)
+            elevatorIds.sort().forEach(id => {
+                const panel = document.createElement('div');
+                panel.className = 'elevator-panel';
+                panel.id = `panel-${id}`;
+                panel.innerHTML = `
+                    <div class="floor-label elevator-id">מעלית ${id}</div>
+                    <div class="floor-indicator" id="floorNumber-${id}">--</div>
+                    <div class="direction-status">
+                        <i id="directionIcon-${id}" class="fas fa-minus direction-icon direction-neutral"></i>
+                        <span id="directionText-${id}">...</span>
+                    </div>
+                    <div class="eta-display">
+                        <div class="floor-label" id="etaLabel-${id}">זמן הגעה משוער לקומה ${THIS_SCREEN_FLOOR}</div>
+                        <div class="eta-result" id="etaResult-${id}">...</div>
+                    </div>
+                `;
+                container.appendChild(panel);
+            });
+        }
+        // --- סוף שינוי ---
+
+        function getNumericFloor(floorText) {
+            if (floorText === null || floorText === undefined) return null;
+            const text = String(floorText).toUpperCase();
+            if (text === 'L') return -1;
+            const num = parseInt(text, 10);
+            return isNaN(num) ? null : num;
+        }
+
+        function countStops(startFloor, endFloor, direction, stops) {
+            if (!stops) return 0;
+            const sortedStops = stops.map(getNumericFloor).sort((a, b) => a - b);
+            if (direction === 'up') return sortedStops.filter(f => f > startFloor && f <= endFloor).length;
+            else return sortedStops.filter(f => f < startFloor && f >= endFloor).length;
+        }
+        
+        function calculateAndShowETAFor(elevatorId, elevatorState) {
+            const etaResultElement = document.getElementById(`etaResult-${elevatorId}`);
+            if (!etaResultElement) return;
+            if (!isShabbatOrHoliday) { etaResultElement.textContent = ""; return; }
+            const elevatorConfig = elevatorConfigs[elevatorId];
+            if (!elevatorState || !elevatorConfig || !settings || !elevatorConfig.STOPPING_FLOORS) { etaResultElement.textContent = "..."; return; }
+            const userFloorNum = getNumericFloor(THIS_SCREEN_FLOOR);
+            if (userFloorNum === null) { etaResultElement.textContent = "שגיאה: קומה לא מוגדרה"; return; }
+            
+            // --- שינוי קטן: בדיקה האם בכלל מחשבים זמן (עצירה), גם אם לא מציגים ---
+            if (!elevatorConfig.STOPPING_FLOORS.map(String).includes(String(THIS_SCREEN_FLOOR))) { etaResultElement.textContent = "לא עוצרת בקומה זו"; return; }
+            
+            const elevatorFloorNum = getNumericFloor(elevatorState.floor);
+            if (userFloorNum === elevatorFloorNum) { etaResultElement.textContent = "המעלית כאן"; return; }
+            let effectiveDirection = elevatorState.direction;
+            
+            // --- UPDATED: Get Per-Elevator Limits ---
+            const topFloorNum = getNumericFloor(elevatorConfig.TOP_FLOOR ?? settings.TOP_FLOOR);
+            const bottomFloorNum = getNumericFloor(elevatorConfig.BOTTOM_FLOOR ?? settings.BOTTOM_FLOOR);
+            // ----------------------------------------
+            
+            if (effectiveDirection === 'stopped' || effectiveDirection === ' ') {
+                if (elevatorFloorNum === bottomFloorNum) effectiveDirection = 'up';
+                else if (elevatorFloorNum === topFloorNum) effectiveDirection = 'down';
+            }
+            let totalSeconds = 0;
+            
+            // --- NEW: Per-Elevator Configs with Global Fallback ---
+            // Priorities: Elevator Config > Global Settings > Default
+            const timePerFloor = parseFloat(elevatorConfig.TIME_PER_FLOOR ?? settings.TIME_PER_FLOOR ?? 0);
+            const expressTimeUp = parseFloat(elevatorConfig.EXPRESS_TIME_UP ?? settings.EXPRESS_TIME_UP ?? 0);
+            const expressTimeDown = parseFloat(elevatorConfig.EXPRESS_TIME_DOWN ?? settings.EXPRESS_TIME_DOWN ?? 0);
+            const shabbatMode = elevatorConfig.SHABBAT_MODE ?? settings.SHABBAT_MODE ?? 'full';
+            // -----------------------------------------------------
+
+            const totalTravelDistance = topFloorNum - bottomFloorNum || 1;
+            const stopsTime = (start, end, dir) => countStops(start, end, dir, elevatorConfig.STOPPING_FLOORS) * timePerFloor;
+            const expressTime = (start, end, totalTime) => (Math.abs(end - start) / totalTravelDistance) * totalTime;
+            switch (shabbatMode) {
+                case 'full':
+                    if (effectiveDirection === 'up' || effectiveDirection === ' ') totalSeconds = (userFloorNum > elevatorFloorNum) ? stopsTime(elevatorFloorNum, userFloorNum, 'up') : stopsTime(elevatorFloorNum, topFloorNum, 'up') + stopsTime(topFloorNum, userFloorNum, 'down');
+                    else totalSeconds = (userFloorNum < elevatorFloorNum) ? stopsTime(elevatorFloorNum, userFloorNum, 'down') : stopsTime(elevatorFloorNum, bottomFloorNum, 'down') + stopsTime(bottomFloorNum, userFloorNum, 'up');
+                    break;
+                case 'express_up':
+                    if (effectiveDirection === 'up' || effectiveDirection === ' ') totalSeconds = expressTime(elevatorFloorNum, topFloorNum, expressTimeUp) + stopsTime(topFloorNum, userFloorNum, 'down');
+                    else totalSeconds = (userFloorNum < elevatorFloorNum) ? stopsTime(elevatorFloorNum, userFloorNum, 'down') : stopsTime(elevatorFloorNum, bottomFloorNum, 'down') + expressTimeUp + stopsTime(topFloorNum, userFloorNum, 'down');
+                    break;
+                case 'stops_up':
+                    if (effectiveDirection === 'down' || effectiveDirection === ' ') totalSeconds = expressTime(elevatorFloorNum, bottomFloorNum, expressTimeDown) + stopsTime(bottomFloorNum, userFloorNum, 'up');
+                    else totalSeconds = (userFloorNum > elevatorFloorNum) ? stopsTime(elevatorFloorNum, userFloorNum, 'up') : stopsTime(elevatorFloorNum, topFloorNum, 'up') + expressTimeDown + stopsTime(bottomFloorNum, userFloorNum, 'up');
+                    break;
+            }
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = Math.round(totalSeconds % 60);
+            etaResultElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')} דקות`;
+        }
+
+        function updateElevatorDisplay(elevatorId, stateData) {
+            const panel = document.getElementById(`panel-${elevatorId}`);
+            if (!panel) return;
+            const floorElement = document.getElementById(`floorNumber-${elevatorId}`);
+            const iconElement = document.getElementById(`directionIcon-${elevatorId}`);
+            const textElement = document.getElementById(`directionText-${elevatorId}`);
+            if (!stateData) {
+                floorElement.textContent = '--';
+                iconElement.className = 'fas fa-minus direction-icon direction-neutral';
+                textElement.textContent = "ממתין...";
+                return;
+            }
+            floorElement.textContent = stateData.floor ?? '--';
+            iconElement.className = 'fas direction-icon';
+            const dir = stateData.direction;
+            if (dir === 'up') {
+                iconElement.classList.add('fa-arrow-up', 'direction-up');
+                textElement.textContent = " ";
+            } else if (dir === 'down') {
+                iconElement.classList.add('fa-arrow-down', 'direction-down');
+                textElement.textContent = " ";
+            } else {
+                iconElement.classList.add('fa-minus', 'direction-neutral');
+                textElement.textContent = " ";
+            }
+        }
+    </script>
+</body>
+</html>
