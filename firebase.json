@@ -6,7 +6,20 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "**/CLAUDE.md"
+      "**/CLAUDE.md",
+      "functions/**"
     ]
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "*.local"
+      ]
+    }
+  ]
 }

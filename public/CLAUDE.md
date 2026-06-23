@@ -26,6 +26,19 @@
 - 2 מצבים: weekday (ללא stops) + shabbat (עם stops).
 - טקסטים ארוכים ("Synagogue / בית כנסת") לא חורגים מהפאנל.
 
+## 🔔 התראות — שכבת ענן "תמיד-חיה"
+- **למה בענן:** ההתראות עברו מ-ה-Pi לענן כי Pi כבוי / הפסקת-חשמל לא יכול להתריע על עצמו.
+- **3 התראות:** כניסה/יציאה משבת (`elevator_configs/{id}/SHABBAT_ACTIVE`) ו-"אין תנועה X זמן
+  (החרגת לילה)" (`elevators/{id}/timestamp`; **תופס גם הפסקת-חשמל** — Pi מת ⇒ timestamp קופא).
+- **מסלול פעיל (פשוט) = `apps-script/`** — Google Apps Script ששולח מייל דרך `MailApp`
+  (מחשבון Google, בלי SMTP/סיסמת-אפליקציה/Blaze) + טלגרם אופציונלי. הגדרות בראש הסקריפט,
+  מצב ב-PropertiesService (אין צומת/כתיבה ל-DB). טריגר מתוזמן כל ~5 דק'. ראה `apps-script/README.md`.
+- **חלופה = `functions/`** (Cloud Functions, טריגרים מיידיים, דורש Blaze+SMTP). **אל תריץ את
+  שתי השכבות יחד** — התראות כפולות. `lib/night.js`+`lib/watch.js` נמלו מ-`notifier.py` (עם בדיקות).
+- **חשוב:** השאר את ההתראות על ה-Pi **כבויות** (`rfid_config.json→notifications.enabled:false`).
+
 ## פריסה
 - **תמיד גבה את `public/` לפני deploy.**
-- `firebase deploy --only hosting` (project `ramada-elev`).
+- Hosting: `firebase deploy --only hosting` (project `ramada-elev`).
+- Functions: `cd functions && npm install` → `firebase deploy --only functions`
+  (דורש Blaze + הגדרת Secrets — ראה `functions/README.md`).
