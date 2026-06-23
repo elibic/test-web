@@ -17,7 +17,7 @@
 
 // ===================== הגדרות — ערוך כאן בלבד =====================
 var DB_URL = "https://ramada-elev-default-rtdb.europe-west1.firebasedatabase.app";
-var ELEVATOR_IDS = ["A"];             // אם יש עוד מעליות: ["A", "B"]
+var ELEVATOR_IDS = [];                // ריק = זיהוי אוטומטי של כל המעליות מ-/elevators
 var EMAIL_TO = "elchib18@gmail.com";  // נמענים, מופרדים בפסיק
 var THRESHOLD_HOURS = 8;              // סף "אין תנועה" (שעות-יום נטו, ללא לילה)
 var NIGHT_START_HOUR = 23;            // תחילת לילה (שעה מקומית)
@@ -34,13 +34,22 @@ var DB_AUTH = "";
 
 /** הפונקציה שמריצים בטריגר המתוזמן (כל ~5 דקות). */
 function monitorElevators() {
-  ELEVATOR_IDS.forEach(function (id) {
+  var ids = ELEVATOR_IDS && ELEVATOR_IDS.length ? ELEVATOR_IDS : discoverElevatorIds();
+  ids.forEach(function (id) {
     try {
       checkElevator(id);
     } catch (e) {
       Logger.log("שגיאה במעלית " + id + ": " + e);
     }
   });
+}
+
+/** זיהוי אוטומטי של כל המעליות מתוך /elevators (כמו האתר). */
+function discoverElevatorIds() {
+  var all = fetchJson("/elevators");
+  var ids = all ? Object.keys(all) : [];
+  Logger.log("מעליות שזוהו: " + (ids.length ? ids.join(", ") : "(אין)"));
+  return ids;
 }
 
 function checkElevator(id) {
