@@ -25,10 +25,15 @@ admin.initializeApp();
 const REGION = "europe-west1";                 // תואם לאזור ה-RTDB
 const INSTANCE = "ramada-elev-default-rtdb";   // שם מופע ה-RTDB
 
-const TELEGRAM_BOT_TOKEN = defineSecret("TELEGRAM_BOT_TOKEN");
+// סודות שנפרסים כעת (מייל + endpoint הבדיקה).
 const SMTP_PASS = defineSecret("SMTP_PASS");
 const NOTIFY_TEST_KEY = defineSecret("NOTIFY_TEST_KEY");
-const SECRETS = [TELEGRAM_BOT_TOKEN, SMTP_PASS, NOTIFY_TEST_KEY];
+const SECRETS = [SMTP_PASS, NOTIFY_TEST_KEY];
+// להפעלת Telegram בהמשך:
+//   1) firebase functions:secrets:set TELEGRAM_BOT_TOKEN
+//   2) הוסף  defineSecret("TELEGRAM_BOT_TOKEN")  ל-SECRETS למעלה
+//   3) הפעל את הערוץ ב-/settings/notifications (channels.telegram) ו-redeploy.
+// הקוד ב-lib/notify.js כבר תומך ב-Telegram; הוא פשוט לא יישלח כל עוד הערוץ כבוי.
 
 function isActive(v) {
   return v === true || v === 1 || v === "true" || v === "force_on";

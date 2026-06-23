@@ -28,49 +28,52 @@ Cloud Functions שרצות **בענן** ולכן שולחות התראות גם 
   "events": { "shabbat_enter": true, "shabbat_exit": true, "no_movement": true },
   "no_movement": { "threshold_hours": 10, "night_start": "23:00", "night_end": "06:00" },
   "channels": {
-    "telegram": { "enabled": true, "chat_id": "123456789" },
     "email": {
-      "enabled": false,
+      "enabled": true,
       "smtp_host": "smtp.gmail.com",
       "smtp_port": 587,
       "username": "you@gmail.com",
       "from": "you@gmail.com",
       "to": ["alerts@example.com"]
-    }
+    },
+    "telegram": { "enabled": false, "chat_id": "123456789" }
   }
 }
 ```
-> `bot_token` ו-`password` **לא** כאן — הם Secrets. `chat_id`/נמענים הם ניתוב, לא סוד.
+> `password`/`bot_token` **לא** כאן — הם Secrets. נמענים/`chat_id` הם ניתוב, לא סוד.
+> כרגע מתחילים עם **מייל** (telegram כבוי; יופעל בהמשך — ראו index.js).
 
-## פריסה (חד-פעמי)
-דורש את Firebase CLI ותוכנית **Blaze** (פונקציות דור-2, מתזמן ויציאה לרשת מחייבים זאת;
-השימוש בפועל נכנס ב-free tier).
+## פריסה (חד-פעמי) — מצב נוכחי: מייל
+דורש את Firebase CLI ותוכנית **Blaze** (כבר פעיל).
 
 ```bash
 cd functions
 npm install
 
-# 1) מעבר ל-Blaze: Firebase Console → Upgrade (כרטיס אשראי; בלי עלות צפויה)
-
-# 2) הגדרת הסודות (פעם אחת; ערך מודבק כשנשאלים):
-firebase functions:secrets:set TELEGRAM_BOT_TOKEN
-firebase functions:secrets:set SMTP_PASS         # רק אם משתמשים במייל
+# 1) הגדרת הסודות שצריך עכשיו (פעם אחת; הערך מודבק כשנשאלים):
+firebase functions:secrets:set SMTP_PASS         # סיסמת-אפליקציה של Gmail (16 תווים)
 firebase functions:secrets:set NOTIFY_TEST_KEY   # מחרוזת אקראית לבדיקה
+#   (TELEGRAM_BOT_TOKEN — בהמשך, כשנפעיל טלגרם)
 
-# 3) הזנת ההעדפות ב-RTDB תחת /settings/notifications (קונסולה או import)
+# 2) הזנת ההעדפות ב-RTDB תחת /settings/notifications (קונסולה), עם channels.email.enabled=true
 
-# 4) פריסה:
+# 3) פריסה (או דרך GitHub Actions — ראו למטה):
 firebase deploy --only functions
 ```
 
-## בדיקה — לקבל התראה אמיתית
-אחרי פריסה, פנייה ל-endpoint הבדיקה (מחזיר תוצאה לכל ערוץ ושולח הודעה אמיתית):
+### ⚠️ Gmail — סיסמת-אפליקציה
+ה-`SMTP_PASS` הוא **לא** סיסמת ה-Gmail הרגילה אלא **App Password**:
+Google Account → Security → צריך **2-Step Verification מופעל** → "App passwords" →
+צור סיסמה (16 תווים) → זה הערך של `SMTP_PASS`. `username`/`from` = כתובת ה-Gmail המלאה.
+
+## בדיקה — לקבל מייל אמיתי
+אחרי פריסה, פנייה ל-endpoint הבדיקה (שולח הודעה אמיתית לכל ערוץ פעיל):
 ```bash
 curl "https://europe-west1-ramada-elev.cloudfunctions.net/notifyTest?key=<NOTIFY_TEST_KEY>"
 ```
 > ה-URL המדויק מודפס בסיום `firebase deploy`. בדור-2 ייתכן URL מסוג `*.run.app`.
 
-תשובה תקינה: `{"ok":true,"results":[{"channel":"telegram","ok":true,...}]}` ותקבל הודעה.
+תשובה תקינה: `{"ok":true,"results":[{"channel":"email","ok":true,...}]}` ותקבל מייל.
 
 ## פריסה אוטומטית מ-GitHub (CI/CD)
 Workflow מוכן: `.github/workflows/firebase-deploy.yml`. פורס Hosting+Functions
