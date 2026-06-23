@@ -72,6 +72,22 @@ curl "https://europe-west1-ramada-elev.cloudfunctions.net/notifyTest?key=<NOTIFY
 
 תשובה תקינה: `{"ok":true,"results":[{"channel":"telegram","ok":true,...}]}` ותקבל הודעה.
 
+## פריסה אוטומטית מ-GitHub (CI/CD)
+Workflow מוכן: `.github/workflows/firebase-deploy.yml`. פורס Hosting+Functions
+ב-push ל-`main` (או ידנית: Actions → "Deploy to Firebase" → Run workflow).
+
+**הקמה חד-פעמית — הוסף secret אחד לאימות** (GitHub → Settings → Secrets and
+variables → Actions → New repository secret). שתי אפשרויות:
+
+- **`FIREBASE_SERVICE_ACCOUNT`** (מומלץ): Firebase Console → ⚙️ Project settings →
+  Service accounts → *Generate new private key* → הדבק את כל ה-JSON כערך ה-secret.
+  ודא שלחשבון יש הרשאות פריסה (Firebase Admin + Cloud Functions Admin + Service
+  Account User; ולפונקציות עם סודות גם Secret Manager Admin).
+- **`FIREBASE_TOKEN`** (פשוט יותר, מיושן): מקומית `firebase login:ci` → הדבק את הטוקן.
+
+> עדיין נדרש חד-פעמית: Blaze + `firebase functions:secrets:set ...` (ראו למעלה).
+> ה-CI מריץ `npm test` לפני הפריסה — פריסה תיעצר אם הבדיקות נכשלות.
+
 ## בדיקות יחידה (חישוב יום/לילה)
 ```bash
 cd functions && npm install && npm test

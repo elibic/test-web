@@ -80,6 +80,7 @@ node_modules/
 !/firebase.json
 !/.firebaserc
 !/functions
+!/.github
 !/public
 
 #  בתוך public/ — דלג על ארכיונים וגיבויים:
