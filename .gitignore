@@ -80,6 +80,7 @@ node_modules/
 !/firebase.json
 !/.firebaserc
 !/functions
+!/apps-script
 !/.github
 !/public
 
