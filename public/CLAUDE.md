@@ -26,6 +26,22 @@
 - 2 מצבים: weekday (ללא stops) + shabbat (עם stops).
 - טקסטים ארוכים ("Synagogue / בית כנסת") לא חורגים מהפאנל.
 
+## 🔔 התראות — שכבת ענן "תמיד-חיה" (`functions/`)
+- **למה בענן:** ההתראות עברו מ-ה-Pi לענן כי Pi כבוי / הפסקת-חשמל לא יכול להתריע על עצמו.
+- **3 התראות:** כניסה/יציאה משבת (טריגר על `elevator_configs/{id}/SHABBAT_ACTIVE`),
+  ו-"אין תנועה X זמן (החרגת לילה)" (פונקציה מתוזמנת על `elevators/{id}/timestamp`;
+  **תופסת גם הפסקת-חשמל** — Pi מת ⇒ timestamp קופא).
+- **קוד:** `functions/index.js` (3 פונקציות + `notifyTest` ל-endpoint בדיקה),
+  `lib/notify.js` (Telegram+Email), `lib/night.js` + `lib/watch.js` (חישוב יום/לילה +
+  watchdog טהור עם בדיקות; נמל מ-`elevator-rpi/shabbat_detector/notifier.py`).
+- **סודות → Functions Secrets בלבד** (`TELEGRAM_BOT_TOKEN`, `SMTP_PASS`, `NOTIFY_TEST_KEY`) —
+  לא ב-DB, לא ב-Git. **העדפות → `/settings/notifications` ב-RTDB** (ניתן לעריכה).
+  מצב פנימי למניעת כפילות → `/notify_state/{id}`.
+- **חשוב:** השאר את ההתראות על ה-Pi **כבויות** (`rfid_config.json→notifications.enabled:false`)
+  כדי לא לקבל פעמיים. הוראות פריסה ובדיקה מלאות: `functions/README.md`.
+
 ## פריסה
 - **תמיד גבה את `public/` לפני deploy.**
-- `firebase deploy --only hosting` (project `ramada-elev`).
+- Hosting: `firebase deploy --only hosting` (project `ramada-elev`).
+- Functions: `cd functions && npm install` → `firebase deploy --only functions`
+  (דורש Blaze + הגדרת Secrets — ראה `functions/README.md`).

@@ -78,6 +78,8 @@ node_modules/
 !/.gitignore
 !/README.md
 !/firebase.json
+!/.firebaserc
+!/functions
 !/public
 
 #  בתוך public/ — דלג על ארכיונים וגיבויים:
