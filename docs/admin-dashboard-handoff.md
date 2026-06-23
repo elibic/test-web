@@ -10,8 +10,8 @@
 | חלק | מה זה | סטטוס |
 |-----|-------|-------|
 | **1. הדשבורד** | ריפו `elibic/admin-dashboard` — אתר סטטי, Firebase Hosting | ✅ **בנוי** (ענף `claude/focused-turing-buyt3w`) |
-| **2. צד ה-Pi** | דיווח-גרסה + ביצוע פקודת-עדכון ב-`elevator-rpi` | ❌ **לא קיים** — זה הצעד הבא |
-| **3. ramada-web** | אימות נתיב `/setup` + מבנה config פר-פרויקט | ⏳ קל; הריפו עכשיו ב-scope |
+| **2. צד ה-Pi** | דיווח-גרסה + ביצוע פקודת-עדכון ב-`elevator-rpi` | ✅ **בנוי** (ענף `claude/amazing-goldberg-axrpem`) — `fleet_agent.py` + `docs/fleet-remote-update.md` + שילוב ב-`setup.sh` |
+| **3. ramada-web** | אימות נתיב `/setup` + מבנה config פר-פרויקט | ✅ **אומת** (ראו "חלק 3" למטה) |
 
 **הבעיה המרכזית:** הדשבורד כותב פקודות עדכון ל-`/fleet/{id}/command`, ומציג עמודות "גרסה/מקוון"
 לפי `/fleet/{id}` — אבל **ה-Pi עוד לא כותב לשם כלום ולא קורא משם כלום**. חלק 2 הוא מה שסוגר את הלולאה.
@@ -63,10 +63,30 @@ Firebase Hosting על פרויקט האדמין **`econtrolelevelev`** (`.fireba
 
 ---
 
-## מה לא קיים — חלק 2: צד ה-Pi ב-`elevator-rpi` ← **הצעד הבא**
-חסרים שני קבצים שמוזכרים בכל התיעוד אך **לא קיימים בריפו**:
-- `shabbat_detector/fleet_agent.py` — הסוכן שמדווח גרסה וקורא פקודות.
-- `docs/fleet-remote-update.md` — תיעוד המודל + חוקי-RTDB פר-פרויקט.
+## ✅ חלק 2 — צד ה-Pi ב-`elevator-rpi` — **בנוי**
+> נבנה בענף `claude/amazing-goldberg-axrpem` (2026-06-23). תיעוד מלא:
+> `elevator-rpi/docs/fleet-remote-update.md`.
+
+נבנו:
+- `shabbat_detector/fleet_agent.py` — heartbeat ל-`/fleet/{id}` (`version`=תאריך-commit
+  `YYYY.MM.DD`, `commit`, `last_seen`, `status`) + watcher לפקודת `update` עם אימות
+  `secret_key` (bearer-token, `compare_digest`) → מריץ `./setup.sh` → מדווח `update_status`.
+  הגנת replay: dedupe לפי `requested_at` (state נפרד) + מחיקת הפקודה + reconcile לאחר קריסה.
+- `systemd/fleet-agent.service.in` (+עותק סטטי) ושילוב ב-`installer/core.py`
+  (`install_fleet_agent` → `install_all`/`all_status`/`service_action`). השירות רץ כ-root.
+- `docs/fleet-remote-update.md` — מודל נתונים, secret_key, replay, חוזה-גרסה, חוקי-RTDB.
+- `rfid_config.example.json` — מפתחות fleet אופציונליים.
+
+**החלטות שאושרו ע"י המשתמש לפני המימוש:** מודל bearer-token (אימות בצד ה-Pi) ·
+פעולת-עדכון = `sudo ./setup.sh` (מתקין מלא) · הגנת-replay = dedupe + מחיקת הפקודה.
+
+**פתוח בצד-הפריסה (לא קוד):**
+1. **חוקי-RTDB פר-פרויקט** — ה-`secret_key` ב-`/fleet` חשוף בקריאה; חובה לגדר (מודל A
+   תואם-קיים / מודל B מואמת — מתועדים ב-`fleet-remote-update.md`).
+2. **`LATEST_VERSION`** בדשבורד = תאריך ה-commit של ה-tip ב-`main` בכל שחרור (כרגע `2026.06.21`).
+3. ה-Pi מושך מ-`main`; ענף הפיתוח טרם הועבר ל-`main` (`git push origin <branch>:main`).
+
+### המודל המקורי שהיה חסר (לתיעוד):
 
 **מה ה-fleet_agent צריך לעשות** (לפי `admin-dashboard-plan.md` §2, מתבסס על המודל הקיים ב-`firebase_client.py`):
 1. **דיווח גרסה** — בהפעלה + כל ~5 דק': `PATCH /fleet/{ELEVATOR_ID}` עם
@@ -80,15 +100,28 @@ Firebase Hosting על פרויקט האדמין **`econtrolelevelev`** (`.fireba
 4. **אינטגרציה**: שירות systemd נפרד או הרחבה ל-`shabbat-detector`; להוסיף ל-`setup.sh`.
    `ELEVATOR_ID` + `secret_key` + `FIREBASE_URL` כבר בקונפיג (`rfid_config.json`).
 
-> ⚠️ פתוח לאישור: המודל הזה ("Pi מריץ git pull לפי פקודה מרחוק, מאומת ב-secret_key") טרם אושר סופית
-> ע"י המשתמש לפני בנייה. **לוודא אישור לפני מימוש.**
+> ✅ המודל אושר ונבנה (ראו למעלה). שולב גם `_reconcile` לקריסה באמצע עדכון ו-restart-עצמי
+> לטעינת קוד-סוכן מעודכן.
 
 ---
 
-## חלק 3 — `ramada-web` (קל, עכשיו ב-scope)
-- לאמת את הנתיב המדויק של דף ההגדרות (`/setup`) שאליו הדשבורד מקשר (`https://<subdomain>.econtrol.co.il/setup`).
-- לאמת את מבנה ה-Firebase web config פר-פרויקט (התבנית שממנה משכפלים אתרי לקוח).
-- מקור-אמת למודל הנתונים: `ramada-web/public/setup.html`.
+## ✅ חלק 3 — `ramada-web` — **אומת** (2026-06-23)
+1. **נתיב `/setup`** — `firebase.json` עם `cleanUrls: true` ⇒ `https://<subdomain>.econtrol.co.il/setup`
+   נפתר ל-`public/setup.html` (דף הגדרות אמיתי, ~3220 שורות: רדיו `force_on/force_off`,
+   קריאה/כתיבה ל-`elevator_configs` ו-`settings`). הקישור בדשבורד תקין.
+2. **מבנה web config פר-פרויקט** — ה-`webConfig` שהדשבורד שומר ב-`/projects/{id}/webConfig`
+   = אובייקט `firebaseConfig` מתוך `public/firebase-config.js` של הלקוח
+   (`{apiKey, authDomain, databaseURL, projectId, storageBucket, messagingSenderId, appId}`).
+   הדשבורד פותח app משני ב-`initializeApp(cfg, id)` ומוודא `databaseURL` + `projectId`
+   ⇒ **תת-קבוצה מינימלית בת 4 מפתחות** (`apiKey/authDomain/databaseURL/projectId`) מספיקה לניטור;
+   הקונפיג המלא של אתר-הלקוח הוא על-קבוצה (נדרש שם ל-storage/messaging/analytics).
+   הזרימה: בהוספת פרויקט בדשבורד מדביקים את אובייקט ה-`firebaseConfig` של הלקוח לשדה ה-config.
+3. **מקור-אמת למודל הנתונים** — `public/setup.html` אומת: `elevator_configs/{id}` עם
+   `SHABBAT_OVERRIDE ∈ {force_on, force_off}`, ו-**`null`/חסר = auto** (לא המחרוזת `"auto"` —
+   ה-detector מתרגם חסר→auto, אז התוצאה זהה). `settings` גלובלי נקרא/נכתב משם. תואם ל-`elevator-rpi/CLAUDE.md`.
+
+> **ניואנס לתיעוד:** ה-CLAUDE.md מציין override כ"מחרוזות auto/force_on/force_off". בפועל `auto`
+> מיוצג ע"י היעדר/`null` (setup.html כותב `null`), לא המחרוזת `"auto"`. ההתנהגות זהה.
 
 ---
 
@@ -100,11 +133,14 @@ Firebase Hosting על פרויקט האדמין **`econtrolelevelev`** (`.fireba
 - **`LATEST_VERSION`**: כרגע מעודכן ידנית ב-`admin-dashboard.js`. לזכור לעדכן בכל שחרור של elevator-rpi.
 
 ## הצעד הבא (סדר מומלץ)
-1. לוודא scope: admin-dashboard + elevator-rpi + ramada-web בסשן.
-2. לקבל אישור על מודל ה-secret_key לעדכון מרחוק.
-3. **לבנות חלק 2** ב-`elevator-rpi`: `fleet_agent.py` + `docs/fleet-remote-update.md` + שילוב ב-`setup.sh`.
-4. למלא TODO-ים בצד הדשבורד (RTDB + Auth + rules + databaseURL) ולפרוס.
-5. לאמת מקצה-לקצה: Pi מדווח גרסה → מופיע בדשבורד → "עדכן" → Pi מבצע git pull → מדווח תוצאה.
+1. ✅ scope: admin-dashboard + elevator-rpi + ramada-web.
+2. ✅ אישור מודל ה-secret_key לעדכון מרחוק (bearer-token).
+3. ✅ **חלק 2** ב-`elevator-rpi`: `fleet_agent.py` + `docs/fleet-remote-update.md` + שילוב ב-`installer/setup.sh`.
+4. ✅ **חלק 3** ב-`ramada-web`: אומת `/setup` + מבנה web config + מקור-אמת.
+5. ⬜ **דשבורד (Firebase, לא קוד):** RTDB + Auth + rules + `databaseURL` ב-`firebase-config.js` ולפרוס.
+   להוסיף **חוקי-RTDB פר-פרויקט** ל-`/fleet` (ראו `elevator-rpi/docs/fleet-remote-update.md`).
+6. ⬜ להעביר את ענף `elevator-rpi` ל-`main` (ה-Pi מושך מ-`main`) ולעדכן `LATEST_VERSION` לתאריך השחרור.
+7. ⬜ אימות מקצה-לקצה: Pi מדווח גרסה → מופיע בדשבורד → "עדכן" → Pi מבצע `setup.sh` → מדווח תוצאה.
 
 ---
 
