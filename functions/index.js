@@ -1,5 +1,5 @@
 /**
- * Cloud Functions — שכבת התראות "תמיד-חיה" למערכת מעלית שבת (פרויקט ramada-elev).
+ * Cloud Functions — שכבת התראות "תמיד-חיה" למערכת מעלית שבת (פרויקט test-94822).
  *
  * רצה בענן ולכן עובדת גם כשה-Pi כבוי / הפסקת חשמל. שלוש התראות:
  *   1. כניסה למצב שבת   — SHABBAT_ACTIVE עבר false→true
@@ -22,8 +22,8 @@ const { noMovementDecision } = require("./lib/watch");
 
 admin.initializeApp();
 
-const REGION = "europe-west1";                 // תואם לאזור ה-RTDB
-const INSTANCE = "ramada-elev-default-rtdb";   // שם מופע ה-RTDB
+const REGION = "us-central1";                 // תואם לאזור ה-RTDB
+const INSTANCE = "test-94822-default-rtdb";   // שם מופע ה-RTDB
 
 // סודות שנפרסים כעת (מייל + endpoint הבדיקה).
 const SMTP_PASS = defineSecret("SMTP_PASS");

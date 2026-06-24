@@ -5,14 +5,14 @@
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCySWsQFuu9K9kZ5tt-wJhxKyDpgzxrapM",
-  authDomain: "ramada.econtrol.co.il",
-  databaseURL: "https://ramada-elev-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "ramada-elev",
-  storageBucket: "ramada-elev.firebasestorage.app",
-  messagingSenderId: "977442422042",
-  appId: "1:977442422042:web:f8369e4072172a174440a3",
-  measurementId: "G-CVDSD0WPN3"
+  apiKey: "AIzaSyA5ZzCrONVD0jMq3h_ISD-wVqyuphQ3Qck",
+  authDomain: "test-94822.firebaseapp.com",
+  databaseURL: "https://test-94822-default-rtdb.firebaseio.com",
+  projectId: "test-94822",
+  storageBucket: "test-94822.firebasestorage.app",
+  messagingSenderId: "909846357157",
+  appId: "1:909846357157:web:731bef70c1aad16133594c",
+  measurementId: "G-41RX929LQX"
 };
 // --- APP CONFIGURATION & BRANDING (Project Specifics) ---
 // This object centralizes all project-specific assets, texts, and settings.

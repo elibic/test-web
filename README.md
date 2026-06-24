@@ -1,7 +1,7 @@
 # Ramada Shabbat Elevator — Web
 
 קבצי הווב של מערכת מעלית שבת (Ramada), הנפרסים ל‑Firebase Hosting
-(פרויקט: `ramada-elev`).
+(פרויקט: `test-94822`).
 
 ## מבנה
 

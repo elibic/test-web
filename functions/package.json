@@ -1,6 +1,6 @@
 {
   "name": "functions",
-  "description": "Cloud Functions — שכבת התראות תמיד-חיה למערכת מעלית שבת (ramada-elev)",
+  "description": "Cloud Functions — שכבת התראות תמיד-חיה למערכת מעלית שבת (test-94822)",
   "private": true,
   "engines": {
     "node": "20"

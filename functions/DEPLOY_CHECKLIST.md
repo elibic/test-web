@@ -1,12 +1,12 @@
-# Deploy checklist — functions (ramada-elev)
+# Deploy checklist — functions (test-94822)
 
-פריסת שכבת ההתראות "תמיד-חיה" (Cloud Functions) ל-`ramada-elev`. הפריסה רצה
+פריסת שכבת ההתראות "תמיד-חיה" (Cloud Functions) ל-`test-94822`. הפריסה רצה
 אוטומטית ב-push ל-`main` שנוגע ב-`functions/`/`public/` (workflow: `.github/workflows/firebase-deploy.yml`).
 
 ## הקמה חד-פעמית (כל אלה צריכים להיות מוכנים לפני פריסה מוצלחת)
 
 ### 1. תוכנית Blaze
-פרויקט `ramada-elev` חייב להיות על **Blaze** — Cloud Functions לא נפרסות ב-Spark.
+פרויקט `test-94822` חייב להיות על **Blaze** — Cloud Functions לא נפרסות ב-Spark.
 
 ### 2. הרשאות ל-Service Account (זה שב-secret `FIREBASE_SERVICE_ACCOUNT`)
 ב-Google Cloud Console → IAM, על ה-SA (`client_email` מתוך ה-JSON), הענק:
@@ -32,9 +32,9 @@
 ### 5. הרשאות לסוכני-שירות (gen-2) — חד-פעמי
 אם ה-SA אינו Owner/Project IAM Admin, הרץ ב-Cloud Shell פעם אחת (הערכים מודפסים בלוג הכושל):
 ```bash
-gcloud projects add-iam-policy-binding ramada-elev --member=serviceAccount:service-<PROJ_NUM>@gcp-sa-pubsub.iam.gserviceaccount.com --role=roles/iam.serviceAccountTokenCreator
-gcloud projects add-iam-policy-binding ramada-elev --member=serviceAccount:<PROJ_NUM>-compute@developer.gserviceaccount.com --role=roles/run.invoker
-gcloud projects add-iam-policy-binding ramada-elev --member=serviceAccount:<PROJ_NUM>-compute@developer.gserviceaccount.com --role=roles/eventarc.eventReceiver
+gcloud projects add-iam-policy-binding test-94822 --member=serviceAccount:service-<PROJ_NUM>@gcp-sa-pubsub.iam.gserviceaccount.com --role=roles/iam.serviceAccountTokenCreator
+gcloud projects add-iam-policy-binding test-94822 --member=serviceAccount:<PROJ_NUM>-compute@developer.gserviceaccount.com --role=roles/run.invoker
+gcloud projects add-iam-policy-binding test-94822 --member=serviceAccount:<PROJ_NUM>-compute@developer.gserviceaccount.com --role=roles/eventarc.eventReceiver
 ```
 
 ### 6. אימות ל-CI (GitHub → Settings → Secrets and variables → Actions)
@@ -46,6 +46,6 @@ gcloud projects add-iam-policy-binding ramada-elev --member=serviceAccount:<PROJ
 
 ## בדיקה אחרי פריסה ירוקה
 ```
-curl "https://europe-west1-ramada-elev.cloudfunctions.net/notifyTest?key=<NOTIFY_TEST_KEY>"
+curl "https://us-central1-test-94822.cloudfunctions.net/notifyTest?key=<NOTIFY_TEST_KEY>"
 ```
 תקין: `{"ok":true,...}` + מתקבל מייל.

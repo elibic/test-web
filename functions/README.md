@@ -1,4 +1,4 @@
-# functions — שכבת התראות "תמיד-חיה" (ramada-elev)
+# functions — שכבת התראות "תמיד-חיה" (test-94822)
 
 Cloud Functions שרצות **בענן** ולכן שולחות התראות גם כש-ה-Pi כבוי / יש הפסקת חשמל.
 זה מחליף את ההתראות שרצו על ה-Pi עצמו (`shabbat_detector/notifier.py`) — שם המכשיר לא
@@ -19,7 +19,7 @@ Cloud Functions שרצות **בענן** ולכן שולחות התראות גם 
 - **העדפות** (לא-סוד) → `/settings/notifications` ב-RTDB — ניתנות לעריכה מקונסולת Firebase
   (ובהמשך מ-`setup.html`).
 - **מצב פנימי** (למניעת התראות כפולות) → `/notify_state/{id}` (נכתב ע"י הפונקציה).
-- אזור: `europe-west1` (תואם ל-RTDB). מופע RTDB: `ramada-elev-default-rtdb`.
+- אזור: `us-central1` (תואם ל-RTDB). מופע RTDB: `test-94822-default-rtdb`.
 
 ## מבנה `/settings/notifications` (RTDB)
 ```json
@@ -69,7 +69,7 @@ Google Account → Security → צריך **2-Step Verification מופעל** → 
 ## בדיקה — לקבל מייל אמיתי
 אחרי פריסה, פנייה ל-endpoint הבדיקה (שולח הודעה אמיתית לכל ערוץ פעיל):
 ```bash
-curl "https://europe-west1-ramada-elev.cloudfunctions.net/notifyTest?key=<NOTIFY_TEST_KEY>"
+curl "https://us-central1-test-94822.cloudfunctions.net/notifyTest?key=<NOTIFY_TEST_KEY>"
 ```
 > ה-URL המדויק מודפס בסיום `firebase deploy`. בדור-2 ייתכן URL מסוג `*.run.app`.
 

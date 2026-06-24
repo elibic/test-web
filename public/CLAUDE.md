@@ -1,6 +1,6 @@
 # CLAUDE.md — ramada-web
 
-קבצי הווב של מערכת מעלית שבת (Ramada), הנפרסים ל-Firebase Hosting (project: `ramada-elev`).
+קבצי הווב של מערכת מעלית שבת (Ramada), הנפרסים ל-Firebase Hosting (project: `test-94822`).
 פאנל מצב מעלית בזמן אמת, רספונסיבי (kiosk / portrait / wide).
 
 ## הקובץ הראשי
@@ -39,6 +39,6 @@
 
 ## פריסה
 - **תמיד גבה את `public/` לפני deploy.**
-- Hosting: `firebase deploy --only hosting` (project `ramada-elev`).
+- Hosting: `firebase deploy --only hosting` (project `test-94822`).
 - Functions: `cd functions && npm install` → `firebase deploy --only functions`
   (דורש Blaze + הגדרת Secrets — ראה `functions/README.md`).
