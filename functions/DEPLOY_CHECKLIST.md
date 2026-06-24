@@ -15,10 +15,12 @@
 - **Service Account User**
 - **Secret Manager Admin** (לסודות הפונקציות)
 - **Cloud Build Editor** + **Artifact Registry Administrator** (build דור-2)
+- **Owner** או **Project IAM Admin** ← בלעדיו: `We failed to modify the IAM policy` (Firebase לא יכול להעניק לסוכני-השירות את התפקידים שלהם)
 - (אופציונלי כגיבוי רחב: **Editor**)
 
 ### 3. הפעלת APIs בפרויקט
-`cloudfunctions`, `cloudbuild`, `artifactregistry`, `run`, `eventarc`.
+`cloudfunctions`, `cloudbuild`, `artifactregistry`, `run`, `eventarc`, `pubsub`, `cloudscheduler`, `secretmanager`.
+(Firebase מפעיל את רובם אוטומטית אם ל-SA יש Service Usage Admin.)
 
 ### 4. Function Secrets (Secret Manager — שמות מדויקים)
 הפונקציות מצהירות עליהם ב-`index.js`; חייבים להתקיים אחרת הפריסה ב-`--non-interactive` נכשלת:
@@ -26,7 +28,15 @@
 - **`NOTIFY_TEST_KEY`** — מחרוזת אקראית להגנת endpoint הבדיקה.
 - `TELEGRAM_BOT_TOKEN` — רק כשמפעילים טלגרם (כרגע מושבת ב-`index.js`).
 
-### 5. אימות ל-CI (GitHub → Settings → Secrets and variables → Actions)
+### 5. הרשאות לסוכני-שירות (gen-2) — חד-פעמי
+אם ה-SA אינו Owner/Project IAM Admin, הרץ ב-Cloud Shell פעם אחת (הערכים מודפסים בלוג הכושל):
+```bash
+gcloud projects add-iam-policy-binding ramada-elev --member=serviceAccount:service-<PROJ_NUM>@gcp-sa-pubsub.iam.gserviceaccount.com --role=roles/iam.serviceAccountTokenCreator
+gcloud projects add-iam-policy-binding ramada-elev --member=serviceAccount:<PROJ_NUM>-compute@developer.gserviceaccount.com --role=roles/run.invoker
+gcloud projects add-iam-policy-binding ramada-elev --member=serviceAccount:<PROJ_NUM>-compute@developer.gserviceaccount.com --role=roles/eventarc.eventReceiver
+```
+
+### 6. אימות ל-CI (GitHub → Settings → Secrets and variables → Actions)
 - **`FIREBASE_SERVICE_ACCOUNT`** (מומלץ): JSON של Service Account. ה-workflow מעדיף אותו אם קיים.
 - או **`FIREBASE_TOKEN`**: פלט `firebase login:ci`. ⚠️ אם `FIREBASE_SERVICE_ACCOUNT` קיים — הוא גובר; כדי להשתמש בטוקן יש למחוק את ה-SA.
 
