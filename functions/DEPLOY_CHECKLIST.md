@@ -19,8 +19,9 @@
 - (אופציונלי כגיבוי רחב: **Editor**)
 
 ### 3. הפעלת APIs בפרויקט
-`cloudfunctions`, `cloudbuild`, `artifactregistry`, `run`, `eventarc`, `pubsub`, `cloudscheduler`, `secretmanager`.
-(Firebase מפעיל את רובם אוטומטית אם ל-SA יש Service Usage Admin.)
+`cloudbilling` ← בלעדיו: `403 Cloud Billing API has not been used... or it is disabled`.
+וגם: `cloudfunctions`, `cloudbuild`, `artifactregistry`, `run`, `eventarc`, `pubsub`, `cloudscheduler`, `secretmanager`.
+(Firebase מפעיל את רובם אוטומטית אם ל-SA יש Service Usage Admin — חוץ מ-cloudbilling, שכדאי להפעיל ידנית.)
 
 ### 4. Function Secrets (Secret Manager — שמות מדויקים)
 הפונקציות מצהירות עליהם ב-`index.js`; חייבים להתקיים אחרת הפריסה ב-`--non-interactive` נכשלת:
