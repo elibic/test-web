@@ -60,7 +60,8 @@ jobs:
 
       - name: פריסה
         env:
-          TARGET: ${{ github.event.inputs.target || 'functions,hosting' }}
+          # פריסה אוטומטית ב-push = Hosting בלבד (functions דורש Blaze+Secrets — הרץ ידנית בבחירת target)
+          TARGET: ${{ github.event.inputs.target || 'hosting' }}
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
