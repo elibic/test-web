@@ -21,7 +21,7 @@
 |------|-------|---------------|
 | `elibic/ramada-web` | תבנית אתר ציבורי פר-פרויקט + Cloud Functions התראות | ✅ |
 | `elibic/elevator-rpi` | קוד ה-RPi (RFID→Firebase), זהה לכולם; מכאן עדכוני-צי | ✅ |
-| `elibic/admin-dashboard` | דשבורד-על על ה-hub | ❌ **חסום** — צריך להוסיף ל-scope |
+| `elibic/admin-dashboard` | דשבורד-על על ה-hub | ✅ |
 
 ---
 
@@ -45,18 +45,25 @@
 
 ---
 
-## 🎯 הצעד הבא (לסשן עם admin-dashboard ב-scope): שילוב הדשבורד בדף-הנחיתה
-לבעלים יש **פרויקט Firebase מרכזי (hub) שכבר מריץ דף-נחיתה בדף הראשי**. רוצה לשלב את הדשבורד לתוכו:
-- **`/` = דף הנחיתה (נשאר ראשי)**, **`/dashboard` = הדשבורד** (אתר Hosting אחד; קבצי הדשבורד תחת `public/dashboard/`).
+## ✅ הושלם (2026-06-24, סשן שני): שילוב הדשבורד בדף-הנחיתה (hub)
+לבעלים יש **פרויקט Firebase מרכזי (hub) שמריץ דף-נחיתה בדף הראשי**. הדשבורד שולב לתוכו:
+- **`/` = דף הנחיתה (ראשי)**, **`/admin` = הדשבורד** (אתר Hosting אחד; קבצי הדשבורד תחת `public/admin/`).
 
-### שאלות פתוחות שצריך לסגור לפני בנייה
-1. **התיקייה של דף-הנחיתה** — הבעלים יצרף אותה (לא עלתה עדיין). צריך לראות מבנה.
-2. **זהות ה-hub** — האם הנחיתה רצה על **`econtrolelevelev`** (זה ש-`admin-dashboard/public/firebase-config.js`
-   כבר מכוון אליו), או פרויקט אחר? אם אחר — לעדכן את ה-config של הדשבורד בהתאם.
-3. **RTDB ב-hub** — הדשבורד צריך Realtime Database באותו פרויקט (`/projects`, `/notes`, ובהמשך `registry/buildings`).
-   מופעל שם? (ב-`firebase-config.js` של הדשבורד `databaseURL` עדיין ריק — TODO.)
-4. **Source-of-truth** — להכניס את הדשבורד *לריפו של הנחיתה*, או את הנחיתה *לתוך `admin-dashboard`*? איך נקרא ריפו הנחיתה (אם קיים)?
-5. **אישור מבנה URL** — `/` נחיתה, `/dashboard` דשבורד, `public/dashboard/`.
+### החלטות שנסגרו לפני הבנייה (5 השאלות) — ✅
+1. **תיקיית הנחיתה** — צורפה. אתר סטטי (`public:"."`, cleanUrls); קובץ הפרודקשן `index.html`
+   ("מעלית שבת אצלכם בסלון | ECONTROL") + `404.html` + `icon-512.png` + הרבה גיבויים/טיוטות.
+2. **זהות ה-hub** — ה-`.firebaserc` של הנחיתה = **`econtrolelevelev`** = בדיוק הפרויקט שהדשבורד מכוון אליו. אותו hub.
+3. **RTDB ב-hub** — מופעל (אזור EU). מולא `databaseURL` =
+   `https://econtrolelevelev-default-rtdb.europe-west1.firebasedatabase.app`.
+4. **Source-of-truth** — הנחיתה הוכנסה **לתוך `admin-dashboard`** (הגיעה כתיקייה בלבד, ללא ריפו משלה).
+5. **מבנה URL** — `/` נחיתה · **`/admin`** דשבורד (הבעלים בחר `/admin`, לא `/dashboard`).
+
+### מה נבנה (קומיט בענף `claude/gracious-goldberg-46vlsy` של `admin-dashboard`)
+- הדשבורד עבר ל-`public/admin/` (git mv); דף הנחיתה תחת `public/`. `firebase.json` → `public:"public"`, cleanUrls.
+- נתיבי-הקבצים של הדשבורד הומרו למוחלטים `/admin/...` (עמיד ל-trailing-slash) ו-`?v=20260624`.
+- `databaseURL` הושלם; `README` + `public/admin/CLAUDE.md` עודכנו. נבדק מקומית: `/`=נחיתה, `/admin/`=דשבורד, כל הנכסים 200.
+- הנחיתה הוכנסה as-is (כולל גיבויים/כפילויות, לפי בקשת הבעלים); `.gstack/`+`.firebase/` (runtime/סוד) לא נוספו.
+- **נותר לבעלים (זמן-ריצה):** פריסה (`firebase deploy --only hosting -P econtrolelevelev`), ולוודא RTDB+Auth מופעלים בקונסול.
 
 ### רקע על admin-dashboard (מתוך עיון בקוד שהבעלים העלה)
 - אתר סטטי. קבצים: `public/index.html` (login·stats·grid·notes·modal), `public/admin-dashboard.js` (~650 ש'),
@@ -66,8 +73,8 @@
   secret_key·webConfig מלא), גריד שפותח Firebase app **משני** לכל פרויקט וקורא `/elevators`,`/elevator_configs`,`/fleet`,
   כפתורי עדכון-מרחוק שכותבים `/fleet/{id}/command`, פתקים `/notes`, ו-`LATEST_VERSION` קבוע בראש ה-JS.
 - ענף ברירת-מחדל של הריפו: `claude/focused-turing-buyt3w`.
-- **בשילוב:** index.html של הדשבורד יעבור ל-`/dashboard` (נתיבים יחסיים לקבצים: לוודא ש-style.css/JS/firebase-config
-  נטענים נכון מתת-התיקייה); דף הנחיתה נשאר ב-root.
+- **בשילוב (בוצע):** קבצי הדשבורד עברו ל-`public/admin/` (מוגש ב-`/admin`); נתיבי הקבצים הומרו למוחלטים
+  `/admin/...` כדי שייטענו נכון מתת-התיקייה; דף הנחיתה נשאר ב-root.
 
 ---
 
@@ -83,13 +90,14 @@
 ---
 
 ## ⚠️ scope / נגישות
-- בסשן הזה רק `ramada-web` + `elevator-rpi` היו ב-scope. `admin-dashboard` נחסם ("not configured for this session").
+- בסשן זה (השני) **שלושת הריפו** ב-scope (admin-dashboard + ramada-web + elevator-rpi). בסשן הראשון `admin-dashboard` נחסם.
+- כל הפיתוח בסשן זה בענף `claude/gracious-goldberg-46vlsy` (בכל שלושת הריפו).
 - הדפלוי בוצע דרך **git push ל-main** + טריגר-push של ה-workflow. הערה: ל-GitHub MCP אין `actions: write`
   (workflow_dispatch מחזיר 403) — מפעילים פריסה ע"י push ל-main שנוגע ב-`functions/`/`public/`/workflow.
 - לסשן הבא: לכלול בסביבה את **שלושת הריפו** (admin-dashboard + ramada-web + elevator-rpi), ולצרף את תיקיית דף-הנחיתה.
 
 ## טקסט-פתיחה לסשן הבא (להדבקה)
-> קרא את `docs/admin-dashboard-handoff.md` בריפו `ramada-web`. ודא ששלושת הריפו ב-scope
-> (admin-dashboard + ramada-web + elevator-rpi). המשימה הבאה: לשלב את `admin-dashboard` לתוך פרויקט
-> ה-hub שכבר מריץ דף-נחיתה — הנחיתה נשארת ב-`/`, הדשבורד ב-`/dashboard`. אני מצרף את תיקיית דף-הנחיתה.
-> לפני בנייה, סגור את 5 השאלות הפתוחות שבמסמך (זהות ה-hub, RTDB, source-of-truth, מבנה URL).
+> קרא את `docs/admin-dashboard-handoff.md` בריפו `ramada-web`. שילוב ה-hub (נחיתה `/` + דשבורד `/admin`)
+> **הושלם** ונדחף ל-`admin-dashboard` (ענף `claude/gracious-goldberg-46vlsy`). המשימה הבאה: **חלק 2 — צד ה-RPi**
+> ב-`elevator-rpi`: `shabbat_detector/fleet_agent.py` (דיווח גרסה ל-`/fleet/{id}` + watcher על `/fleet/{id}/command`)
+> + `docs/fleet-remote-update.md`. ⚠️ לאשר עם הבעלים את מודל ה-secret_key לעדכון-מרחוק לפני מימוש.
