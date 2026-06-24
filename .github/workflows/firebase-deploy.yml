@@ -68,9 +68,9 @@ jobs:
           if [ -n "$SA" ]; then
             echo "$SA" > "$RUNNER_TEMP/sa.json"
             export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-            firebase deploy --only "$TARGET" --project ramada-elev --non-interactive
+            firebase deploy --only "$TARGET" --project ramada-elev --non-interactive --force
           elif [ -n "$FIREBASE_TOKEN" ]; then
-            firebase deploy --only "$TARGET" --project ramada-elev --non-interactive --token "$FIREBASE_TOKEN"
+            firebase deploy --only "$TARGET" --project ramada-elev --non-interactive --force --token "$FIREBASE_TOKEN"
           else
             echo "::error::חסר secret לאימות — הוסף FIREBASE_SERVICE_ACCOUNT (מומלץ) או FIREBASE_TOKEN ל-Secrets של הריפו."
             exit 1
