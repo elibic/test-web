@@ -1020,6 +1020,81 @@ function saveSettingsAndClose() {
 }
 window.saveSettingsAndClose = saveSettingsAndClose;
 
+// --- INDEX ACCESS GATE (per-project, settings/appearance.access) ---
+// Restricted projects require Firebase Auth + a role at/above indexMinRole.
+// Roles live in the existing nodes (managed in admin.html): super_admins /
+// allowed_users / allowed_viewers. NOTE: a client gate is not real security -
+// a restricted project must also enforce RTDB Security Rules (see checklist).
+function roleRank(r) { return r === 'super_admin' ? 3 : r === 'admin' ? 2 : r === 'viewer' ? 1 : 0; }
+
+async function getIndexUserRole(user) {
+    const enc = (user && user.email || '').replace(/\./g, '_');
+    if (!enc) return null;
+    const checks = [['super_admins', 'super_admin'], ['allowed_users', 'admin'], ['allowed_viewers', 'viewer']];
+    for (const [node, role] of checks) {
+        try {
+            const snap = await database.ref(node).child(enc).once('value');
+            if (snap.exists() && snap.val() === true) return role;
+        } catch (e) { /* rules may deny - treat as no role */ }
+    }
+    return null;
+}
+
+function showIndexAuth(opts) {
+    const el = document.getElementById('indexAuthScreen');
+    if (!el) return;
+    el.style.display = 'flex';
+    document.getElementById('iaTitle').textContent = opts.title;
+    document.getElementById('iaDesc').textContent = opts.desc;
+    document.getElementById('iaError').textContent = opts.error || '';
+    const loginMode = !opts.denied;
+    document.getElementById('iaGoogleBtn').style.display = loginMode ? '' : 'none';
+    document.getElementById('iaEmailForm').style.display = loginMode ? '' : 'none';
+    document.getElementById('iaSignOut').style.display = opts.denied ? '' : 'none';
+}
+function hideIndexAuth() {
+    const el = document.getElementById('indexAuthScreen');
+    if (el) el.style.display = 'none';
+}
+
+// Resolves true when an authorized user is present; false (with denied screen)
+// when the signed-in user lacks the required role.
+function ensureIndexAccess(minRole) {
+    return new Promise((resolve) => {
+        const auth = firebase.auth();
+        let resolved = false;
+        const errEl = () => document.getElementById('iaError');
+        const gbtn = document.getElementById('iaGoogleBtn');
+        const form = document.getElementById('iaEmailForm');
+        const sout = document.getElementById('iaSignOut');
+        if (gbtn) gbtn.onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+            .catch(e => { if (errEl()) errEl().textContent = e.message; });
+        if (form) form.onsubmit = (e) => {
+            e.preventDefault();
+            auth.signInWithEmailAndPassword(document.getElementById('iaEmail').value, document.getElementById('iaPassword').value)
+                .catch(err => { if (errEl()) errEl().textContent = err.message; });
+        };
+        if (sout) sout.onclick = () => auth.signOut().finally(() => location.reload());
+
+        ui.loadingOverlay.style.display = 'none';
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) { showIndexAuth({ title: 'כניסה למערכת', desc: 'דף זה מוגבל. יש להתחבר כדי לצפות.' }); return; }
+            const role = await getIndexUserRole(user);
+            const authorized = roleRank(role) >= roleRank(minRole);
+            if (authorized) {
+                if (resolved) { location.reload(); return; }
+                resolved = true;
+                hideIndexAuth();
+                ui.loadingOverlay.style.display = 'flex';
+                resolve(true);
+            } else {
+                showIndexAuth({ denied: true, title: 'אין הרשאה', desc: 'המשתמש שלך אינו מורשה לצפות בדף זה.' });
+                if (!resolved) { resolved = true; resolve(false); }
+            }
+        });
+    });
+}
+
 // --- APP INITIALIZATION ---
 async function initializeApp() {
     console.log("Initializing app configurations...");
@@ -1037,6 +1112,14 @@ async function initializeApp() {
         settings = sSnap.val() || {};
         floorAliases = settings.FLOOR_ALIASES || {};
         if (window.applyAppearance) window.applyAppearance(settings.appearance);
+
+        // INDEX access gate (per-project, configurable in setup.html -> מראה).
+        const access = (settings.appearance && settings.appearance.access) || {};
+        if (access.indexMode === 'restricted') {
+            const ok = await ensureIndexAccess(access.indexMinRole || 'viewer');
+            if (!ok) return; // denied screen shown; do not render the dashboard
+        }
+
         elevatorConfigs = cSnap.val() || {};
 
         renderSystemBanners();

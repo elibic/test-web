@@ -28,6 +28,22 @@
         <span style="color:var(--gold-primary);" id="loadingText">טוען מערכת...</span>
     </div>
 
+    <!-- Access gate for restricted projects (settings/appearance.access). Hidden unless needed. -->
+    <div id="indexAuthScreen" style="display:none; position:fixed; inset:0; z-index:12000; background:#1a1a2e; color:#fff; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; font-family:'Assistant','Roboto Condensed',sans-serif;">
+        <div style="max-width:360px; width:100%;">
+            <h2 id="iaTitle" style="color:#c5a47e; margin:0 0 8px;">כניסה למערכת</h2>
+            <p id="iaDesc" style="opacity:.85; margin:0 0 20px;">דף זה מוגבל. יש להתחבר כדי לצפות.</p>
+            <button id="iaGoogleBtn" type="button" style="width:100%; padding:12px; margin-bottom:12px; border:none; border-radius:10px; background:#fff; color:#222; font-size:1em; cursor:pointer;">התחברות עם Google</button>
+            <form id="iaEmailForm">
+                <input id="iaEmail" type="email" placeholder="אימייל" autocomplete="username" style="width:100%; padding:12px; margin-bottom:8px; border-radius:10px; border:1px solid #555; background:#24243a; color:#fff; box-sizing:border-box;">
+                <input id="iaPassword" type="password" placeholder="סיסמה" autocomplete="current-password" style="width:100%; padding:12px; margin-bottom:8px; border-radius:10px; border:1px solid #555; background:#24243a; color:#fff; box-sizing:border-box;">
+                <button type="submit" style="width:100%; padding:12px; border:none; border-radius:10px; background:#c5a47e; color:#1a1a2e; font-weight:600; font-size:1em; cursor:pointer;">התחבר</button>
+            </form>
+            <p id="iaError" style="color:#ff8a80; min-height:1.2em; margin:12px 0 0;"></p>
+            <button id="iaSignOut" type="button" style="display:none; margin-top:12px; background:none; border:none; color:#c5a47e; text-decoration:underline; cursor:pointer;">התנתק</button>
+        </div>
+    </div>
+
     <div id="displayContainer" style="display:none;">
 
         <div id="systemBanners" class="system-banners"></div>
@@ -182,6 +198,7 @@
     <div class="notification-popup" id="notificationPopup"></div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="firebase-config.js"></script>
     <script src="appearance.js?v=20260630-appear1"></script>
