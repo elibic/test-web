@@ -1,3 +1,17 @@
+// --- Theme variant from route prefix ---
+// The same files serve every variant. LITE is the only opt-in, meant for weak
+// devices (RPi Zero-class): /lite/kiosk, /lite/display, /lite/public. EVERY other
+// route - the regular ones (/kiosk, /display, /public) AND the explicit /rich/
+// prefix - gets the RICH theme (full graphics + animations). This way the normal
+// links keep working and render rich by default. A prefix segment is non-numeric
+// so it never collides with the floor parser (getFloorFromUrl scans from the end)
+// or PAGE_KEY (substring).
+(function applyThemeFromPath() {
+    const segs = (location.pathname || '').toLowerCase().split('/').filter(Boolean);
+    if (segs[0] === 'lite') document.body.classList.add('theme-lite');
+    else document.body.classList.add('theme-rich');
+})();
+
 // --- 1. Dynamic Floor Detection (URL Param: ?floor=5) ---
 function getFloorFromUrl() {
     // Priority 1: Check Query Params (?floor=5)
@@ -351,7 +365,12 @@ const ui = {
     manualShabbatBtn: document.getElementById('manualShabbatBtn'),
 };
 
+// Persisted per-device so the kiosk touch toggle (digital <-> analog) survives reloads.
+// Default true (digital). Only kiosk.html has the toggle + analog markup.
+// Guarded: localStorage can throw (private mode / blocked storage) and this runs
+// at module load - a throw here would kill the whole script.
 let isDigitalClock = true;
+try { isDigitalClock = (localStorage.getItem('kioskIsDigitalClock') ?? '1') !== '0'; } catch (e) {}
 
 function showNotification(message, isError = false) {
     if (!ui.notificationPopup) return;
@@ -452,18 +471,35 @@ function updateClockDisplay() {
 }
 
 function updateAnalogClock(hours, minutes, seconds) {
-    // --- FIX: Removed +90 offset because CSS transform-origin is at bottom ---
-    // 0 degrees = 12 o'clock
-    const secondsDegrees = ((seconds / 60) * 360);
-    const minutesDegrees = ((minutes / 60) * 360) + ((seconds/60)*6);
+    // 0deg = 12 o'clock. Hands pivot at the dial center (CSS transform-origin
+    // 50% 100%); keep translateX(-50%) so they stay centered after rotate().
+    const minutesDegrees = ((minutes / 60) * 360) + ((seconds / 60) * 6);
     const hour12 = hours % 12;
-    const hoursDegrees = ((hour12 / 12) * 360) + ((minutes/60)*30);
-    
-    // --- PERFORMANCE OPTIMIZATION: Do not update second hand (Hidden by CSS) ---
-    // if (ui.secondHand) ui.secondHand.style.transform = `rotate(${secondsDegrees}deg)`;
-    
-    if (ui.minuteHand) ui.minuteHand.style.transform = `rotate(${minutesDegrees}deg)`;
-    if (ui.hourHand) ui.hourHand.style.transform = `rotate(${hoursDegrees}deg)`;
+    const hoursDegrees = ((hour12 / 12) * 360) + ((minutes / 60) * 30);
+
+    if (ui.minuteHand) ui.minuteHand.style.transform = `translateX(-50%) rotate(${minutesDegrees}deg)`;
+    if (ui.hourHand)   ui.hourHand.style.transform   = `translateX(-50%) rotate(${hoursDegrees}deg)`;
+    // The second hand is driven smoothly by startAnalogSweep() (rAF) when the
+    // analog face is actually visible - not here, to avoid a 1s "tick".
+}
+
+// Smooth analog second hand via requestAnimationFrame. Self-terminates whenever
+// the analog face is not visible (digital mode selected, or Shabbat hides the
+// whole clock) so it costs nothing on a 24/7 screen. Restarted from the toggle
+// handler and from updateDisplayMode when returning to weekday.
+let _analogSweepRAF = null;
+function startAnalogSweep() {
+    if (_analogSweepRAF !== null) return; // already running
+    const step = () => {
+        const hidden = isDigitalClock || isShabbatOrHoliday || !ui.secondHand
+            || (ui.analogClockWrapper && ui.analogClockWrapper.style.display === 'none');
+        if (hidden) { _analogSweepRAF = null; return; }
+        const now = new Date(Date.now() + (serverTimeOffset || 0) + (SIMULATED_HOURS_OFFSET * 60 * 60 * 1000));
+        const sec = now.getSeconds() + now.getMilliseconds() / 1000;
+        ui.secondHand.style.transform = `translateX(-50%) rotate(${(sec / 60) * 360}deg)`;
+        _analogSweepRAF = requestAnimationFrame(step);
+    };
+    _analogSweepRAF = requestAnimationFrame(step);
 }
 
 async function fetchHebrewDate(date) {
@@ -488,9 +524,15 @@ async function fetchHebrewDate(date) {
 if(ui.toggleClockBtn) {
     ui.toggleClockBtn.addEventListener('click', () => {
         isDigitalClock = !isDigitalClock;
+        try { localStorage.setItem('kioskIsDigitalClock', isDigitalClock ? '1' : '0'); } catch (e) {}
         if(ui.digitalClockPanel) ui.digitalClockPanel.style.display = isDigitalClock ? 'block' : 'none';
         if(ui.analogClockWrapper) ui.analogClockWrapper.style.display = isDigitalClock ? 'none' : 'flex';
+        if(!isDigitalClock) startAnalogSweep();
     });
+    // Apply the persisted choice on load (the handler above only runs on click).
+    if(ui.digitalClockPanel) ui.digitalClockPanel.style.display = isDigitalClock ? 'block' : 'none';
+    if(ui.analogClockWrapper) ui.analogClockWrapper.style.display = isDigitalClock ? 'none' : 'flex';
+    if(!isDigitalClock) startAnalogSweep();
 }
 
 let qrCodeGenerated = false;
@@ -676,7 +718,9 @@ function renderFullDisplay() {
     const shabbatOn = isShabbatOrHoliday;
     const weekdayMode = document.body.classList.contains('weekday-mode');
 
-    // Weekday + non-public page: nothing to render. Show empty-state.
+    // Weekday + non-public page = CLOCK mode (the clock is the content). Clear any
+    // stale panels and do NOT show the "waiting for active elevator" empty-state -
+    // that belongs to Shabbat/elevator mode only.
     if (!shabbatOn && !weekdayMode && !isPublicKiosk) {
         const container = document.querySelector('.dashboard-container');
         if (container) {
@@ -684,7 +728,7 @@ function renderFullDisplay() {
                 if (!c.classList.contains('empty-state')) c.remove();
             });
         }
-        setEmptyStateVisible(true);
+        setEmptyStateVisible(false);
         return;
     }
     // Public-kiosk weekday + Shabbat: original render path.
@@ -709,6 +753,7 @@ function renderFullDisplay() {
     if (latestElevatorsData) {
         createElevatorPanels(visibleElevators);
         updateShabbatLabels(visibleElevators);
+        renderStopsChips();
         visibleElevators.forEach(id => {
             if (latestElevatorsData[id]) processElevatorUpdate(id, latestElevatorsData[id]);
         });
@@ -883,6 +928,8 @@ function updateDisplayMode() {
 
     if (ui.clockContainer) ui.clockContainer.style.display = isShabbatOrHoliday ? 'none' : 'flex';
     if (ui.toggleClockBtn) ui.toggleClockBtn.style.display = isShabbatOrHoliday ? 'none' : 'block';
+    // Restart the smooth analog sweep on return to weekday (no-op if digital or already running).
+    if (!isShabbatOrHoliday) startAnalogSweep();
     
     // Bottom bar is always on for public, conditional for others
     if (ui.bottomStatusBar) {
@@ -1069,6 +1116,93 @@ function countStopsInList(startFloor, endFloor, list) {
         const sortedStops = list.map(getNumericFloor).sort((a, b) => a - b);
         if (endFloor > startFloor) { return sortedStops.filter(f => f > startFloor && f < endFloor).length; } // Fixed in previous versions
         else { return sortedStops.filter(f => f < startFloor && f > endFloor).length; } // Fixed in previous versions
+}
+
+// --- Shabbat per-elevator stops chips (shared: display / kiosk / public) ---
+// Ported from the inline public.html renderer so EVERY screen shows the
+// STOPPING_FLOORS_UP/DOWN chips when an elevator is in Shabbat mode. Reuses the
+// existing globals (elevatorConfigs, floorAliases via getFloorDisplayName,
+// effectiveShabbatActive, THIS_SCREEN_FLOOR). Driven from renderFullDisplay
+// after createElevatorPanels - no MutationObserver, since renderFullDisplay
+// already re-runs on every config / settings / elevator / Shabbat change.
+function stopFloorNum(s) {
+    // Like getNumericFloor but returns 0 (not null) for unparseable values, so
+    // sorting and range-clamping keep the inline renderer's original behavior.
+    const n = getNumericFloor(s);
+    return n === null ? 0 : n;
+}
+// Vertical strip: long names collapse to their first character; numeric floors
+// and short aliases (<=2 chars) stay as-is.
+function shortFloorLabel(text) {
+    const s = String(text).trim();
+    if (/^-?\d+$/.test(s)) return s;   // numeric floor (e.g. 12, -2)
+    if (s.length <= 2) return s;       // short alias (e.g. L, B1)
+    return s.charAt(0);                // long name -> first letter
+}
+function buildStopList(up, down) {
+    const map = new Map();
+    (up   || []).forEach(f => { const k = String(f); if (!map.has(k)) map.set(k, { up:false, down:false }); map.get(k).up = true; });
+    (down || []).forEach(f => { const k = String(f); if (!map.has(k)) map.set(k, { up:false, down:false }); map.get(k).down = true; });
+    // Sort descending by physical floor (high -> low) so the highest floor sits
+    // at the TOP of the vertical strip, like a real elevator selector.
+    return Array.from(map.entries()).sort((a, b) => stopFloorNum(b[0]) - stopFloorNum(a[0]));
+}
+function stopArrowHtml(dir) {
+    if (dir.up && dir.down) return '<span class="arr both"><span>▲</span><span>▼</span></span>';
+    if (dir.up)              return '<span class="arr">▲</span>';
+    if (dir.down)            return '<span class="arr">▼</span>';
+    return '';
+}
+function renderStopChipRow(panel, id) {
+    const cfg = (elevatorConfigs && elevatorConfigs[id]) || {};
+    const isShab = effectiveShabbatActive(cfg);
+    const upRaw   = cfg.STOPPING_FLOORS_UP   || [];
+    const downRaw = cfg.STOPPING_FLOORS_DOWN || [];
+    // Clamp stops to the elevator's physical range. Firebase can hold stale
+    // floors above TOP_FLOOR / below BOTTOM_FLOOR (CLAUDE.md contract item 6).
+    const topNum    = stopFloorNum(cfg.TOP_FLOOR);
+    const bottomNum = stopFloorNum(cfg.BOTTOM_FLOOR);
+    const hasRange  = (cfg.TOP_FLOOR != null && cfg.BOTTOM_FLOOR != null);
+    const inRange = (f) => { if (!hasRange) return true; const n = stopFloorNum(f); return n >= bottomNum && n <= topNum; };
+    const up   = upRaw.filter(inRange);
+    const down = downRaw.filter(inRange);
+
+    let row = panel.querySelector(':scope > .elevator-stops');
+    // Show only when THIS elevator is in Shabbat mode and has in-range stops.
+    if (!isShab || (!up.length && !down.length)) { if (row) row.remove(); return; }
+    // .elevator-stops is a direct child of the panel; the panel's CSS grid
+    // (body.layout-v2, page-agnostic) places it via grid-area: stops.
+    if (!row) { row = document.createElement('div'); row.className = 'elevator-stops'; panel.appendChild(row); }
+
+    const here = (THIS_SCREEN_FLOOR != null) ? String(THIS_SCREEN_FLOOR) : null;
+    const list = buildStopList(up, down); // already descending by floor
+    let chipsHtml = '';
+    list.forEach(entry => {
+        const k = entry[0], dir = entry[1];
+        const hereClass = (here !== null && k === here) ? ' is-here' : '';
+        const name = getFloorDisplayName(k);
+        // Escape via the existing helper - aliases are admin-set but may contain & < > " '.
+        chipsHtml +=
+            '<span class="chip' + hereClass + '" title="' + _bannerEscape(name) + '">' +
+                _bannerEscape(shortFloorLabel(name)) +
+                stopArrowHtml(dir) +
+            '</span>';
+    });
+    row.innerHTML = '<div class="stops-row">' + chipsHtml + '</div>';
+}
+function renderStopsChips() {
+    document.querySelectorAll('.elevator-panel').forEach(panel => {
+        // public.html uses a custom ETA prefix wording; keep it ONLY on public
+        // so the other pages retain their own prefix from createElevatorPanels.
+        if (PAGE_KEY === 'public') {
+            const prefix = panel.querySelector('.eta-prefix');
+            if (prefix && prefix.textContent.trim() !== 'המעלית תגיע לקומה') {
+                prefix.textContent = 'המעלית תגיע לקומה';
+            }
+        }
+        const id = (panel.id || '').replace(/^panel-/, '');
+        if (id) renderStopChipRow(panel, id);
+    });
 }
 
 function calculateAndShowETAFor(elevatorId, elevatorState) {

@@ -6,7 +6,7 @@
     <title>מעלית שבת - תצוגת קיוסק ציבורית</title>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;700&family=Roboto+Condensed:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-    <link rel="stylesheet" href="kiosk-style.css?v=20260531-grid13">
+    <link rel="stylesheet" href="/kiosk-style.css?v=20260630-themes9">
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
@@ -114,7 +114,7 @@
     </div>
 
     <!-- Main Logic -->
-    <script src="kiosk-logic.js?v=20260531-grid13"></script>
+    <script src="/kiosk-logic.js?v=20260630-themes9"></script>
 
     <!-- Split elevator names + Generate QR -->
     <script>
@@ -165,171 +165,5 @@
     })();
     </script>
 
-    <!-- ==========================================================
-         NEW — Per-elevator stops row (reads STOPPING_FLOORS_UP/DOWN
-         from elevator_configs in Firebase). Isolated to public2.html;
-         does NOT touch kiosk-logic.js or any other page.
-         ========================================================== -->
-    <script>
-    (function() {
-        var THIS_FLOOR = (function() {
-            var p = new URLSearchParams(location.search);
-            return p.get('floor');
-        })();
-
-        var configs = {};
-        var aliases = {};
-
-        function floorNum(s) {
-            if (s === null || s === undefined) return 0;
-            var t = String(s).toUpperCase();
-            if (t === 'L') return -1;
-            var n = parseInt(t, 10);
-            return isNaN(n) ? 0 : n;
-        }
-        function displayName(f) {
-            var key = String(f);
-            return aliases[key] || key;
-        }
-        // For the vertical strip: long names → just the first character.
-        // Numeric floors and 1–2-char aliases stay as-is.
-        function shortLabel(text) {
-            var s = String(text).trim();
-            if (/^-?\d+$/.test(s)) return s;   // numeric (e.g. 12, -2)
-            if (s.length <= 2) return s;       // short alias (e.g. L, B1)
-            return s.charAt(0);                // long name → first letter
-        }
-
-        function effectiveShab(cfg) {
-            if (!cfg) return false;
-            var ov = cfg.SHABBAT_OVERRIDE;
-            if (ov === 'force_on') return true;
-            if (ov === 'force_off') return false;
-            return cfg.SHABBAT_ACTIVE === true;
-        }
-
-        function buildList(up, down) {
-            var map = new Map();
-            (up   || []).forEach(function(f) {
-                var k = String(f);
-                if (!map.has(k)) map.set(k, { up:false, down:false });
-                map.get(k).up = true;
-            });
-            (down || []).forEach(function(f) {
-                var k = String(f);
-                if (!map.has(k)) map.set(k, { up:false, down:false });
-                map.get(k).down = true;
-            });
-            // Sort descending by physical floor (high → low, RTL natural reading)
-            return Array.from(map.entries()).sort(function(a, b) {
-                return floorNum(b[0]) - floorNum(a[0]);
-            });
-        }
-
-        // Filled triangle arrows. Both-direction = stacked ▲ over ▼.
-        function arrowHtml(dir) {
-            if (dir.up && dir.down) return '<span class="arr both"><span>▲</span><span>▼</span></span>';
-            if (dir.up)              return '<span class="arr">▲</span>';
-            if (dir.down)            return '<span class="arr">▼</span>';
-            return '';
-        }
-
-        function renderRow(panel, id) {
-            var cfg = configs[id] || {};
-            var isShab = effectiveShab(cfg);
-            var upRaw   = cfg.STOPPING_FLOORS_UP   || [];
-            var downRaw = cfg.STOPPING_FLOORS_DOWN || [];
-
-            // Filter stops to the elevator's actual floor range. Firebase data
-            // can contain stale floors above TOP_FLOOR or below BOTTOM_FLOOR
-            // (e.g. from old suggested_config or manual setup typos). Showing
-            // those would mislead the user; clamp to the physical range.
-            var topNum    = floorNum(cfg.TOP_FLOOR);
-            var bottomNum = floorNum(cfg.BOTTOM_FLOOR);
-            var hasRange  = (cfg.TOP_FLOOR != null && cfg.BOTTOM_FLOOR != null);
-            function inRange(f) {
-                if (!hasRange) return true;
-                var n = floorNum(f);
-                return n >= bottomNum && n <= topNum;
-            }
-            var up   = upRaw.filter(inRange);
-            var down = downRaw.filter(inRange);
-
-            var row = panel.querySelector(':scope > .elevator-stops');
-            // Hide unless THIS specific elevator is in Shabbat mode and has stops.
-            if (!isShab || (!up.length && !down.length)) {
-                if (row) row.remove();
-                return;
-            }
-            // Append .elevator-stops as a direct child of the panel — the
-            // panel's CSS grid (in kiosk-style.css) places it via grid-area.
-            // No more .panel-main-col wrapper needed.
-            if (!row) {
-                row = document.createElement('div');
-                row.className = 'elevator-stops';
-                panel.appendChild(row);
-            }
-
-            var here = THIS_FLOOR != null ? String(THIS_FLOOR) : null;
-            // Sort DESCENDING (high → low) so the highest floor is at the
-            // TOP of the vertical strip — matches a real elevator selector.
-            var list = buildList(up, down); // already desc by floorNum
-            var chipsHtml = '';
-            list.forEach(function(entry) {
-                var k = entry[0], dir = entry[1];
-                var hereClass = (here !== null && k === here) ? ' is-here' : '';
-                var arrHtml = arrowHtml(dir);
-                var label = shortLabel(displayName(k));
-                chipsHtml +=
-                    '<span class="chip' + hereClass + '" title="' + displayName(k).replace(/"/g, '&quot;') + '">' +
-                        label +
-                        arrHtml +
-                    '</span>';
-            });
-            row.innerHTML = '<div class="stops-row">' + chipsHtml + '</div>';
-        }
-
-        function renderAll() {
-            document.querySelectorAll('.elevator-panel').forEach(function(panel) {
-                // Customise the ETA prefix text on every panel (idempotent).
-                var prefix = panel.querySelector('.eta-prefix');
-                if (prefix && prefix.textContent.trim() !== 'המעלית תגיע לקומה') {
-                    prefix.textContent = 'המעלית תגיע לקומה';
-                }
-                var id = (panel.id || '').replace(/^panel-/, '');
-                if (id) renderRow(panel, id);
-            });
-        }
-
-        // Watch for panel creation/replacement by kiosk-logic.js
-        var container = null;
-        function ensureObserver() {
-            if (container) return;
-            container = document.querySelector('.dashboard-container');
-            if (!container) return;
-            new MutationObserver(function() { renderAll(); }).observe(container, { childList: true });
-            renderAll();
-        }
-        var tries = 0;
-        var iv = setInterval(function() {
-            ensureObserver();
-            if (container || ++tries > 30) clearInterval(iv);
-        }, 300);
-
-        // Subscribe to elevator_configs + settings (FLOOR_ALIASES)
-        function subscribe() {
-            if (!window.database) { setTimeout(subscribe, 200); return; }
-            window.database.ref('elevator_configs').on('value', function(snap) {
-                configs = snap.val() || {};
-                renderAll();
-            });
-            window.database.ref('settings/FLOOR_ALIASES').on('value', function(snap) {
-                aliases = snap.val() || {};
-                renderAll();
-            });
-        }
-        subscribe();
-    })();
-    </script>
 </body>
 </html>

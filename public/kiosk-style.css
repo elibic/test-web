@@ -443,21 +443,36 @@ body.weekday-mode .dashboard-container { display: flex !important; }
 .clock-date { font-size: 1.5em; font-weight: 500; color: var(--gold-primary); margin-top: 10px; letter-spacing: 1px; }
 .clock-hebrew-date { font-size: 1.2em; font-weight: 400; color: var(--gold-dark); margin-top: 5px; }
 
-/* --- Analog Clock --- */
-#analogClockWrapper { display: none; width: 100%; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 20px; }
+/* --- Analog Clock (modern, centered hands) --- */
+#analogClockWrapper { display: none; width: 100%; flex-direction: column; align-items: center; justify-content: center; min-height: 0; margin: auto 0; }
 .analog-clock-panel {
-    width: 280px; height: 280px; position: relative; 
-    background: rgba(255, 255, 255, 0.6); 
-    border: 4px solid var(--gold-primary); border-radius: 50%; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    /* Fallback sizing for browsers without container queries: viewport-based, capped.
+       Modern browsers get height-aware cqh/cqw sizing in the @supports block below, so
+       the face can never overflow (clip) the clock area on short screens. */
+    width: clamp(150px, 30vmin, 290px); height: clamp(150px, 30vmin, 290px);
+    flex-shrink: 0; aspect-ratio: 1;   /* stay circular - don't let the flex column squash it into an ellipse */
+    position: relative; box-sizing: border-box;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 42%, #ffffff 0%, var(--cream) 72%, var(--cream-dark) 100%);
+    border: 6px solid var(--gold-primary);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.12), inset 0 2px 8px rgba(255,255,255,0.7);
     margin: 0 auto 20px auto;
 }
-.analog-clock-panel .hand { width: 50%; height: 4px; background: var(--gold-dark); position: absolute; top: 50%; transform-origin: 100%; transform: rotate(90deg); border-radius: 4px; border: none; }
-.analog-clock-panel .hour-hand { width: 30%; left: 20%; height: 6px; background: var(--text-main); }
-.analog-clock-panel .minute-hand { width: 40%; left: 10%; height: 4px; background: var(--gold-primary); }
-.analog-clock-panel .second-hand { display: none !important; }
-.analog-clock-panel .center-dot { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; background: var(--text-main); border: 3px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; }
-.analog-clock-panel .number { position: absolute; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: 500; color: var(--text-main); transform: translate(-50%, -50%); font-family: 'Assistant', 'Roboto Condensed', sans-serif; }
+/* Hands pivot at the dial center and point up at 0deg. left/bottom:50% put the
+   base at center; transform-origin: 50% 100% spins around the dial center;
+   height is the hand LENGTH. The JS keeps translateX(-50%) in its transform
+   string (see updateAnalogClock) so the hands stay centered after rotation. */
+.analog-clock-panel .hand {
+    position: absolute; left: 50%; bottom: 50%;
+    transform-origin: 50% 100%;
+    transform: translateX(-50%) rotate(0deg);
+    border-radius: 6px; background: var(--text-main);
+}
+.analog-clock-panel .hour-hand   { width: 8px; height: 27%; background: var(--text-main); z-index: 6; }
+.analog-clock-panel .minute-hand { width: 6px; height: 38%; background: var(--gold-dark); z-index: 7; }
+.analog-clock-panel .second-hand { width: 2px; height: 42%; background: var(--gold-primary); z-index: 8; display: block; }
+.analog-clock-panel .center-dot { position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; background: var(--gold-primary); border: 3px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
+.analog-clock-panel .number { position: absolute; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1.35em; font-weight: 600; color: var(--text-main); transform: translate(-50%, -50%); font-family: 'Assistant', 'Roboto Condensed', sans-serif; }
 .analog-clock-panel .number-12 { top: 8%; left: 50%; } .analog-clock-panel .number-1 { top: 13.4%; left: 71.7%; } .analog-clock-panel .number-2 { top: 28.3%; left: 86.6%; } .analog-clock-panel .number-3 { top: 50%; left: 92%; } .analog-clock-panel .number-4 { top: 71.7%; left: 86.6%; } .analog-clock-panel .number-5 { top: 86.6%; left: 71.7%; } .analog-clock-panel .number-6 { top: 92%; left: 50%; } .analog-clock-panel .number-7 { top: 86.6%; left: 28.3%; } .analog-clock-panel .number-8 { top: 71.7%; left: 13.4%; } .analog-clock-panel .number-9 { top: 50%; left: 8%; } .analog-clock-panel .number-10 { top: 28.3%; left: 13.4%; } .analog-clock-panel .number-11 { top: 13.4%; left: 28.3%; }
 .analog-clock-date-container { text-align: center; }
 .analog-clock-date { font-size: 1.5em; color: var(--gold-primary); font-weight: 500; }
@@ -1757,10 +1772,14 @@ body.empty-state-mode .bottom-status-bar { display: flex; }
     font-size: clamp(0.9rem, 1.8dvh, 1.4rem);
   }
 
-  /* display.html — clock-only, no dashboard */
-  body.layout-v2.layout-display .dashboard-container { display: none !important; }
-  body.layout-v2.layout-display #main-shabbat-indicator { display: none !important; }
-  body.layout-v2.layout-display #clockContainer {
+  /* display.html - weekday: giant clock only; Shabbat: dashboard + "Shabbat Shalom" banner.
+     The hides are scoped to :not(.shabbat-mode-active) so the JS-driven mode switch
+     (updateDisplayMode) can reveal the dashboard on Shabbat. */
+  body.layout-v2.layout-display:not(.shabbat-mode-active) .dashboard-container { display: none !important; }
+  body.layout-v2.layout-display:not(.shabbat-mode-active) #main-shabbat-indicator { display: none !important; }
+  /* Override the global rule (412) that hides the indicator on Shabbat: show it on the big display. */
+  body.layout-v2.layout-display.shabbat-mode-active #main-shabbat-indicator { display: flex !important; }
+  body.layout-v2.layout-display:not(.shabbat-mode-active) #clockContainer {
     display: flex !important;
     flex-direction: column;
     justify-content: center;
@@ -1817,6 +1836,22 @@ body.empty-state-mode .bottom-status-bar { display: flex; }
     gap: clamp(8px, 1.2vw, 15px);
   }
 
+  /* kiosk.html — weekday/clock mode: hide the empty elevator dashboard so the clock
+     fills and centers the whole main area. Otherwise `body.layout-v2 .dashboard-container
+     { display:grid !important }` (≈line 994) keeps an EMPTY dashboard in flow - it has
+     flex:1 1 auto and steals ~half the height, squeezing the clock into the top strip
+     where it clips under the logo on short (landscape) screens. The :not(.shabbat-mode-active)
+     guard keeps the dashboard on Shabbat. Mirrors the display.html rule above. */
+  body.layout-v2.layout-kiosk:not(.shabbat-mode-active) .dashboard-container { display: none !important; }
+
+  /* Analog face sized by the main size-container's height/width (capped 290px) so it can
+     never overflow/clip the clock area - even on a short screen or with a tall logo.
+     (#displayContainer is container-type:size / container-name:main.) */
+  body.layout-v2.layout-kiosk .analog-clock-panel {
+    width: min(290px, 60cqh, 90cqw);
+    height: min(290px, 60cqh, 90cqw);
+  }
+
   /* Empty-state messaging — fit within main row */
   body.layout-v2 .empty-state {
     flex: 1 1 auto;
@@ -1827,3 +1862,107 @@ body.empty-state-mode .bottom-status-bar { display: flex; }
   }
 
 }  /* end @supports (container-type: size) */
+
+/* ============================================
+   THEME: LITE (flat, calm, minimal)
+   Selected by the /lite/<page> route -> body.theme-lite (set in kiosk-logic.js).
+   LITE is the ONLY opt-in; every other route (the regular /kiosk, /display, /public
+   AND the explicit /rich/ prefix) gets body.theme-rich. LITE strips the depth cues
+   (shadows, gradients, glow) and motion so it reads as a clean, utilitarian variant -
+   clearly distinct from rich, in every state (clock view included), not just when an
+   animation happens to be running.
+   ============================================ */
+/* 1) Flatten the shared depth tokens - panels and the digital clock use these. */
+body.theme-lite {
+    --glass-shadow: none;
+    --glass-inner-shadow: none;
+    --active-gold-bg: var(--gold-primary);   /* approaching -> flat gold, not a gradient */
+}
+/* 2) Motion off + static fallbacks for animation-dependent elements. */
+body.theme-lite .elevator-panel.approaching,
+body.theme-lite .stop-ring,
+body.theme-lite .stop-bars,
+body.theme-lite .elevator-arrow-path { animation: none !important; }
+body.theme-lite .stop-ring { stroke-dashoffset: 0; }                 /* draw the ring fully */
+body.theme-lite .elevator-arrow-path { opacity: 1; transform: none; }
+/* 3) Flatten depth on the main surfaces: no shadows, solid clock face, tighter corners. */
+body.theme-lite .elevator-panel,
+body.theme-lite .clock-panel,
+body.theme-lite .eta-display,
+body.theme-lite .chip,
+body.theme-lite .system-banner { box-shadow: none !important; }
+body.theme-lite .elevator-panel { border-radius: 10px; }
+body.theme-lite .analog-clock-panel { background: var(--cream) !important; box-shadow: none !important; border-width: 3px; }
+body.theme-lite .analog-clock-panel .center-dot { box-shadow: none !important; }
+/* 4) Approaching = flat emphasis: solid gold border, no glow, no scale. */
+body.theme-lite .elevator-panel.approaching { transform: none !important; box-shadow: none !important; border-color: var(--gold-primary) !important; }
+/* 5) Calmer transitions; never transition the JS-driven analog hands (would jitter). */
+body.theme-lite * { transition-duration: 0.12s !important; }
+body.theme-lite .analog-clock-panel .hand { transition: none !important; }
+/* 6) Reach the Nitza "lite" abstraction level (we keep ramada's palette/fonts):
+   solid fills instead of translucent glass, a clean flat-box border, no text-shadow. */
+body.theme-lite { --glass-bg: var(--cream-dark); }                    /* solid card fill, no translucency */
+body.theme-lite .elevator-panel { border: 2px solid var(--gold-light); }
+body.theme-lite .clock-time,
+body.theme-lite .clock-date,
+body.theme-lite .clock-hebrew-date,
+body.theme-lite .elevator-panel * { text-shadow: none !important; }    /* flat text, no glow */
+
+/* ============================================
+   THEME: RICH (full motion) - body.theme-rich
+   The DEFAULT theme: applied to the regular routes (/kiosk, /display, /public) and
+   the explicit /rich/ prefix. SAME palette and layout as lite - the ONLY difference
+   vs lite is MOTION + GPU effects. rich = lots of live
+   animation (for capable devices); lite = static + lightweight (weak devices /
+   RPi Zero). No color / dark changes here, on purpose - the axis is animation.
+   NOTE: the difference is visible in MOTION, not in a still screenshot.
+   ============================================ */
+/* Continuous ambient motion: warm gold light-blooms drift slowly behind content. */
+body.theme-rich::before,
+body.theme-rich::after {
+    content: ""; position: fixed; inset: -25%; z-index: -2; pointer-events: none;
+    background-repeat: no-repeat; will-change: transform;
+}
+body.theme-rich::before {
+    background-image:
+        radial-gradient(closest-side, rgba(197,164,126,0.45), transparent),
+        radial-gradient(closest-side, rgba(230,194,95,0.32), transparent);
+    background-size: 55% 55%, 45% 45%;
+    background-position: 15% 22%, 85% 78%;
+    filter: blur(40px);
+    animation: richAuroraA 16s ease-in-out infinite alternate;
+}
+body.theme-rich::after {
+    background-image: radial-gradient(closest-side, rgba(221,201,168,0.40), transparent);
+    background-size: 50% 50%; background-position: 60% 12%;
+    filter: blur(50px);
+    animation: richAuroraB 22s ease-in-out infinite alternate;
+}
+@keyframes richAuroraA { from { transform: translate3d(-6%,-4%,0) scale(1);  } to { transform: translate3d(7%,5%,0) scale(1.18); } }
+@keyframes richAuroraB { from { transform: translate3d(4%,3%,0) scale(1.08); } to { transform: translate3d(-6%,-4%,0) scale(1); } }
+
+/* Glowing, breathing clock (giant display clock + kiosk clock). */
+body.theme-rich .clock-time { animation: richClockGlow 3.8s ease-in-out infinite; }
+@keyframes richClockGlow {
+    0%,100% { text-shadow: 0 0 14px rgba(197,164,126,0.45); }
+    50%     { text-shadow: 0 0 40px rgba(197,164,126,0.85), 0 0 72px rgba(230,194,95,0.40); }
+}
+
+/* Glassy panels + smooth, slightly slower transitions (a live, premium feel). */
+body.theme-rich .elevator-panel {
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+/* The "Shabbat Shalom" indicator + candles gently breathe and glow. */
+body.theme-rich #main-shabbat-indicator { animation: richBreathe 4s ease-in-out infinite; }
+@keyframes richBreathe {
+    0%,100% { transform: scale(1);    filter: drop-shadow(0 0 6px rgba(197,164,126,0.40)); }
+    50%     { transform: scale(1.03); filter: drop-shadow(0 0 18px rgba(197,164,126,0.75)); }
+}
+
+/* NOTE: intentionally NO global @media (prefers-reduced-motion) gate here.
+   PUBLIC (the rich reference) has none, and gating animations behind it made the
+   direction arrows / pulses appear FROZEN in rich on devices/OSes that request
+   reduced motion - while production PUBLIC kept animating. The /lite route is the
+   explicit "no motion, lightweight" option (weak devices), so reduced-motion
+   users simply use /lite. Rich/default animate like PUBLIC, always. */

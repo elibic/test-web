@@ -1646,6 +1646,37 @@
                     </div>
                 </div>
 
+                <div class="card-section-title" style="margin-top: var(--s-5);">📐 בדיקות מבנה הנסיעה</div>
+                <p class="ch-desc" style="margin: 0 0 var(--s-3);">
+                    מעבר לשאלה <em>באילו</em> קומות המעלית עוצרת, הבדיקות האלו בוחנות <em>איך</em>
+                    היא נוסעת - האם היא נוסעת רצוף מקצה לקצה כמו מעלית שבת, או "מקפצת" בין קומות
+                    כמו ביום חול. כך מונעים כניסה ויציאה שגויות ממצב שבת. השאר ריק לברירת המחדל.
+                </p>
+                <div class="field-row">
+                    <div class="field">
+                        <label class="field-label" for="sd-min-coverage-pct">כמה מהקומות חייבות להתבקר? (%) <button class="help-trigger" data-help="sd-coverage">?</button></label>
+                        <input type="number" id="sd-min-coverage-pct" min="0" max="100" placeholder="80">
+                        <div class="field-hint">מעלית שבת עוברת על כל קומות-העצירה שהגדרת. כאן קובעים כמה מהן חייבות להופיע במחזור אחד כדי שייחשב "שבת". 80% מאפשר שקומה או שתיים יוחמצו (למשל תג שלא נקלט).</div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-max-backtracks">כמה "קפיצות אחורה" מותרות? <button class="help-trigger" data-help="sd-backtracks">?</button></label>
+                        <input type="number" id="sd-max-backtracks" min="0" max="20" placeholder="0">
+                        <div class="field-hint">בשבת המעלית יורדת ברצף 11, 10, 9... בלי לחזור למעלה באמצע. "קפיצה אחורה" = שינוי כיוון בתוך מקטע. 0 = הכי קפדני; הגדל אם המעלית שלך לפעמים סוטה.</div>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label class="field-label" for="sd-max-revisits">כמה חזרות על אותה קומה מותרות? <button class="help-trigger" data-help="sd-revisits">?</button></label>
+                        <input type="number" id="sd-max-revisits" min="0" max="20" placeholder="1">
+                        <div class="field-hint">בנסיעת שבת כל קומה מבוקרת פעם אחת בכל כיוון. אם המעלית חוזרת שוב ושוב לאותה קומה - זה סימן ליום חול. כאן קובעים כמה חזרות לסבול לפני שפוסלים את המחזור.</div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-duration-tol-pct">סטיית משך-מחזור מותרת (%) <button class="help-trigger" data-help="sd-duration">?</button></label>
+                        <input type="number" id="sd-duration-tol-pct" min="0" max="100" placeholder="40">
+                        <div class="field-hint">לפי הקומות והזמנים שהגדרת, המערכת יודעת כמה זמן אמורה לקחת נסיעה שלמה הלוך-ושוב. מחזור ארוך בהרבה (נדודים) או קצר בהרבה (נסיעה חלקית) - נפסל. 40% = מותר ±40% מהזמן הצפוי. 0 = מבטל את הבדיקה.</div>
+                    </div>
+                </div>
+
                 <div class="card-section-title" style="margin-top: var(--s-5);">📤 תנאי יציאה ממצב שבת</div>
                 <div class="field-row">
                     <div class="field">
@@ -1677,6 +1708,18 @@
                         <label class="field-label" for="sd-no-report-min">פסק זמן ללא דיווח (דק׳)</label>
                         <input type="number" id="sd-no-report-min" min="0" max="240" placeholder="15">
                         <div class="field-hint">0 = כבוי. ה-tracker שותק → חריגה.</div>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label class="field-label" for="sd-consecutive-nonmatch">מחזורים חריגים רצופים ליציאה <button class="help-trigger" data-help="sd-nonmatch">?</button></label>
+                        <input type="number" id="sd-consecutive-nonmatch" min="1" max="20" placeholder="2">
+                        <div class="field-hint">אחרי צאת השבת המעלית חוזרת לעבוד רגיל. ברגע שהמערכת רואה כמה מחזורים ברצף שלא נראים כמו שבת - היא יוצאת ממצב שבת. 2 = יציאה זהירה אך מהירה.</div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="sd-missed-cycle-factor">מקדם היעדר-מחזור <button class="help-trigger" data-help="sd-missed">?</button></label>
+                        <input type="number" id="sd-missed-cycle-factor" min="0" max="10" step="0.1" placeholder="2.5">
+                        <div class="field-hint">אם המעלית הפסיקה לנסוע בקצב-השבת הסדיר (למשל במוצ"ש), המערכת מחכה בערך פי-המספר-הזה מאורך-מחזור-רגיל ואז יוצאת. 2.5 = יציאה תוך כ-2.5 מחזורים של שקט. 0 = מבטל את הבדיקה.</div>
                     </div>
                 </div>
             </div>
@@ -2227,6 +2270,52 @@ const HELP_DB = {
             <div class="help-example">ברירת מחדל: <code>90</code> דקות.</div>
         `,
     },
+    'sd-coverage': {
+        title: 'כמה מהקומות חייבות להתבקר?',
+        body: `
+            <p>מעלית שבת עוברת על <strong>כל קומות-העצירה</strong> שהגדרת למצב שבת. ההגדרה הזו קובעת כמה מהן חייבות להופיע במחזור אחד כדי שייחשב נסיעת-שבת.</p>
+            <p>הסיבה: לפעמים קריאת-תג בודדת לא נקלטת, ואז קומה אחת "נעלמת" מהמחזור. אחוז של 80% מאפשר להחמיץ קומה או שתיים בלי לפסול את המחזור - אבל אם חצי מהקומות חסרות, זו כנראה לא נסיעת שבת.</p>
+            <div class="help-example">ברירת מחדל: <code>80%</code>. העלה ל-<code>90%</code> לזיהוי קפדני יותר, הורד אם יש החמצות-תג תכופות.</div>
+        `,
+    },
+    'sd-backtracks': {
+        title: 'כמה "קפיצות אחורה" מותרות?',
+        body: `
+            <p>בשבת המעלית נוסעת ברצף מקצה לקצה - בירידה הקומות יורדות 11, 10, 9, 8... בלי לחזור למעלה באמצע. ביום חול היא "מקפצת" לפי לחיצות (קודם 5, אחר כך 8, אחר כך 2).</p>
+            <p>"קפיצה אחורה" = שינוי כיוון בתוך מקטע אחד. ההגדרה קובעת כמה כאלה לסבול לפני שהמחזור נחשב לא-שבתי.</p>
+            <div class="help-example">ברירת מחדל: <code>0</code> (הכי קפדני). הגדל אם יש לך מעלית שלפעמים סוטה קצת גם בשבת.</div>
+        `,
+    },
+    'sd-revisits': {
+        title: 'כמה חזרות על אותה קומה מותרות?',
+        body: `
+            <p>בנסיעת שבת כל קומה מבוקרת <strong>פעם אחת</strong> בכל כיוון. אם המעלית חוזרת שוב ושוב לאותה קומה באותו מקטע - זה סימן מובהק לנסיעת יום-חול לפי לחיצות נוסעים.</p>
+            <div class="help-example">ברירת מחדל: <code>1</code> (סובלנות לחזרה אקראית אחת). <code>0</code> = הכי קפדני.</div>
+        `,
+    },
+    'sd-duration': {
+        title: 'סטיית משך-מחזור מותרת',
+        body: `
+            <p>לפי הקומות והזמנים שהגדרת, המערכת מחשבת בעצמה כמה זמן <strong>אמורה</strong> לקחת נסיעה שלמה הלוך-ושוב. מחזור שאורך הרבה יותר (נדודים ארוכים) או הרבה פחות (נסיעה חלקית) - כנראה אינו נסיעת שבת ולכן נפסל.</p>
+            <div class="help-example">ברירת מחדל: <code>40%</code> - מותר ±40% מהזמן הצפוי. <code>0</code> מבטל את הבדיקה.</div>
+        `,
+    },
+    'sd-nonmatch': {
+        title: 'מחזורים חריגים רצופים ליציאה',
+        body: `
+            <p>אחרי צאת השבת המעלית חוזרת לעבוד רגיל. ברגע שהמערכת רואה כמה מחזורים <strong>ברצף</strong> שלא נראים כמו שבת (לפי כל הבדיקות למעלה) - היא יוצאת ממצב שבת.</p>
+            <p>זו דרך-היציאה המדויקת: היא מעוגנת במבנה הנסיעה ולא בשעון, כך שאינה תלויה בכמה זמן עבר.</p>
+            <div class="help-example">ברירת מחדל: <code>2</code> - יציאה זהירה אך מהירה.</div>
+        `,
+    },
+    'sd-missed': {
+        title: 'מקדם היעדר-מחזור',
+        body: `
+            <p>לפעמים במוצאי שבת המעלית פשוט מפסיקה לנסוע בקצב-השבת הסדיר, בלי לייצר מחזורים חריגים מובהקים. כדי לתפוס גם את זה, המערכת מחכה בערך <strong>פי-המספר-הזה</strong> מאורך-מחזור-שבת-רגיל, ואם בינתיים לא הגיע אף מחזור-שבת תקין - היא יוצאת.</p>
+            <p>זה בדיוק המנגנון שמונע מהמעלית להישאר "תקועה" במצב שבת אחרי שהיא כבר חזרה לשגרה.</p>
+            <div class="help-example">ברירת מחדל: <code>2.5</code> - יציאה אחרי כ-2.5 מחזורים של שקט/אי-סדירות. <code>0</code> מבטל את הבדיקה.</div>
+        `,
+    },
     'top-floor': {
         title: 'תחנה עליונה',
         body: `<p>התחנה הגבוהה ביותר שהמעלית מגיעה אליה. למשל <code>12</code> או <code>15</code>.</p>`,
@@ -2597,6 +2686,13 @@ function renderSystem() {
         'sd-candidate-exit-timeout': 'CANDIDATE_EXIT_TIMEOUT_MIN',
         'sd-inactivity-min':         'INACTIVITY_AT_INVALID_FLOOR_MIN',
         'sd-no-report-min':          'NO_REPORT_TIMEOUT_MIN',
+        // Structural cycle checks (smart detection)
+        'sd-min-coverage-pct':       'MIN_FLOOR_COVERAGE_PCT',
+        'sd-max-backtracks':         'MAX_BACKTRACKS_PER_LEG',
+        'sd-max-revisits':           'MAX_REVISITS_PER_LEG',
+        'sd-duration-tol-pct':       'CYCLE_DURATION_TOLERANCE_PCT',
+        'sd-consecutive-nonmatch':   'CONSECUTIVE_NONMATCH_FOR_EXIT',
+        'sd-missed-cycle-factor':    'MISSED_CYCLE_FACTOR',
     };
     for (const [id, key] of Object.entries(map)) {
         const el = $('#' + id);
@@ -2646,6 +2742,14 @@ $('#saveSystemBtn').addEventListener('click', () => {
         const n = parseInt(v, 10);
         if (!isNaN(n)) sdNew[key] = n;
     };
+    // MISSED_CYCLE_FACTOR is a fractional multiplier (e.g. 2.5), so it is read
+    // as a float rather than an integer like the rest of the tunables.
+    const sdGetFloat = (id, key) => {
+        const v = $('#' + id).value.trim();
+        if (v === '') return;
+        const n = parseFloat(v);
+        if (!isNaN(n)) sdNew[key] = n;
+    };
     sdGet('sd-required-cycles',        'REQUIRED_MATCHING_CYCLES');
     sdGet('sd-timing-tol-pct',         'TIMING_TOLERANCE_PCT');
     sdGet('sd-max-timing-exc',         'MAX_TIMING_EXCEPTIONS');
@@ -2657,6 +2761,13 @@ $('#saveSystemBtn').addEventListener('click', () => {
     sdGet('sd-candidate-exit-timeout', 'CANDIDATE_EXIT_TIMEOUT_MIN');
     sdGet('sd-inactivity-min',         'INACTIVITY_AT_INVALID_FLOOR_MIN');
     sdGet('sd-no-report-min',          'NO_REPORT_TIMEOUT_MIN');
+    // Structural cycle checks (smart detection)
+    sdGet('sd-min-coverage-pct',       'MIN_FLOOR_COVERAGE_PCT');
+    sdGet('sd-max-backtracks',         'MAX_BACKTRACKS_PER_LEG');
+    sdGet('sd-max-revisits',           'MAX_REVISITS_PER_LEG');
+    sdGet('sd-duration-tol-pct',       'CYCLE_DURATION_TOLERANCE_PCT');
+    sdGet('sd-consecutive-nonmatch',   'CONSECUTIVE_NONMATCH_FOR_EXIT');
+    sdGetFloat('sd-missed-cycle-factor', 'MISSED_CYCLE_FACTOR');
 
     database.ref('settings').update({
         YOM_TOV_SHENI: $('#yomtovSheniToggle').checked,

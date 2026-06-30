@@ -8,6 +8,14 @@
       "**/node_modules/**",
       "**/CLAUDE.md",
       "functions/**"
+    ],
+    "rewrites": [
+      { "source": "/lite/kiosk{,/**}",   "destination": "/kiosk.html" },
+      { "source": "/rich/kiosk{,/**}",   "destination": "/kiosk.html" },
+      { "source": "/lite/display{,/**}", "destination": "/display.html" },
+      { "source": "/rich/display{,/**}", "destination": "/display.html" },
+      { "source": "/lite/public{,/**}",  "destination": "/public.html" },
+      { "source": "/rich/public{,/**}",  "destination": "/public.html" }
     ]
   },
   "functions": [
