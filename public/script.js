@@ -33,6 +33,11 @@ function applyAppConfig() {
 
     const waLink = document.querySelector('.contact-link-action');
     if (waLink && cfg.texts.whatsappLink) waLink.href = cfg.texts.whatsappLink;
+
+    // Synchronous theme default (anti-FOUC). RTDB settings/appearance overrides later.
+    if (window.applyAppearance && cfg.theme) {
+        window.applyAppearance({ theme: cfg.theme, logo: { themeColor: cfg.branding.themeColor } });
+    }
 }
 
 // Call immediately to update UI before full load
@@ -1031,12 +1036,14 @@ async function initializeApp() {
 
         settings = sSnap.val() || {};
         floorAliases = settings.FLOOR_ALIASES || {};
+        if (window.applyAppearance) window.applyAppearance(settings.appearance);
         elevatorConfigs = cSnap.val() || {};
 
         renderSystemBanners();
         database.ref('settings').on('value', (snap) => {
             settings = snap.val() || {};
             floorAliases = settings.FLOOR_ALIASES || {};
+            if (window.applyAppearance) window.applyAppearance(settings.appearance);
             renderSystemBanners();
         });
         initRemoteReloadListener('index');

@@ -336,6 +336,12 @@ function applyBranding() {
 
     // WhatsApp Link
     if (cfg.texts.whatsappLink) WHATSAPP_LINK = cfg.texts.whatsappLink;
+
+    // Synchronous theme default (anti-FOUC). RTDB settings/appearance overrides it
+    // once Firebase loads (see initializeAppLogic).
+    if (window.applyAppearance && cfg.theme) {
+        window.applyAppearance({ theme: cfg.theme, logo: { themeColor: cfg.branding.themeColor } });
+    }
 }
 
 // Call Branding Init
@@ -631,6 +637,7 @@ async function initializeAppLogic() {
         ]);
         settings = settingsSnapshot.val() || {};
         floorAliases = settings.FLOOR_ALIASES || {};
+        if (window.applyAppearance) window.applyAppearance(settings.appearance);
         elevatorConfigs = configsSnapshot.val() || {};
         latestElevatorsData = elevatorsSnapshot.val() || {};
         await checkShabbatStatus();
@@ -645,6 +652,7 @@ async function initializeAppLogic() {
             const prevYomTov = settings ? settings.YOM_TOV_SHENI : undefined;
             settings = snapshot.val() || {};
             floorAliases = settings.FLOOR_ALIASES || {};
+            if (window.applyAppearance) window.applyAppearance(settings.appearance);
             renderSystemBanners();
 
             // אם YOM_TOV_SHENI השתנה — חשב מחדש את מצב שבת מיד (לא לחכות ל-interval)

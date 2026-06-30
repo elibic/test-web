@@ -51,8 +51,8 @@
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
 body { 
-    margin: 0; padding: 0; 
-    font-family: 'Assistant', 'Roboto Condensed', 'Fedra Sans', sans-serif; 
+    margin: 0; padding: 0;
+    font-family: var(--app-font, 'Assistant', 'Roboto Condensed', 'Fedra Sans', sans-serif);
     background: var(--cream);
     color: var(--text-main); 
     display: flex; flex-direction: column; 
@@ -68,7 +68,7 @@ body.screen-active-mode {
 
 /* כל הפונטים = Assistant נקי */
 .floor-indicator, .clock-time, .elevator-id, .eta-result, .status-time, .step-num {
-    font-family: 'Assistant', 'Roboto Condensed', sans-serif;
+    font-family: var(--app-font, 'Assistant', 'Roboto Condensed', sans-serif);
 }
 
 /* --- Main Layout --- */

@@ -35,8 +35,8 @@
 
 /* --- General Layout --- */
 body { 
-    margin: 0; padding: 0; 
-    font-family: 'Assistant', 'Roboto Condensed', 'Fedra Sans', sans-serif; 
+    margin: 0; padding: 0;
+    font-family: var(--app-font, 'Assistant', 'Roboto Condensed', 'Fedra Sans', sans-serif);
     background: var(--cream);
     color: var(--text-main); 
     display: flex; flex-direction: column; 
@@ -49,7 +49,7 @@ body {
 
 /* Assistant for all numbers */
 .floor-indicator, .clock-time, .elevator-id, .eta-result, .status-time, .number {
-    font-family: 'Assistant', 'Roboto Condensed', sans-serif;
+    font-family: var(--app-font, 'Assistant', 'Roboto Condensed', sans-serif);
 }
 
 /* --- Top Logo — on light header strip --- */

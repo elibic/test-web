@@ -30,6 +30,18 @@ const appConfig = {
         // Theme Color (Browser Address Bar & PWA)
         themeColor: "#E6C25F"
     },
+    // Theme defaults (synchronous, anti-FOUC). The LIVE per-project values come from
+    // RTDB settings/appearance (edited in setup.html -> "מראה"); these are just the
+    // instant default shown before Firebase loads. On clone, set to the chosen preset.
+    theme: {
+        preset: "ramada-gold",
+        bg: "#f5f0eb",
+        surface: "#ede6dc",
+        text: "#333333",
+        accent: "#c5a47e",
+        accentDark: "#8c7354",
+        fontFamily: "Assistant"
+    },
     texts: {
         title: "מעלית שבת אצלך בסלון", // Browser Tab Title
         contactPhone: "052-5705289",
