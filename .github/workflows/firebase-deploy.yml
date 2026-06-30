@@ -30,6 +30,7 @@ on:
         options:
           - "functions,hosting"
           - "functions"
+          - "functions:extractTheme"
           - "hosting"
 
 permissions:
