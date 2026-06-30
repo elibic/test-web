@@ -1839,19 +1839,53 @@
                     <label class="field-label" for="appPreset">ערכה מוכנה</label>
                     <select id="appPreset"></select>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:8px">
-                    <div class="field"><label class="field-label" for="appBg">רקע</label><input type="color" id="appBg"></div>
-                    <div class="field"><label class="field-label" for="appSurface">משטח / כרטיסים</label><input type="color" id="appSurface"></div>
-                    <div class="field"><label class="field-label" for="appText">צבע טקסט</label><input type="color" id="appText"></div>
-                    <div class="field"><label class="field-label" for="appAccent">צבע הדגשה</label><input type="color" id="appAccent"></div>
-                    <div class="field"><label class="field-label" for="appAccentDark">הדגשה כהה</label><input type="color" id="appAccentDark"></div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:8px">
+                    <div class="field"><label class="field-label" for="appBg">רקע</label>
+                        <div style="display:flex;gap:8px;align-items:center"><input type="color" id="appBg"><input type="text" id="appBgHex" maxlength="7" placeholder="#f5f0eb" dir="ltr" style="width:96px;font-family:monospace"></div></div>
+                    <div class="field"><label class="field-label" for="appSurface">משטח / כרטיסים</label>
+                        <div style="display:flex;gap:8px;align-items:center"><input type="color" id="appSurface"><input type="text" id="appSurfaceHex" maxlength="7" placeholder="#ede6dc" dir="ltr" style="width:96px;font-family:monospace"></div></div>
+                    <div class="field"><label class="field-label" for="appText">צבע טקסט</label>
+                        <div style="display:flex;gap:8px;align-items:center"><input type="color" id="appText"><input type="text" id="appTextHex" maxlength="7" placeholder="#333333" dir="ltr" style="width:96px;font-family:monospace"></div></div>
+                    <div class="field"><label class="field-label" for="appAccent">צבע הדגשה</label>
+                        <div style="display:flex;gap:8px;align-items:center"><input type="color" id="appAccent"><input type="text" id="appAccentHex" maxlength="7" placeholder="#c5a47e" dir="ltr" style="width:96px;font-family:monospace"></div></div>
+                    <div class="field"><label class="field-label" for="appAccentDark">הדגשה כהה</label>
+                        <div style="display:flex;gap:8px;align-items:center"><input type="color" id="appAccentDark"><input type="text" id="appAccentDarkHex" maxlength="7" placeholder="#8c7354" dir="ltr" style="width:96px;font-family:monospace"></div></div>
                     <div class="field"><label class="field-label" for="appFont">גופן</label><select id="appFont"></select></div>
+                </div>
+                <div class="field" id="appCustomFontWrap" style="display:none;margin-top:8px">
+                    <label class="field-label">פונט מותאם (שם + קובץ/URL)</label>
+                    <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+                        <input type="text" id="appFontName" placeholder="שם הפונט (family)">
+                        <input type="url" id="appFontUrl" placeholder="https://.../font.woff2" dir="ltr">
+                    </div>
+                    <div style="margin-top:8px">
+                        <button type="button" class="btn btn-ghost btn-sm" id="appFontUploadBtn" style="display:none">⬆ העלאת קובץ פונט</button>
+                        <input type="file" id="appFontFile" accept=".woff2,.woff,.ttf,.otf" style="display:none">
+                        <span id="appFontUploadMsg" class="ch-desc"></span>
+                    </div>
                 </div>
                 <div id="appPreview" style="margin-top:16px;border-radius:12px;padding:18px;text-align:center;border:1px solid rgba(0,0,0,.08)">
                     <div id="appPreviewTime" style="font-size:2.2em;font-weight:300;line-height:1">12:00:00</div>
                     <div id="appPreviewSub" style="font-size:1em;margin-top:6px">מעלית שבת - תצוגה לדוגמה</div>
                     <span id="appPreviewChip" style="display:inline-block;margin-top:10px;padding:4px 14px;border-radius:999px;font-weight:600">5 ▲</span>
                 </div>
+            </div>
+
+            <!-- Theme template: export / import -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">🧩</div>
+                    <div>
+                        <h3>תבנית ערכה (ייצוא / ייבוא)</h3>
+                        <p class="ch-desc">הפוך כל פרויקט לתבנית: ייצא את הערכה כקוד, והדבק אותה בפרויקט אחר לשימוש חוזר.</p>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                    <button type="button" class="btn btn-ghost btn-sm" id="appExportBtn">⬇ ייצא לתיבה</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="appCopyBtn">📋 העתק</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="appImportBtn">⬆ ייבא מהתיבה</button>
+                </div>
+                <textarea id="appThemeJson" rows="5" dir="ltr" placeholder='{"theme":{...},"logo":{...},"qr":{...},"access":{...}}' style="width:100%;font-family:monospace;font-size:.85em;box-sizing:border-box"></textarea>
             </div>
 
             <!-- Logo -->
@@ -2226,7 +2260,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="firebase-config.js"></script>
-<script src="appearance.js?v=20260630-appear1"></script>
+<script src="appearance.js?v=20260630-appear2"></script>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════
@@ -3096,8 +3130,18 @@ const QR_TEXT_DEFAULTS = {
     sub:   'סרקו ודעו מתי מעלית השבת מגיעה - בזמן אמת',
     en:    'Leave right on time - know when your elevator arrives'
 };
+// [color picker id, hex text id, default]
+const APP_COLOR_FIELDS = [
+    ['appBg', 'appBgHex', '#f5f0eb'], ['appSurface', 'appSurfaceHex', '#ede6dc'],
+    ['appText', 'appTextHex', '#333333'], ['appAccent', 'appAccentHex', '#c5a47e'],
+    ['appAccentDark', 'appAccentDarkHex', '#8c7354']
+];
+
+function appMarkCustom() { $('#appPreset').value = 'custom'; appUpdatePreview(); }
+function appToggleCustomFont() { $('#appCustomFontWrap').style.display = $('#appFont').value === '__custom__' ? '' : 'none'; }
 
 function appThemeFromFields() {
+    const customFont = $('#appFont').value === '__custom__';
     return {
         preset:     $('#appPreset').value,
         bg:         $('#appBg').value,
@@ -3105,18 +3149,28 @@ function appThemeFromFields() {
         text:       $('#appText').value,
         accent:     $('#appAccent').value,
         accentDark: $('#appAccentDark').value,
-        fontFamily: $('#appFont').value
+        fontFamily: customFont ? ($('#appFontName').value.trim() || 'Assistant') : $('#appFont').value,
+        fontUrl:    customFont ? $('#appFontUrl').value.trim() : ''
     };
 }
 
 function appFillThemeFields(t) {
     t = t || {};
-    $('#appBg').value         = t.bg || '#f5f0eb';
-    $('#appSurface').value    = t.surface || '#ede6dc';
-    $('#appText').value       = t.text || '#333333';
-    $('#appAccent').value     = t.accent || '#c5a47e';
-    $('#appAccentDark').value = t.accentDark || '#8c7354';
-    $('#appFont').value       = t.fontFamily || 'Assistant';
+    const vals = { appBg: t.bg || '#f5f0eb', appSurface: t.surface || '#ede6dc', appText: t.text || '#333333',
+                   appAccent: t.accent || '#c5a47e', appAccentDark: t.accentDark || '#8c7354' };
+    APP_COLOR_FIELDS.forEach(([cid, hid]) => { $('#' + cid).value = vals[cid]; $('#' + hid).value = vals[cid]; });
+    const fam = t.fontFamily || 'Assistant';
+    const fonts = window.APPEARANCE_FONTS || [];
+    if (t.fontUrl || (fam && fonts.indexOf(fam) === -1)) {
+        $('#appFont').value = '__custom__';
+        $('#appFontName').value = fam;
+        $('#appFontUrl').value = t.fontUrl || '';
+    } else {
+        $('#appFont').value = fam;
+        $('#appFontName').value = '';
+        $('#appFontUrl').value = '';
+    }
+    appToggleCustomFont();
 }
 
 function appUpdatePreview() {
@@ -3126,12 +3180,30 @@ function appUpdatePreview() {
         box.style.background = t.bg;
         box.style.color = t.text;
         box.style.fontFamily = "'" + t.fontFamily + "', sans-serif";
-        if (window.loadAppFont) window.loadAppFont(t.fontFamily);
+        if (window.loadAppFont) window.loadAppFont(t.fontFamily, t.fontUrl);
     }
     const time = $('#appPreviewTime'); if (time) time.style.color = t.accent;
     const chip = $('#appPreviewChip'); if (chip) { chip.style.background = t.accent; chip.style.color = '#fff'; }
     const logo = $('#appLogoPreview');
     if (logo) { const u = $('#appLogoUrl').value.trim(); if (u) { logo.src = u; logo.style.display = ''; } else { logo.style.display = 'none'; } }
+}
+
+function appBuildAppearanceObj() {
+    return {
+        theme: appThemeFromFields(),
+        logo: { logoUrl: $('#appLogoUrl').value.trim(), poweredByUrl: $('#appPoweredByUrl').value.trim(), themeColor: $('#appThemeColor').value },
+        qr: { showOnPublic: $('#appQrShow').checked, title: $('#appQrTitle').value.trim(), sub: $('#appQrSub').value.trim(), en: $('#appQrEn').value.trim() },
+        access: { indexMode: $('#appIndexMode').value, indexMinRole: $('#appIndexMinRole').value }
+    };
+}
+
+function appApplyImported(obj) {
+    if (obj.theme) { appFillThemeFields(obj.theme); $('#appPreset').value = obj.theme.preset || 'custom'; }
+    if (obj.logo) { $('#appLogoUrl').value = obj.logo.logoUrl || ''; $('#appPoweredByUrl').value = obj.logo.poweredByUrl || ''; $('#appThemeColor').value = obj.logo.themeColor || '#e6c25f'; }
+    if (obj.qr) { $('#appQrShow').checked = obj.qr.showOnPublic !== false; $('#appQrTitle').value = obj.qr.title || ''; $('#appQrSub').value = obj.qr.sub || ''; $('#appQrEn').value = obj.qr.en || ''; }
+    if (obj.access) { $('#appIndexMode').value = obj.access.indexMode || 'open'; $('#appIndexMinRole').value = obj.access.indexMinRole || 'viewer'; }
+    $('#appIndexMinRoleWrap').style.display = $('#appIndexMode').value === 'restricted' ? '' : 'none';
+    appUpdatePreview();
 }
 
 let appearanceInited = false;
@@ -3142,28 +3214,50 @@ function initAppearanceControls() {
         Object.keys(presets).map(k => `<option value="${k}">${presets[k].label || k}</option>`).join('') +
         '<option value="custom">מותאם אישית</option>';
     const fonts = window.APPEARANCE_FONTS || ['Assistant'];
-    $('#appFont').innerHTML = fonts.map(f => `<option value="${f}">${f}</option>`).join('');
+    $('#appFont').innerHTML = fonts.map(f => `<option value="${f}">${f}</option>`).join('') +
+        '<option value="__custom__">מותאם (URL / קובץ)</option>';
 
     $('#appPreset').addEventListener('change', () => {
         const p = presets[$('#appPreset').value];
-        if (p) { appFillThemeFields(p); appUpdatePreview(); }
+        if (p) { appFillThemeFields(p); $('#appPreset').value = $('#appPreset').value; appUpdatePreview(); }
     });
-    ['appBg','appSurface','appText','appAccent','appAccentDark','appFont'].forEach(id => {
-        $('#' + id).addEventListener('input', () => { $('#appPreset').value = 'custom'; appUpdatePreview(); });
+    // color picker <-> hex text two-way sync (manual change => preset becomes "custom")
+    APP_COLOR_FIELDS.forEach(([cid, hid]) => {
+        $('#' + cid).addEventListener('input', () => { $('#' + hid).value = $('#' + cid).value; appMarkCustom(); });
+        $('#' + hid).addEventListener('input', () => {
+            let v = $('#' + hid).value.trim(); if (v && v[0] !== '#') v = '#' + v;
+            if (/^#[0-9a-fA-F]{6}$/.test(v)) { $('#' + cid).value = v; appMarkCustom(); }
+        });
     });
+    $('#appFont').addEventListener('change', () => { appToggleCustomFont(); appMarkCustom(); });
+    ['appFontName', 'appFontUrl'].forEach(id => $('#' + id).addEventListener('input', appMarkCustom));
     $('#appLogoUrl').addEventListener('input', appUpdatePreview);
     $('#appIndexMode').addEventListener('change', () => {
         $('#appIndexMinRoleWrap').style.display = $('#appIndexMode').value === 'restricted' ? '' : 'none';
     });
     $$('[data-save-appearance]').forEach(b => b.addEventListener('click', saveAppearance));
+
+    // Export / Import theme as JSON (turn any project into a reusable template).
+    $('#appExportBtn').addEventListener('click', () => { $('#appThemeJson').value = JSON.stringify(appBuildAppearanceObj(), null, 2); });
+    $('#appCopyBtn').addEventListener('click', () => {
+        const ta = $('#appThemeJson'); if (!ta.value.trim()) ta.value = JSON.stringify(appBuildAppearanceObj(), null, 2);
+        ta.select();
+        if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(() => toast('הועתק ✓', 'success'), () => {});
+        else { try { document.execCommand('copy'); toast('הועתק ✓', 'success'); } catch (e) {} }
+    });
+    $('#appImportBtn').addEventListener('click', () => {
+        let obj; try { obj = JSON.parse($('#appThemeJson').value); } catch (e) { return toast('JSON לא תקין: ' + e.message, 'error'); }
+        appApplyImported(obj);
+        toast('ערכה יובאה - בדוק ולחץ שמור', 'success');
+    });
 }
 
 function renderAppearance() {
     initAppearanceControls();
     const a = state.settings.appearance || {};
     const t = a.theme || (window.appConfig && window.appConfig.theme) || {};
-    $('#appPreset').value = t.preset || 'custom';
     appFillThemeFields(t);
+    $('#appPreset').value = t.preset || 'custom';
     const lg = a.logo || {};
     const cfgBrand = (window.appConfig && window.appConfig.branding) || {};
     $('#appLogoUrl').value      = lg.logoUrl || '';
@@ -3186,20 +3280,9 @@ function saveAppearance() {
     const pb = $('#appPoweredByUrl').value.trim();
     if (lo && !isHttpsUrl(lo)) return toast('קישור הלוגו לא תקין', 'error');
     if (pb && !isHttpsUrl(pb)) return toast('קישור ה-Powered by לא תקין', 'error');
-    const out = {
-        theme: appThemeFromFields(),
-        logo: { logoUrl: lo, poweredByUrl: pb, themeColor: $('#appThemeColor').value },
-        qr: {
-            showOnPublic: $('#appQrShow').checked,
-            title: $('#appQrTitle').value.trim(),
-            sub:   $('#appQrSub').value.trim(),
-            en:    $('#appQrEn').value.trim()
-        },
-        access: {
-            indexMode: $('#appIndexMode').value,
-            indexMinRole: $('#appIndexMinRole').value
-        }
-    };
+    const fu = $('#appFontUrl').value.trim();
+    if ($('#appFont').value === '__custom__' && fu && !isHttpsUrl(fu)) return toast('קישור הפונט לא תקין', 'error');
+    const out = appBuildAppearanceObj();
     database.ref('settings/appearance').set(out)
         .then(() => { state.settings.appearance = out; toast('הגדרות המראה נשמרו ✓', 'success'); })
         .catch(e => toast(e.message, 'error'));

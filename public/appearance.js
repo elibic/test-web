@@ -33,8 +33,20 @@
     window.APPEARANCE_PRESETS = PRESETS;
 
     // Inject a Google-Font <link> once per family ('Assistant' is already in the page heads).
-    function loadAppFont(family) {
+    function loadAppFont(family, fontUrl) {
         if (!family) return;
+        if (fontUrl) {
+            // Custom font file (uploaded to Storage or linked by URL) -> @font-face.
+            var fid = 'app-fontface-' + family.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+            if (document.getElementById(fid)) return;
+            var st = document.createElement('style');
+            st.id = fid;
+            st.textContent = "@font-face{font-family:'" + family.replace(/'/g, '') +
+                "';src:url('" + String(fontUrl).replace(/'/g, '') + "');font-display:swap;}";
+            document.head.appendChild(st);
+            return;
+        }
+        // Curated Google Font -> stylesheet <link>.
         var id = 'app-font-' + family.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
         if (document.getElementById(id)) return;
         var link = document.createElement('link');
@@ -76,7 +88,7 @@
         setVar('--text-secondary', t.accent);
         setVar('--gold-dark', t.accentDark); // darker accent
         if (t.fontFamily) {
-            loadAppFont(t.fontFamily);
+            loadAppFont(t.fontFamily, t.fontUrl);
             root.style.setProperty('--app-font', "'" + t.fontFamily + "', 'Assistant', 'Roboto Condensed', sans-serif");
         }
         var lg = appearance.logo || {};
