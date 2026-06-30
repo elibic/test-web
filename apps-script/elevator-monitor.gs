@@ -151,12 +151,42 @@ function parseList(s) {
 function fetchJson(baseUrl, path, auth) {
   var url = baseUrl + path + ".json";
   if (auth) url += "?auth=" + auth;
-  var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  var res = fetchWithRetry(url, { muteHttpExceptions: true });
+  if (!res) {                                              // כל הנסיונות נכשלו (תקלת-רשת/שרת חולפת)
+    Logger.log("DB " + baseUrl + path + " - נכשל אחרי כל הנסיונות החוזרים");
+    return null;
+  }
   if (res.getResponseCode() !== 200) {
     Logger.log("DB " + baseUrl + path + " → HTTP " + res.getResponseCode() + ": " + res.getContentText());
     return null;
   }
-  return JSON.parse(res.getContentText());
+  try {
+    return JSON.parse(res.getContentText());
+  } catch (e) {                                            // תשובת-200 עם גוף לא-JSON ⇒ אל תפיל את ההרצה
+    Logger.log("DB " + baseUrl + path + " - תשובה לא תקינה (JSON): " + e);
+    return null;
+  }
+}
+
+/**
+ * UrlFetchApp.fetch עם נסיונות חוזרים ו-backoff מעריכי, לעמידות בפני תקלות-רגע
+ * (גמגום-רשת, או תשובת 5xx/429 מ-Firebase). מחזיר את התשובה הראשונה התקינה,
+ * תשובה לא-חוזרת (כמו 401/404 - אין טעם לחזור עליה), או null אם כל הנסיונות נכשלו.
+ */
+function fetchWithRetry(url, params) {
+  var delaysMs = [1000, 2000, 4000];                       // 3 נסיונות חוזרים אחרי הנסיון הראשון
+  for (var attempt = 0; attempt <= delaysMs.length; attempt++) {
+    try {
+      var res = UrlFetchApp.fetch(url, params);
+      var code = res.getResponseCode();
+      if (code < 500 && code !== 429) return res;          // הצלחה או שגיאה לא-חוזרת ⇒ החזר מיד
+      Logger.log("נסיון " + (attempt + 1) + " ל-" + url + " → HTTP " + code);
+    } catch (e) {                                          // חריגת-רשת (Address unavailable וכו') ⇒ נסה שוב
+      Logger.log("נסיון " + (attempt + 1) + " ל-" + url + " נכשל: " + e);
+    }
+    if (attempt < delaysMs.length) Utilities.sleep(delaysMs[attempt]);
+  }
+  return null;                                             // מוצו כל הנסיונות
 }
 
 function nowStr() {
