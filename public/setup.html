@@ -1465,6 +1465,7 @@
             <button class="nav-item"        data-view="elevators"><span class="ni-icon ic" data-icon="elevator"></span><span>מעליות</span><span class="ni-badge hide" id="navElevBadge"></span></button>
             <button class="nav-item"        data-view="system"><span class="ni-icon">⚙️</span><span>הגדרות מערכת</span></button>
             <button class="nav-item"        data-view="content"><span class="ni-icon">🎨</span><span>תוכן ציבורי</span></button>
+            <button class="nav-item"        data-view="appearance"><span class="ni-icon">🖌️</span><span>מראה ומיתוג</span></button>
             <button class="nav-item"        data-view="actions"><span class="ni-icon">🛠</span><span>פעולות מרחוק</span></button>
         </nav>
 
@@ -1813,6 +1814,114 @@
             </div>
         </section>
 
+        <!-- ─────────── VIEW: APPEARANCE (מראה) ─────────── -->
+        <section class="view" id="view-appearance" aria-labelledby="ap-title">
+            <header class="view-header">
+                <div>
+                    <h2 id="ap-title">מראה ומיתוג</h2>
+                    <p class="v-desc">ערכת-נושא (צבעים וגופן), לוגו, קוד ה-QR במסך הציבורי, וגישת דף הבית - לכל פרויקט, בלי קוד.</p>
+                </div>
+            </header>
+
+            <!-- Theme -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">🎨</div>
+                    <div>
+                        <h3>ערכת-נושא</h3>
+                        <p class="ch-desc">בחר ערכה מוכנה או כוונן ידנית. שינוי ידני יסמן "מותאם אישית".</p>
+                    </div>
+                    <div class="ch-actions">
+                        <button class="btn btn-primary btn-sm" data-save-appearance>💾 שמור</button>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="field-label" for="appPreset">ערכה מוכנה</label>
+                    <select id="appPreset"></select>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:8px">
+                    <div class="field"><label class="field-label" for="appBg">רקע</label><input type="color" id="appBg"></div>
+                    <div class="field"><label class="field-label" for="appSurface">משטח / כרטיסים</label><input type="color" id="appSurface"></div>
+                    <div class="field"><label class="field-label" for="appText">צבע טקסט</label><input type="color" id="appText"></div>
+                    <div class="field"><label class="field-label" for="appAccent">צבע הדגשה</label><input type="color" id="appAccent"></div>
+                    <div class="field"><label class="field-label" for="appAccentDark">הדגשה כהה</label><input type="color" id="appAccentDark"></div>
+                    <div class="field"><label class="field-label" for="appFont">גופן</label><select id="appFont"></select></div>
+                </div>
+                <div id="appPreview" style="margin-top:16px;border-radius:12px;padding:18px;text-align:center;border:1px solid rgba(0,0,0,.08)">
+                    <div id="appPreviewTime" style="font-size:2.2em;font-weight:300;line-height:1">12:00:00</div>
+                    <div id="appPreviewSub" style="font-size:1em;margin-top:6px">מעלית שבת - תצוגה לדוגמה</div>
+                    <span id="appPreviewChip" style="display:inline-block;margin-top:10px;padding:4px 14px;border-radius:999px;font-weight:600">5 ▲</span>
+                </div>
+            </div>
+
+            <!-- Logo -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">🖼️</div>
+                    <div>
+                        <h3>לוגו</h3>
+                        <p class="ch-desc">קישורי URL ללוגו העליון וללוגו "Powered by". העלה את התמונה לאחסון והדבק כאן קישור.</p>
+                    </div>
+                    <div class="ch-actions">
+                        <button class="btn btn-primary btn-sm" data-save-appearance>💾 שמור</button>
+                    </div>
+                </div>
+                <div class="field"><label class="field-label" for="appLogoUrl">לוגו עליון (URL)</label><input type="url" id="appLogoUrl" placeholder="https://..."></div>
+                <div class="field"><label class="field-label" for="appPoweredByUrl">לוגו "Powered by" (URL)</label><input type="url" id="appPoweredByUrl" placeholder="https://..."></div>
+                <div class="field"><label class="field-label" for="appThemeColor">צבע theme (דפדפן / PWA)</label><input type="color" id="appThemeColor"></div>
+                <div style="margin-top:10px"><img id="appLogoPreview" alt="תצוגת לוגו" style="max-height:60px;max-width:100%;display:none"></div>
+            </div>
+
+            <!-- QR (PUBLIC) -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">📱</div>
+                    <div>
+                        <h3>קוד QR במסך הציבורי (PUBLIC)</h3>
+                        <p class="ch-desc">האם להציג את ה-QR במסך הציבורי, והטקסט שלידו. (קישור-היעד מנוהל ב"תוכן ציבורי".)</p>
+                    </div>
+                    <div class="ch-actions">
+                        <button class="btn btn-primary btn-sm" data-save-appearance>💾 שמור</button>
+                    </div>
+                </div>
+                <label style="display:flex;align-items:center;gap:10px;margin-bottom:14px;cursor:pointer">
+                    <input type="checkbox" id="appQrShow"> <span>הצג QR במסך הציבורי</span>
+                </label>
+                <div class="field"><label class="field-label" for="appQrTitle">כותרת</label><input type="text" id="appQrTitle" placeholder="צאו מהחדר ברגע הנכון"></div>
+                <div class="field"><label class="field-label" for="appQrSub">תת-כותרת</label><input type="text" id="appQrSub" placeholder="סרקו ודעו מתי מעלית השבת מגיעה"></div>
+                <div class="field"><label class="field-label" for="appQrEn">שורה באנגלית</label><input type="text" id="appQrEn" placeholder="Leave right on time"></div>
+            </div>
+
+            <!-- INDEX access -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">🔒</div>
+                    <div>
+                        <h3>גישת דף הבית (INDEX)</h3>
+                        <p class="ch-desc">פתוח לכולם, או מוגבל לפי רמת-הרשאה. ניהול המשתמשים עצמם ב-admin.html. למצב מוגבל יש להגדיר גם כללי-אבטחה ב-RTDB.</p>
+                    </div>
+                    <div class="ch-actions">
+                        <button class="btn btn-primary btn-sm" data-save-appearance>💾 שמור</button>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="field-label" for="appIndexMode">מצב גישה</label>
+                    <select id="appIndexMode">
+                        <option value="open">פתוח לכולם</option>
+                        <option value="restricted">מוגבל (דרושה התחברות)</option>
+                    </select>
+                </div>
+                <div class="field" id="appIndexMinRoleWrap">
+                    <label class="field-label" for="appIndexMinRole">רמת-מינימום לצפייה</label>
+                    <select id="appIndexMinRole">
+                        <option value="viewer">צופה ומעלה</option>
+                        <option value="admin">מנהל שבת ומעלה</option>
+                        <option value="super_admin">מנהל עליון בלבד</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
         <!-- ─────────── VIEW: ACTIONS ─────────── -->
         <section class="view" id="view-actions" aria-labelledby="ac-title">
             <header class="view-header">
@@ -1870,6 +1979,7 @@
             <button class="bn-item"        data-view="elevators"><span class="bn-icon ic" data-icon="elevator"></span><span>מעליות</span></button>
             <button class="bn-item"        data-view="system"><span class="bn-icon">⚙️</span><span>מערכת</span></button>
             <button class="bn-item"        data-view="content"><span class="bn-icon">🎨</span><span>תוכן</span></button>
+            <button class="bn-item"        data-view="appearance"><span class="bn-icon">🖌️</span><span>מראה</span></button>
             <button class="bn-item"        data-view="actions"><span class="bn-icon">🛠</span><span>פעולות</span></button>
         </div>
     </nav>
@@ -2116,6 +2226,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="firebase-config.js"></script>
+<script src="appearance.js?v=20260630-appear1"></script>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════
@@ -2412,6 +2523,7 @@ const VIEW_TITLES = {
     elevators: 'מעליות',
     system:    'הגדרות מערכת',
     content:   'תוכן ציבורי',
+    appearance:'מראה ומיתוג',
     actions:   'פעולות מרחוק',
 };
 
@@ -2527,6 +2639,7 @@ function renderAll() {
     renderSystem();
     renderBanners();
     renderQrLinks();
+    renderAppearance();
     renderElevators();
 }
 
@@ -2974,6 +3087,123 @@ $$('[data-reset-key]').forEach(btn => {
             .catch(e => toast(e.message, 'error'));
     });
 });
+
+/* ═══════════════════════════════════════════════════════════════
+   APPEARANCE (מראה) - theme / logo / QR / index access
+   ═══════════════════════════════════════════════════════════════ */
+const QR_TEXT_DEFAULTS = {
+    title: 'צאו מהחדר ברגע הנכון',
+    sub:   'סרקו ודעו מתי מעלית השבת מגיעה - בזמן אמת',
+    en:    'Leave right on time - know when your elevator arrives'
+};
+
+function appThemeFromFields() {
+    return {
+        preset:     $('#appPreset').value,
+        bg:         $('#appBg').value,
+        surface:    $('#appSurface').value,
+        text:       $('#appText').value,
+        accent:     $('#appAccent').value,
+        accentDark: $('#appAccentDark').value,
+        fontFamily: $('#appFont').value
+    };
+}
+
+function appFillThemeFields(t) {
+    t = t || {};
+    $('#appBg').value         = t.bg || '#f5f0eb';
+    $('#appSurface').value    = t.surface || '#ede6dc';
+    $('#appText').value       = t.text || '#333333';
+    $('#appAccent').value     = t.accent || '#c5a47e';
+    $('#appAccentDark').value = t.accentDark || '#8c7354';
+    $('#appFont').value       = t.fontFamily || 'Assistant';
+}
+
+function appUpdatePreview() {
+    const t = appThemeFromFields();
+    const box = $('#appPreview');
+    if (box) {
+        box.style.background = t.bg;
+        box.style.color = t.text;
+        box.style.fontFamily = "'" + t.fontFamily + "', sans-serif";
+        if (window.loadAppFont) window.loadAppFont(t.fontFamily);
+    }
+    const time = $('#appPreviewTime'); if (time) time.style.color = t.accent;
+    const chip = $('#appPreviewChip'); if (chip) { chip.style.background = t.accent; chip.style.color = '#fff'; }
+    const logo = $('#appLogoPreview');
+    if (logo) { const u = $('#appLogoUrl').value.trim(); if (u) { logo.src = u; logo.style.display = ''; } else { logo.style.display = 'none'; } }
+}
+
+let appearanceInited = false;
+function initAppearanceControls() {
+    if (appearanceInited) return; appearanceInited = true;
+    const presets = window.APPEARANCE_PRESETS || {};
+    $('#appPreset').innerHTML =
+        Object.keys(presets).map(k => `<option value="${k}">${presets[k].label || k}</option>`).join('') +
+        '<option value="custom">מותאם אישית</option>';
+    const fonts = window.APPEARANCE_FONTS || ['Assistant'];
+    $('#appFont').innerHTML = fonts.map(f => `<option value="${f}">${f}</option>`).join('');
+
+    $('#appPreset').addEventListener('change', () => {
+        const p = presets[$('#appPreset').value];
+        if (p) { appFillThemeFields(p); appUpdatePreview(); }
+    });
+    ['appBg','appSurface','appText','appAccent','appAccentDark','appFont'].forEach(id => {
+        $('#' + id).addEventListener('input', () => { $('#appPreset').value = 'custom'; appUpdatePreview(); });
+    });
+    $('#appLogoUrl').addEventListener('input', appUpdatePreview);
+    $('#appIndexMode').addEventListener('change', () => {
+        $('#appIndexMinRoleWrap').style.display = $('#appIndexMode').value === 'restricted' ? '' : 'none';
+    });
+    $$('[data-save-appearance]').forEach(b => b.addEventListener('click', saveAppearance));
+}
+
+function renderAppearance() {
+    initAppearanceControls();
+    const a = state.settings.appearance || {};
+    const t = a.theme || (window.appConfig && window.appConfig.theme) || {};
+    $('#appPreset').value = t.preset || 'custom';
+    appFillThemeFields(t);
+    const lg = a.logo || {};
+    const cfgBrand = (window.appConfig && window.appConfig.branding) || {};
+    $('#appLogoUrl').value      = lg.logoUrl || '';
+    $('#appPoweredByUrl').value = lg.poweredByUrl || '';
+    $('#appThemeColor').value   = lg.themeColor || cfgBrand.themeColor || '#e6c25f';
+    const qr = a.qr || {};
+    $('#appQrShow').checked = qr.showOnPublic !== false;
+    $('#appQrTitle').value  = qr.title != null ? qr.title : QR_TEXT_DEFAULTS.title;
+    $('#appQrSub').value    = qr.sub   != null ? qr.sub   : QR_TEXT_DEFAULTS.sub;
+    $('#appQrEn').value     = qr.en    != null ? qr.en    : QR_TEXT_DEFAULTS.en;
+    const ac = a.access || {};
+    $('#appIndexMode').value    = ac.indexMode || 'open';
+    $('#appIndexMinRole').value = ac.indexMinRole || 'viewer';
+    $('#appIndexMinRoleWrap').style.display = $('#appIndexMode').value === 'restricted' ? '' : 'none';
+    appUpdatePreview();
+}
+
+function saveAppearance() {
+    const lo = $('#appLogoUrl').value.trim();
+    const pb = $('#appPoweredByUrl').value.trim();
+    if (lo && !isHttpsUrl(lo)) return toast('קישור הלוגו לא תקין', 'error');
+    if (pb && !isHttpsUrl(pb)) return toast('קישור ה-Powered by לא תקין', 'error');
+    const out = {
+        theme: appThemeFromFields(),
+        logo: { logoUrl: lo, poweredByUrl: pb, themeColor: $('#appThemeColor').value },
+        qr: {
+            showOnPublic: $('#appQrShow').checked,
+            title: $('#appQrTitle').value.trim(),
+            sub:   $('#appQrSub').value.trim(),
+            en:    $('#appQrEn').value.trim()
+        },
+        access: {
+            indexMode: $('#appIndexMode').value,
+            indexMinRole: $('#appIndexMinRole').value
+        }
+    };
+    database.ref('settings/appearance').set(out)
+        .then(() => { state.settings.appearance = out; toast('הגדרות המראה נשמרו ✓', 'success'); })
+        .catch(e => toast(e.message, 'error'));
+}
 
 /* ═══════════════════════════════════════════════════════════════
    REMOTE RELOAD
