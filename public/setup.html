@@ -1871,6 +1871,20 @@
                 </div>
             </div>
 
+            <!-- Extract palette from PDF / image -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="ch-icon">🧪</div>
+                    <div>
+                        <h3>חילוץ ערכה מ-PDF / תמונה</h3>
+                        <p class="ch-desc">העלה לוגו, צילום-מסך או דף-מותג (PDF) - נחלץ פלטת-צבעים ונשבץ אוטומטית (רקע/טקסט/הדגשה). כוונן לפי הצורך ולחץ שמור.</p>
+                    </div>
+                </div>
+                <input type="file" id="appExtractFile" accept="image/*,.pdf">
+                <div id="appExtractMsg" class="ch-desc" style="margin-top:6px"></div>
+                <div id="appExtractSwatches" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px"></div>
+            </div>
+
             <!-- Theme template: export / import -->
             <div class="card">
                 <div class="card-header">
@@ -3250,6 +3264,16 @@ function initAppearanceControls() {
         appApplyImported(obj);
         toast('ערכה יובאה - בדוק ולחץ שמור', 'success');
     });
+
+    // Extract palette from an uploaded PDF / image
+    $('#appExtractFile').addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (f) appExtractFromFile(f);
+    });
+    $('#appExtractSwatches').addEventListener('click', (e) => {
+        const hx = e.target && e.target.dataset && e.target.dataset.hex;
+        if (hx && navigator.clipboard) navigator.clipboard.writeText(hx).then(() => toast('הועתק ' + hx, 'success'), () => {});
+    });
 }
 
 function renderAppearance() {
@@ -3286,6 +3310,93 @@ function saveAppearance() {
     database.ref('settings/appearance').set(out)
         .then(() => { state.settings.appearance = out; toast('הגדרות המראה נשמרו ✓', 'success'); })
         .catch(e => toast(e.message, 'error'));
+}
+
+/* ── Palette extraction from PDF / image (client-side) ── */
+function appHex2(n) { return ('0' + Math.max(0, Math.min(255, Math.round(n))).toString(16)).slice(-2); }
+function appRgbToHex(c) { return '#' + appHex2(c.r) + appHex2(c.g) + appHex2(c.b); }
+function appLum(c) { return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b; }
+function appSat(c) { const mx = Math.max(c.r, c.g, c.b), mn = Math.min(c.r, c.g, c.b); return mx === 0 ? 0 : (mx - mn) / mx; }
+
+function appPaletteFromCanvas(canvas) {
+    const ctx = canvas.getContext('2d');
+    let data;
+    try { data = ctx.getImageData(0, 0, canvas.width, canvas.height).data; } catch (e) { return []; }
+    const counts = {};
+    for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3] < 200) continue; // skip transparent
+        const r = Math.round(data[i] / 24) * 24, g = Math.round(data[i + 1] / 24) * 24, b = Math.round(data[i + 2] / 24) * 24;
+        const k = r + ',' + g + ',' + b;
+        counts[k] = (counts[k] || 0) + 1;
+    }
+    return Object.keys(counts).map(k => { const p = k.split(',').map(Number); return { r: p[0], g: p[1], b: p[2], n: counts[k] }; })
+        .sort((a, b) => b.n - a.n).slice(0, 12);
+}
+
+function appPaletteFromImage(img) {
+    const max = 160, scale = Math.min(1, max / Math.max(img.width || max, img.height || max));
+    const cw = Math.max(1, Math.round((img.width || max) * scale)), ch = Math.max(1, Math.round((img.height || max) * scale));
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    cv.getContext('2d').drawImage(img, 0, 0, cw, ch);
+    return appPaletteFromCanvas(cv);
+}
+
+function appApplyPalette(pal) {
+    if (!pal || !pal.length) { toast('לא נמצאו צבעים בקובץ', 'error'); return; }
+    const sw = $('#appExtractSwatches');
+    if (sw) sw.innerHTML = pal.map(c => { const hx = appRgbToHex(c);
+        return '<span title="' + hx + '" data-hex="' + hx + '" style="width:30px;height:30px;border-radius:6px;border:1px solid rgba(0,0,0,.2);background:' + hx + ';cursor:pointer"></span>'; }).join('');
+    const byLum = pal.slice().sort((a, b) => appLum(a) - appLum(b));
+    const bySat = pal.slice().sort((a, b) => appSat(b) - appSat(a));
+    const dark = byLum[0], light = byLum[byLum.length - 1], surface = byLum[byLum.length - 2] || light, accent = bySat[0];
+    const accentDark = { r: accent.r * 0.7, g: accent.g * 0.7, b: accent.b * 0.7 };
+    const curFont = $('#appFont').value === '__custom__' ? $('#appFontName').value : $('#appFont').value;
+    appFillThemeFields({ bg: appRgbToHex(light), surface: appRgbToHex(surface), text: appRgbToHex(dark),
+        accent: appRgbToHex(accent), accentDark: appRgbToHex(accentDark), fontFamily: curFont });
+    $('#appPreset').value = 'custom';
+    appUpdatePreview();
+    toast('פלטה חולצה ושובצה - כוונן לפי הצורך', 'success');
+}
+
+function appExtractFromFile(file) {
+    const msg = $('#appExtractMsg');
+    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+        if (msg) msg.textContent = 'מעבד PDF...';
+        appLoadPdfJs(ok => {
+            if (!ok || !window.pdfjsLib) { if (msg) msg.textContent = ''; return toast('טעינת מנוע ה-PDF נכשלה', 'error'); }
+            const fr = new FileReader();
+            fr.onload = () => {
+                window.pdfjsLib.getDocument({ data: new Uint8Array(fr.result) }).promise
+                    .then(pdf => pdf.getPage(1))
+                    .then(page => {
+                        const base = page.getViewport({ scale: 1 });
+                        const vp = page.getViewport({ scale: Math.min(1.5, 900 / base.width) });
+                        const cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height;
+                        return page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise.then(() => cv);
+                    })
+                    .then(cv => { if (msg) msg.textContent = ''; appApplyPalette(appPaletteFromCanvas(cv)); })
+                    .catch(e => { if (msg) msg.textContent = ''; toast('עיבוד ה-PDF נכשל: ' + e.message, 'error'); });
+            };
+            fr.readAsArrayBuffer(file);
+        });
+    } else if (/^image\//.test(file.type) || /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name)) {
+        const url = URL.createObjectURL(file), img = new Image();
+        img.onload = () => { appApplyPalette(appPaletteFromImage(img)); URL.revokeObjectURL(url); };
+        img.onerror = () => { toast('טעינת התמונה נכשלה', 'error'); URL.revokeObjectURL(url); };
+        img.src = url;
+    } else { toast('סוג קובץ לא נתמך (תמונה או PDF)', 'error'); }
+}
+
+function appLoadPdfJs(cb) {
+    if (window.pdfjsLib) return cb(true);
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => {
+        if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; cb(true); }
+        else cb(false);
+    };
+    s.onerror = () => cb(false);
+    document.head.appendChild(s);
 }
 
 /* ═══════════════════════════════════════════════════════════════
