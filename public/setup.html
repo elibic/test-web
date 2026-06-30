@@ -1883,6 +1883,18 @@
                 <input type="file" id="appExtractFile" accept="image/*,.pdf">
                 <div id="appExtractMsg" class="ch-desc" style="margin-top:6px"></div>
                 <div id="appExtractSwatches" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px"></div>
+                <hr style="border:none;border-top:1px solid rgba(0,0,0,.08);margin:14px 0">
+                <label class="field-label">או חילוץ מאתר אינטרנט</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px">
+                    <input type="url" id="appSiteUrl" placeholder="https://hotel.example.com" dir="ltr" style="flex:1;min-width:220px">
+                    <button type="button" class="btn btn-ghost btn-sm" id="appSiteExtractBtn">חלץ מאתר</button>
+                </div>
+                <div id="appSiteFonts" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
+                <details style="margin-top:8px">
+                    <summary class="ch-desc" style="cursor:pointer">הגדרות מתקדמות (כתובת הפונקציה)</summary>
+                    <input type="url" id="appExtractFnUrl" dir="ltr" placeholder="https://us-central1-PROJECT.cloudfunctions.net/extractTheme" style="width:100%;margin-top:6px;box-sizing:border-box">
+                    <p class="ch-desc" style="margin-top:4px">דורש פריסת הפונקציה extractTheme (Blaze). ברירת-המחדל נגזרת מזיהוי הפרויקט.</p>
+                </details>
             </div>
 
             <!-- Theme template: export / import -->
@@ -3293,6 +3305,20 @@ function initAppearanceControls() {
             }).catch(err => { if (msg) msg.textContent = ''; toast('העלאה נכשלה: ' + err.message, 'error'); });
         });
     }
+
+    // Website extraction: prefill the function URL from the project id, wire the button + font chips.
+    try {
+        const pid = (window.firebase && firebase.apps && firebase.apps[0] && firebase.apps[0].options.projectId) || '';
+        if (pid && !$('#appExtractFnUrl').value) $('#appExtractFnUrl').value = 'https://us-central1-' + pid + '.cloudfunctions.net/extractTheme';
+    } catch (e) {}
+    $('#appSiteExtractBtn').addEventListener('click', appExtractFromSite);
+    $('#appSiteFonts').addEventListener('click', (e) => {
+        const f = e.target && e.target.dataset && e.target.dataset.font;
+        if (!f) return;
+        $('#appFont').value = '__custom__'; appToggleCustomFont();
+        $('#appFontName').value = f; $('#appFontUrl').value = ''; appMarkCustom();
+        toast('גופן נבחר: ' + f, 'success');
+    });
 }
 
 function renderAppearance() {
@@ -3416,6 +3442,31 @@ function appLoadPdfJs(cb) {
     };
     s.onerror = () => cb(false);
     document.head.appendChild(s);
+}
+
+/* ── Website extraction (calls the extractTheme Cloud Function) ── */
+function appApplyHexColors(colors) {
+    const pal = (colors || []).filter(c => /^#[0-9a-fA-F]{6}$/.test(c.hex)).map(c => ({
+        r: parseInt(c.hex.slice(1, 3), 16), g: parseInt(c.hex.slice(3, 5), 16), b: parseInt(c.hex.slice(5, 7), 16), n: c.n || 1
+    }));
+    appApplyPalette(pal);
+}
+function appExtractFromSite() {
+    const site = $('#appSiteUrl').value.trim();
+    const fn = $('#appExtractFnUrl').value.trim();
+    if (!/^https?:\/\//i.test(site)) return toast('כתובת אתר לא תקינה', 'error');
+    if (!/^https?:\/\//i.test(fn)) return toast('חסרה כתובת הפונקציה (הגדרות מתקדמות)', 'error');
+    const msg = $('#appExtractMsg'); if (msg) msg.textContent = 'מושך מהאתר...';
+    fetch(fn + (fn.indexOf('?') >= 0 ? '&' : '?') + 'url=' + encodeURIComponent(site))
+        .then(r => r.json())
+        .then(j => {
+            if (msg) msg.textContent = '';
+            if (j.error) return toast('שגיאה: ' + j.error, 'error');
+            if (j.colors && j.colors.length) appApplyHexColors(j.colors); else toast('לא נמצאו צבעים באתר', 'error');
+            const fc = $('#appSiteFonts');
+            if (fc) fc.innerHTML = (j.fonts || []).map(f => '<button type="button" class="btn btn-ghost btn-sm" data-font="' + String(f).replace(/"/g, '') + '">' + f + '</button>').join('');
+        })
+        .catch(e => { if (msg) msg.textContent = ''; toast('משיכה נכשלה (האם הפונקציה פרוסה + Blaze?): ' + e.message, 'error'); });
 }
 
 /* ═══════════════════════════════════════════════════════════════

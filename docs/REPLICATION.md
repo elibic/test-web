@@ -22,10 +22,21 @@
    ואת `settings`.
 
 ## מודל settings/appearance (נכתב מ-setup.html, נקרא בזמן-ריצה)
-- `theme`   : preset, bg, surface, text, accent, accentDark, fontFamily
+- `theme`   : preset, bg, surface, text, accent, accentDark, fontFamily, fontUrl (פונט מותאם)
 - `logo`    : logoUrl, poweredByUrl, themeColor
 - `qr`      : showOnPublic, title, sub, en   (PUBLIC בלבד; קישור-היעד נשאר ב-settings/qrLinks)
 - `access`  : indexMode (open|restricted), indexMinRole (viewer|admin|super_admin)
 
 `public/appearance.js` (`applyAppearance`) מחיל את כל אלה: צבעים כ-CSS vars על `:root`, גופן דינמי
-(`--app-font` + טעינת Google-Font), לוגו, meta theme-color, וטקסט/הצגת-QR. נטען בכל הדפים + setup.
+(`--app-font` + טעינת Google-Font או `@font-face` ל-fontUrl), לוגו, meta theme-color, וטקסט/הצגת-QR.
+נטען בכל הדפים + setup.
+
+## תוספות מראה (setup.html -> "מראה ומיתוג")
+- **צבע לפי קוד HEX** לצד כל בורר-צבע (סנכרון דו-כיווני).
+- **חילוץ פלטה מ-PDF / תמונה** (צד-לקוח, pdf.js): מעלים קובץ -> שיבוץ אוטומטי (רקע/טקסט/הדגשה) + כוונון.
+- **חילוץ מאתר אינטרנט**: Cloud Function `extractTheme` (functions v2, us-central1). דורש **Blaze**
+  ופריסה ידנית: `firebase deploy --only functions:extractTheme`. ה-UI גוזר את כתובת הפונקציה מזיהוי
+  הפרויקט (ניתן לדריסה תחת "הגדרות מתקדמות").
+- **פונט מותאם**: לפי URL (מיידי), או **העלאת קובץ ל-Storage** - דורש **הפעלת Firebase Storage** +
+  פריסת כללים: `firebase deploy --only storage` (הכללים ב-`storage.rules`).
+- **תבנית ערכה**: ייצוא/ייבוא JSON להעברת ערכה מפרויקט אחד לאחר (כל פרויקט = תבנית).
