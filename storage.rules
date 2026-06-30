@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Firebase Storage rules.
+// Fonts uploaded from setup.html ("מראה" -> פונט מותאם -> העלאת קובץ) are public
+// to read (the kiosk/display/public/index pages load them via @font-face) and
+// writable only by an authenticated admin (the setup page requires super_admin).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /fonts/{fontFile} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('font/.*|application/.*|.*woff.*|.*octet-stream');
+    }
+    // Everything else: locked by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

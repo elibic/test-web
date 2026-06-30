@@ -18,6 +18,7 @@
       { "source": "/rich/public{,/**}",  "destination": "/public.html" }
     ]
   },
+  "storage": { "rules": "storage.rules" },
   "functions": [
     {
       "source": "functions",

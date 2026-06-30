@@ -84,6 +84,7 @@ node_modules/
 !/.github
 !/public
 !/docs
+!/storage.rules
 
 #  בתוך public/ — דלג על ארכיונים וגיבויים:
 /public/OLD/
