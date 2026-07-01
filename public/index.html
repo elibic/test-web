@@ -15,11 +15,11 @@
     <link rel="icon" type="image/png" href="https://firebasestorage.googleapis.com/v0/b/nitzaelev.firebasestorage.app/o/icon.png?alt=media&token=fc912283-66ed-430e-82f9-e6ab265e5e98">
     <link rel="apple-touch-icon" href="https://firebasestorage.googleapis.com/v0/b/nitzaelev.firebasestorage.app/o/icon.png?alt=media&token=fc912283-66ed-430e-82f9-e6ab265e5e98">
 
-    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;700&family=Roboto+Condensed:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;700&family=Heebo:wght@300;400;600;800&family=Roboto+Condensed:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
     
-    <link rel="stylesheet" href="style.css?v=20260630-appear2">
+    <link rel="stylesheet" href="style.css?v=20260701-login">
 </head>
 <body>
 
@@ -28,19 +28,31 @@
         <span style="color:var(--gold-primary);" id="loadingText">טוען מערכת...</span>
     </div>
 
-    <!-- Access gate for restricted projects (settings/appearance.access). Hidden unless needed. -->
-    <div id="indexAuthScreen" style="display:none; position:fixed; inset:0; z-index:12000; background:#1a1a2e; color:#fff; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; font-family:'Assistant','Roboto Condensed',sans-serif;">
-        <div style="max-width:360px; width:100%;">
-            <h2 id="iaTitle" style="color:#c5a47e; margin:0 0 8px;">כניסה למערכת</h2>
-            <p id="iaDesc" style="opacity:.85; margin:0 0 20px;">דף זה מוגבל. יש להתחבר כדי לצפות.</p>
-            <button id="iaGoogleBtn" type="button" style="width:100%; padding:12px; margin-bottom:12px; border:none; border-radius:10px; background:#fff; color:#222; font-size:1em; cursor:pointer;">התחברות עם Google</button>
+    <!-- Access gate for restricted projects (settings/appearance.access). Styled to match the nitza20 login. Hidden unless needed. -->
+    <div id="indexAuthScreen" style="display:none;">
+        <div class="ia-box">
+            <h2 id="iaTitle">כניסה למערכת</h2>
+            <p id="iaDesc">דף זה מוגבל. יש להתחבר כדי לצפות.</p>
+
+            <button id="iaGoogleBtn" type="button" class="ia-btn ia-google-btn">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9.18v3.48h4.74c-.2 1.13-.83 2.08-1.78 2.72v2.26h2.9c1.7-1.56 2.68-3.87 2.68-6.62z"></path><path fill="#34A853" d="M9.18 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-2.97.86-2.3 0-4.26-1.56-4.96-3.66H1.2v2.33C2.68 15.98 5.67 18 9.18 18z"></path><path fill="#FBBC05" d="M4.22 10.74c-.14-.42-.22-.88-.22-1.34s.08-.92.22-1.34V5.73H1.2C.43 7.1.01 8.7.01 10.4c0 1.7.42 3.3 1.19 4.67l3.02-2.33z"></path><path fill="#EA4335" d="M9.18 3.54c1.32 0 2.5.45 3.44 1.34l2.58-2.58C13.65.88 11.61 0 9.18 0 5.67 0 2.68 2.02 1.2 4.93l3.02 2.33c.7-2.1 2.66-3.66 4.96-3.66z"></path></svg>
+                <span>התחבר עם Google</span>
+            </button>
+
+            <p class="ia-or" id="iaOr">או</p>
+
             <form id="iaEmailForm">
-                <input id="iaEmail" type="email" placeholder="אימייל" autocomplete="username" style="width:100%; padding:12px; margin-bottom:8px; border-radius:10px; border:1px solid #555; background:#24243a; color:#fff; box-sizing:border-box;">
-                <input id="iaPassword" type="password" placeholder="סיסמה" autocomplete="current-password" style="width:100%; padding:12px; margin-bottom:8px; border-radius:10px; border:1px solid #555; background:#24243a; color:#fff; box-sizing:border-box;">
-                <button type="submit" style="width:100%; padding:12px; border:none; border-radius:10px; background:#c5a47e; color:#1a1a2e; font-weight:600; font-size:1em; cursor:pointer;">התחבר</button>
+                <input id="iaEmail" type="email" class="ia-input" placeholder="אימייל" autocomplete="username" required>
+                <div class="ia-input-wrapper">
+                    <input id="iaPassword" type="password" class="ia-input" placeholder="סיסמה" autocomplete="current-password" required>
+                    <i class="fas fa-eye ia-pass-toggle" id="iaPassToggle"></i>
+                </div>
+                <button type="submit" class="ia-btn" id="iaLoginBtn">התחבר</button>
             </form>
-            <p id="iaError" style="color:#ff8a80; min-height:1.2em; margin:12px 0 0;"></p>
-            <button id="iaSignOut" type="button" style="display:none; margin-top:12px; background:none; border:none; color:#c5a47e; text-decoration:underline; cursor:pointer;">התנתק</button>
+
+            <a class="ia-forgot" id="iaForgotBtn">שכחתי סיסמה</a>
+            <p id="iaError" class="ia-error"></p>
+            <button id="iaSignOut" type="button" class="ia-signout" style="display:none;">התנתק</button>
         </div>
     </div>
 
@@ -179,6 +191,8 @@
                 <button class="primary-btn" id="saveSettingsBtn" onclick="saveSettingsAndClose()">שמור שינויים</button>
             </div>
 
+             <!-- Logout: revealed by script.js only when the INDEX is access-restricted (user is signed in). -->
+             <button class="primary-btn" id="indexLogoutBtn" onclick="indexLogout()" style="display:none; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444; margin-top:10px;"><i class="fas fa-right-from-bracket"></i> התנתקות מהמערכת</button>
              <button class="primary-btn" id="closeSettingsBtn" onclick="closeSettingsModal()" style="background:#000; border:none; color:var(--text-secondary); margin-top:10px;">סגור</button>
         </div>
     </div>
@@ -201,8 +215,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="firebase-config.js"></script>
-    <script src="appearance.js?v=20260630-appear2"></script>
-    <script src="script.js?v=20260630-appear2"></script>
+    <script src="appearance.js?v=20260701-login"></script>
+    <script src="script.js?v=20260701-login"></script>
 
 </body>
 </html>

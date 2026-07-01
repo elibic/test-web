@@ -1020,6 +1020,14 @@ function saveSettingsAndClose() {
 }
 window.saveSettingsAndClose = saveSettingsAndClose;
 
+// Logout - button lives in Settings and is only revealed when the INDEX is
+// access-restricted (i.e. the viewer signed in through the gate below).
+function indexLogout() {
+    if (!confirm('להתנתק מהמערכת?')) return;
+    firebase.auth().signOut().finally(() => location.reload());
+}
+window.indexLogout = indexLogout;
+
 // --- INDEX ACCESS GATE (per-project, settings/appearance.access) ---
 // Restricted projects require Firebase Auth + a role at/above indexMinRole.
 // Roles live in the existing nodes (managed in admin.html): super_admins /
@@ -1046,10 +1054,14 @@ function showIndexAuth(opts) {
     el.style.display = 'flex';
     document.getElementById('iaTitle').textContent = opts.title;
     document.getElementById('iaDesc').textContent = opts.desc;
-    document.getElementById('iaError').textContent = opts.error || '';
+    const errEl = document.getElementById('iaError');
+    errEl.textContent = opts.error || '';
+    errEl.style.color = '';
     const loginMode = !opts.denied;
     document.getElementById('iaGoogleBtn').style.display = loginMode ? '' : 'none';
     document.getElementById('iaEmailForm').style.display = loginMode ? '' : 'none';
+    document.getElementById('iaOr').style.display = loginMode ? '' : 'none';
+    document.getElementById('iaForgotBtn').style.display = loginMode ? '' : 'none';
     document.getElementById('iaSignOut').style.display = opts.denied ? '' : 'none';
 }
 function hideIndexAuth() {
@@ -1067,12 +1079,29 @@ function ensureIndexAccess(minRole) {
         const gbtn = document.getElementById('iaGoogleBtn');
         const form = document.getElementById('iaEmailForm');
         const sout = document.getElementById('iaSignOut');
+        const toggle = document.getElementById('iaPassToggle');
+        const forgot = document.getElementById('iaForgotBtn');
+        const passInput = document.getElementById('iaPassword');
+        const setErr = (msg, ok) => { const e = errEl(); if (e) { e.style.color = ok ? '#39FF14' : ''; e.textContent = msg; } };
         if (gbtn) gbtn.onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-            .catch(e => { if (errEl()) errEl().textContent = e.message; });
+            .catch(e => setErr(e.message));
         if (form) form.onsubmit = (e) => {
             e.preventDefault();
-            auth.signInWithEmailAndPassword(document.getElementById('iaEmail').value, document.getElementById('iaPassword').value)
-                .catch(err => { if (errEl()) errEl().textContent = err.message; });
+            auth.signInWithEmailAndPassword(document.getElementById('iaEmail').value, passInput.value)
+                .catch(err => setErr(err.message));
+        };
+        if (toggle && passInput) toggle.onclick = () => {
+            const reveal = passInput.type === 'password';
+            passInput.type = reveal ? 'text' : 'password';
+            toggle.classList.toggle('fa-eye', !reveal);
+            toggle.classList.toggle('fa-eye-slash', reveal);
+        };
+        if (forgot) forgot.onclick = () => {
+            const email = document.getElementById('iaEmail').value.trim();
+            if (!email) return setErr('הזינו אימייל למעלה ואז לחצו "שכחתי סיסמה".');
+            auth.sendPasswordResetEmail(email)
+                .then(() => setErr('נשלח מייל לאיפוס סיסמה (בדקו גם בספאם).', true))
+                .catch(err => setErr(err.message));
         };
         if (sout) sout.onclick = () => auth.signOut().finally(() => location.reload());
 
@@ -1118,6 +1147,8 @@ async function initializeApp() {
         if (access.indexMode === 'restricted') {
             const ok = await ensureIndexAccess(access.indexMinRole || 'viewer');
             if (!ok) return; // denied screen shown; do not render the dashboard
+            const lo = document.getElementById('indexLogoutBtn');
+            if (lo) lo.style.display = '';  // signed in -> offer logout in Settings
         }
 
         elevatorConfigs = cSnap.val() || {};
