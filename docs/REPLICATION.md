@@ -34,9 +34,18 @@
 ## תוספות מראה (setup.html -> "מראה ומיתוג")
 - **צבע לפי קוד HEX** לצד כל בורר-צבע (סנכרון דו-כיווני).
 - **חילוץ פלטה מ-PDF / תמונה** (צד-לקוח, pdf.js): מעלים קובץ -> שיבוץ אוטומטי (רקע/טקסט/הדגשה) + כוונון.
-- **חילוץ מאתר אינטרנט**: Cloud Function `extractTheme` (functions v2, us-central1). דורש **Blaze**
-  ופריסה ידנית: `firebase deploy --only functions:extractTheme`. ה-UI גוזר את כתובת הפונקציה מזיהוי
-  הפרויקט (ניתן לדריסה תחת "הגדרות מתקדמות").
+- **חילוץ מאתר אינטרנט**: Cloud Function `extractTheme` (functions v2, us-central1). ה-UI גוזר את
+  כתובת הפונקציה מזיהוי הפרויקט (דריסה תחת "הגדרות מתקדמות"). **תנאים מוקדמים לפריסה (התבררו בשטח -
+  חובה לכולם, אחרת נכשל; פירוט מלא ב-`HANDOFF.md`):**
+  1. **Blaze** מופעל על הפרויקט.
+  2. **תפקידי IAM ל-SA של ה-Action** (`firebase-adminsdk-fbsvc@<project>.iam.gserviceaccount.com`):
+     **Editor** + **Service Account User** + **Cloud Functions Admin** + **Cloud Run Admin**.
+     ⚠️ `Cloud Functions Admin` הוא הקריטי (נותן `setIamPolicy` להפיכת הפונקציה לציבורית) - Editor
+     לבדו לא מספיק, ואל תבלבל בינו ל-`Cloud Run Admin`.
+  3. פריסה: Actions -> Run workflow -> branch main -> target **`functions:extractTheme`** (לא
+     `functions,hosting`), או מקומית `firebase deploy --only functions:extractTheme -P <project>`.
+  4. `functions/index.js` מכיל **רק את extractTheme** (בלי `defineSecret`) - אחרת ניתוח-הקוד של
+     ה-CLI נופל על Secret Manager. ההתראות מנוהלות ב-apps-script, לא כאן.
 - **פונט מותאם**: לפי URL (מיידי), או **העלאת קובץ ל-Storage** - דורש **הפעלת Firebase Storage** +
   פריסת כללים: `firebase deploy --only storage` (הכללים ב-`storage.rules`).
 - **תבנית ערכה**: ייצוא/ייבוא JSON להעברת ערכה מפרויקט אחד לאחר (כל פרויקט = תבנית).
