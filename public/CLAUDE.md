@@ -1,6 +1,11 @@
-# CLAUDE.md — ramada-web
+# CLAUDE.md — test-web (public)
 
-קבצי הווב של מערכת מעלית שבת (Ramada), הנפרסים ל-Firebase Hosting (project: `test-94822`).
+> ⚠️ **HOSTING עבר למונו-רפו (יולי 2026).** מקור-האמת לקוד ה-web הוא ריפו **ramada-web** תחת
+> `monorepo/shared/public`. **אל תערוך כאן את הקבצים לצורך פריסה** - השינויים נעשים במונו-רפו
+> ונפרסים לכל הבניינים. ה-`public/` כאן נשמר כ-rollback בלבד. התיעוד הרספונסיבי למטה עדיין תקף
+> (הקוד זהה) - אך ערוך אותו ב-`monorepo/shared/public/CLAUDE.md`.
+
+קבצי הווב של מערכת מעלית שבת (project: `test-94822`).
 פאנל מצב מעלית בזמן אמת, רספונסיבי (kiosk / portrait / wide).
 
 ## הקובץ הראשי

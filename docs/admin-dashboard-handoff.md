@@ -1,3 +1,6 @@
+> ⚠️ **מיושן / עותק.** מקור-האמת עבר למונו-רפו בריפו **ramada-web** (`docs/` ו-`monorepo/`).
+> ראה `ramada-web/docs/SETUP-NEW-PROJECT.md`. הריפו הזה פורש מפריסת hosting (יולי 2026).
+
 # Handoff — ECONTROL: דשבורד-על, צי מעליות, והתראות
 
 > מסמך העברת-סשן (חי). בסשן חדש: *"קרא את `docs/admin-dashboard-handoff.md` בריפו ramada-web והמשך מהצעד הבא."*

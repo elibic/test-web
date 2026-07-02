@@ -11,15 +11,15 @@
 
 ## מבנה
 
-- `public/` — קבצי האתר (HTML / CSS / JS) שמוגשים למשתמשים.
-- `firebase.json` — הגדרות הפריסה ל‑Firebase Hosting.
+- `public/` — עותק rollback של קבצי האתר. **מקור-האמת הוא `ramada-web/monorepo/shared/public`.**
+- `functions/` — `extractTheme` (נפרס ידנית דרך `firebase-deploy.yml`, functions-only).
 
 ## פריסה
 
-```bash
-firebase deploy --only hosting
-```
+ה-**hosting** של `test-94822` נפרס מהמונו-רפו (ריפו `ramada-web`):
+`preview-project.yml` (תצוגה) / `deploy-all.yml` (פרודקשן), project=`test-94822`.
+**אין לפרוס hosting מכאן** (נטרלנו את זה כדי למנוע פריסה כפולה).
 
 ---
 
-*מנוהל ב‑Git ו‑GitHub מאז יוני 2026.*
+*מנוהל ב‑Git ו‑GitHub מאז יוני 2026. hosting אוחד למונו-רפו ביולי 2026.*
