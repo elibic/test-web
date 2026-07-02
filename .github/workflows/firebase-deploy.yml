@@ -1,37 +1,21 @@
-# פריסה אוטומטית ל-Firebase (Hosting + Functions) — project test-94822.
+# ⚠️ HOSTING עבר למונו-רפו. פריסת ה-HOSTING של test-94822 מתבצעת ממקור-האמת היחיד בריפו
+#    ramada-web תחת monorepo/ (workflows: preview-project.yml / deploy-all.yml). לכן ה-workflow
+#    הזה **אינו** פורס hosting יותר, ואינו רץ אוטומטית על push - כדי שלא ירוצו שתי פריסות על
+#    אותו פרויקט. נשאר כאן רק פריסת FUNCTIONS ידנית (extractTheme), אם וכשצריך.
 #
-# הפעלה:
-#   • אוטומטית: push ל-main שנוגע ב-functions/ · public/ · firebase.json · ‎.firebaserc
-#   • ידנית:   Actions → "Deploy to Firebase" → Run workflow (אפשר לבחור מה לפרוס)
-#
-# חד-פעמי לפני שעובד (ראו functions/README.md):
-#   1) שדרוג הפרויקט ל-Blaze.
-#   2) הגדרת Secrets של הפונקציות:  firebase functions:secrets:set TELEGRAM_BOT_TOKEN  (וכו')
-#   3) הוספת secret אימות לריפו ב-GitHub (Settings → Secrets and variables → Actions):
-#        FIREBASE_SERVICE_ACCOUNT  — JSON של Service Account (מומלץ), או
-#        FIREBASE_TOKEN            — פלט של `firebase login:ci` (פשוט יותר, מיושן).
-name: Deploy to Firebase
+# חד-פעמי (ראו functions/README.md): Blaze + Secrets + FIREBASE_SERVICE_ACCOUNT ברירי הריפו.
+name: Deploy to Firebase (functions only)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "functions/**"
-      - "public/**"
-      - "firebase.json"
-      - ".firebaserc"
-      - ".github/workflows/firebase-deploy.yml"
   workflow_dispatch:
     inputs:
       target:
-        description: "מה לפרוס"
+        description: "מה לפרוס (functions בלבד - hosting עבר למונו-רפו)"
         type: choice
-        default: "functions,hosting"
+        default: "functions:extractTheme"
         options:
-          - "functions,hosting"
-          - "functions"
           - "functions:extractTheme"
-          - "hosting"
+          - "functions"
 
 permissions:
   contents: read
@@ -52,17 +36,12 @@ jobs:
         run: npm ci
         working-directory: functions
 
-      - name: בדיקות (חישוב יום/לילה + watchdog)
-        run: npm test
-        working-directory: functions
-
       - name: התקנת Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: פריסה
+      - name: פריסת functions
         env:
-          # פריסה אוטומטית ב-push = Hosting בלבד (functions דורש Blaze+Secrets — הרץ ידנית בבחירת target)
-          TARGET: ${{ github.event.inputs.target || 'hosting' }}
+          TARGET: ${{ github.event.inputs.target || 'functions:extractTheme' }}
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
